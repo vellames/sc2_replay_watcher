@@ -459,6 +459,7 @@ export function ReplayViewer() {
     const opponentStats = opponent ? currentFrame?.stats[String(opponent.id)] : undefined;
     const supplyUsed = stats?.supplyUsed ?? 0;
     const supplyCap = Math.max(1, stats?.supplyCap ?? 0);
+    const isSupplyBlocked = supplyCap < 200 && supplyUsed >= supplyCap;
     const production = currentFrame?.production[String(player.id)] ?? [];
     const completedUpgrades = replay.timeline
       .filter((event) => event.type === "upgrade" && event.playerId === player.id && event.time <= currentTime)
@@ -474,8 +475,12 @@ export function ReplayViewer() {
             <span><i />{player.name}</span>
             <small>{player.race}</small>
           </div>
-          <div className="macro-player-title"><span>{t("watcher.supply")}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
-          <div className="supply-track"><i style={{ width: `${Math.min(100, (supplyUsed / supplyCap) * 100)}%` }} /></div>
+          <div className="macro-player-title"><span>{t("watcher.supply")}{isSupplyBlocked && <em>{t("watcher.blocked")}</em>}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
+          <div className={`supply-track ${isSupplyBlocked ? "blocked" : ""}`}><i style={{ width: `${Math.min(100, (supplyUsed / supplyCap) * 100)}%` }} /></div>
+          <div className="resource-bank">
+            <span><Pickaxe size={10} /><b>{compactNumber(stats?.minerals ?? 0)}</b><small>{t("watcher.minerals")}</small></span>
+            <span><Zap size={10} /><b>{compactNumber(stats?.vespene ?? 0)}</b><small>{t("watcher.vespene")}</small></span>
+          </div>
           <div className="macro-metrics side-macro-metrics">
             <div><small>{t("watcher.army")}</small><strong>{stats?.armySupply ?? 0} <em>supply</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
             <div><small>{t("watcher.workers")}</small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
