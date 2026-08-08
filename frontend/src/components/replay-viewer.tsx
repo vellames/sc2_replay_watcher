@@ -34,6 +34,8 @@ import {
   RotateCcw,
   Shield,
   Scan,
+  SkipBack,
+  SkipForward,
   Sparkles,
   Swords,
   Target,
@@ -437,6 +439,16 @@ export function ReplayViewer() {
     resources: t("watcher.layer.resources"),
     cameras: t("watcher.layer.cameras"),
   };
+  const seekRelevantEvent = (direction: -1 | 1) => {
+    const events = replay.timeline.filter((event) => event.type !== "movement" && event.time > 0);
+    const target = direction < 0
+      ? [...events].reverse().find((event) => event.time < currentTime - .5)
+      : events.find((event) => event.time > currentTime + .5);
+    if (!target) return;
+    setCurrentTime(target.time);
+    setPlaying(false);
+    if (target.engagementId) setSelection({ kind: "engagement", engagementId: target.engagementId });
+  };
   const renderPlayerPanel = (player: (typeof replay.players)[number], side: "left" | "right") => {
     const stats = currentFrame?.stats[String(player.id)];
     const opponent = replay.players.find((candidate) => candidate.id !== player.id);
@@ -763,6 +775,10 @@ export function ReplayViewer() {
           <div className="controls">
             <button className="icon-button" onClick={() => { setCurrentTime(0); setPlaying(false); }} aria-label={t("watcher.restart")}><RotateCcw size={17} /></button>
             <button className="play-button" onClick={() => setPlaying((value) => !value)} aria-label={playing ? t("watcher.pause") : t("watcher.play")}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
+            <div className="event-nav">
+              <button onClick={() => seekRelevantEvent(-1)} aria-label={t("watcher.previousEvent")} title={t("watcher.previousEvent")}><SkipBack size={13} /></button>
+              <button onClick={() => seekRelevantEvent(1)} aria-label={t("watcher.nextRelevantEvent")} title={t("watcher.nextRelevantEvent")}><SkipForward size={13} /></button>
+            </div>
             <span className="control-time">{formatTime(currentTime)}</span>
             <div className="timeline-shell">
               <input className="timeline" aria-label="Tempo do replay" type="range" min="0" max={replay.meta.duration} step="0.1" value={currentTime} onChange={(event) => setCurrentTime(Number(event.target.value))} style={{ "--progress": `${(currentTime / replay.meta.duration) * 100}%` } as React.CSSProperties} />

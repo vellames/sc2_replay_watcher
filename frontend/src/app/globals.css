@@ -282,10 +282,14 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .position-section > div span:last-child { margin-left: auto; color: var(--selection-color); }
 .position-section > div b { color: #9bb0ba; font-weight: 600; }
 .position-section > small { display: block; margin-top: 5px; color: #3f5664; font: 500 6px var(--font-geist-mono); }
-.controls { min-height: 70px; display: grid; grid-template-columns: auto auto auto 1fr auto auto; gap: 13px; align-items: center; padding: 0 20px; border-top: 1px solid var(--line); background: #0b141d; }
+.controls { min-height: 70px; display: grid; grid-template-columns: auto auto auto auto 1fr auto auto; gap: 13px; align-items: center; padding: 0 20px; border-top: 1px solid var(--line); background: #0b141d; }
 .icon-button, .play-button { display: grid; place-items: center; cursor: pointer; }
 .icon-button { width: 31px; height: 31px; background: transparent; color: #728696; border: 1px solid #263746; border-radius: 4px; }
 .play-button { width: 37px; height: 37px; color: #051019; background: #64d2ff; border: 0; border-radius: 50%; box-shadow: 0 0 20px rgba(65,200,255,.2); }
+.event-nav { display: flex; align-items: center; border: 1px solid #263746; border-radius: 4px; overflow: hidden; }
+.event-nav button { width: 27px; height: 29px; display: grid; place-items: center; color: #6b8191; border: 0; border-right: 1px solid #263746; background: transparent; cursor: pointer; }
+.event-nav button:last-child { border-right: 0; }
+.event-nav button:hover { color: #b8d9e8; background: rgba(82, 169, 204, .08); }
 .control-time { font: 500 10px var(--font-geist-mono); color: #b6c8d5; }
 .control-time.muted { color: #536676; }
 .timeline-shell { position: relative; width: 100%; height: 30px; display: flex; align-items: center; }
@@ -432,6 +436,7 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   .watcher-main { width: 100%; }
   .map-stage { min-height: 390px; }
   .controls { grid-template-columns: auto auto 1fr auto; padding: 0 12px; }
+  .event-nav { display: none; }
   .control-time, .speed svg:first-child { display: none; }
   footer { gap: 20px; }
   footer span:last-child { display: none; }
