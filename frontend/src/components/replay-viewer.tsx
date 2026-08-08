@@ -192,9 +192,13 @@ export function ReplayViewer() {
 
   useEffect(() => {
     if (!playing || !replay) return;
+    let previousTick = performance.now();
     const interval = window.setInterval(() => {
+      const now = performance.now();
+      const elapsed = (now - previousTick) / 1000;
+      previousTick = now;
       setCurrentTime((time) => {
-        const next = time + 0.1 * speed;
+        const next = time + elapsed * speed;
         if (next >= replay.meta.duration) {
           setPlaying(false);
           return replay.meta.duration;
@@ -213,8 +217,9 @@ export function ReplayViewer() {
         event.preventDefault();
         setPlaying((value) => !value);
       }
-      if (event.code === "ArrowLeft") setCurrentTime((value) => Math.max(0, value - 5));
-      if (event.code === "ArrowRight") setCurrentTime((value) => Math.min(replay.meta.duration, value + 5));
+      const seekStep = event.shiftKey ? 1 : 5;
+      if (event.code === "ArrowLeft") setCurrentTime((value) => Math.max(0, value - seekStep));
+      if (event.code === "ArrowRight") setCurrentTime((value) => Math.min(replay.meta.duration, value + seekStep));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
