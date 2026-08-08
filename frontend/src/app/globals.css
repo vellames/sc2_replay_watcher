@@ -142,6 +142,14 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .tech-state > span svg { color: #9186d4; }
 .tech-state > div { margin-top: 6px; display: flex; gap: 4px; overflow: hidden; }
 .tech-state b { min-width: 0; padding: 3px 5px; overflow: hidden; color: #9c96c9; border: 1px solid rgba(145, 134, 212, .14); border-radius: 2px; background: rgba(112, 96, 180, .06); font: 550 6px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
+.build-path { margin: 8px 0 10px; padding: 8px 0; border-top: 1px solid rgba(116, 167, 195, .08); border-bottom: 1px solid rgba(116, 167, 195, .08); }
+.build-path > span { margin-bottom: 5px; display: flex; align-items: center; gap: 5px; color: #607989; font: 650 7px var(--font-geist-mono); letter-spacing: .07em; }
+.build-path > div { min-height: 20px; display: grid; grid-template-columns: 31px minmax(0, 1fr) auto; align-items: center; gap: 5px; color: #667d8d; font: 550 7px var(--font-geist-mono); }
+.build-path time { color: #4d6675; }
+.build-path b { overflow: hidden; color: #9eb2bd; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.build-path small { color: #4f7665; font-size: 5px; letter-spacing: .06em; }
+.build-path .upcoming b { color: var(--player-color); }
+.build-path .upcoming small { color: #7f8bc0; }
 .production-list { border-top: 1px solid rgba(116, 167, 195, .1); padding-top: 9px; }
 .production-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; color: #657d8e; font: 600 7px var(--font-geist-mono); letter-spacing: .08em; }
 .production-title span { display: flex; align-items: center; gap: 5px; }

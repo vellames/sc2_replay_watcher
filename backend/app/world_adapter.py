@@ -135,6 +135,7 @@ def watcher_payload(
             for player_id, samples in reader.camera_samples().items()
         },
         "timeline": manifest.get("timeline", []),
+        "buildOrder": manifest.get("buildOrder", []),
         "engagements": manifest.get("engagements", []),
         "frames": [_frame_payload(frame) for frame in reader.iter_frames()],
     }

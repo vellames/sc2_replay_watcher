@@ -466,6 +466,9 @@ export function ReplayViewer() {
     const completedUpgrades = replay.timeline
       .filter((event) => event.type === "upgrade" && event.playerId === player.id && event.time <= currentTime)
       .slice(-3);
+    const playerBuildOrder = (replay.buildOrder ?? []).filter((milestone) => milestone.playerId === player.id);
+    const recentMilestones = playerBuildOrder.filter((milestone) => milestone.completedAt <= currentTime).slice(-2);
+    const upcomingMilestone = playerBuildOrder.find((milestone) => milestone.completedAt > currentTime);
     const armyValueDelta = (stats?.armyValue ?? 0) - (opponentStats?.armyValue ?? 0);
     const workerDelta = (stats?.workers ?? 0) - (opponentStats?.workers ?? 0);
     const deltaClass = (value: number) => value > 0 ? "leading" : value < 0 ? "trailing" : "tied";
@@ -496,6 +499,13 @@ export function ReplayViewer() {
             <div className="tech-state">
               <span><FlaskConical size={10} />{t("watcher.completedUpgrades")}</span>
               <div>{completedUpgrades.map((upgrade, index) => <b key={`${upgrade.time}-${upgrade.label}-${index}`} title={`${formatTime(upgrade.time)} · ${cleanType(upgrade.label)}`}>{cleanType(upgrade.label)}</b>)}</div>
+            </div>
+          )}
+          {(recentMilestones.length > 0 || upcomingMilestone) && (
+            <div className="build-path">
+              <span><ListTree size={10} />{t("watcher.buildPath")}</span>
+              {recentMilestones.map((milestone) => <div key={`${milestone.completedAt}-${milestone.product}`}><time>{formatTime(milestone.completedAt)}</time><b>{cleanType(milestone.product)}</b><small>{t("watcher.done")}</small></div>)}
+              {upcomingMilestone && <div className="upcoming"><time>{formatTime(upcomingMilestone.completedAt)}</time><b>{cleanType(upcomingMilestone.product)}</b><small>{t("watcher.next")}</small></div>}
             </div>
           )}
           <div className="production-list side-production-list">

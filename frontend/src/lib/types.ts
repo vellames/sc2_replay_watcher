@@ -202,6 +202,14 @@ export type ReplayData = {
     engagementId?: string;
     armyGroupId?: string;
   }>;
+  buildOrder: Array<{
+    playerId: number;
+    product: string;
+    kind: "unit" | "building" | "upgrade";
+    startedAt: number;
+    completedAt: number;
+    confidence: "recorded" | "derived" | "estimated";
+  }>;
   engagements: ReplayEngagement[];
   frames: ReplayFrame[];
 };

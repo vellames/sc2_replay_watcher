@@ -62,6 +62,10 @@ def test_demo_is_compiled_by_world_engine() -> None:
     assert any(frame["armyGroups"] for frame in payload["frames"])
     assert "engagements" in payload
     assert payload["engagements"]
+    assert payload["buildOrder"]
+    assert {"playerId", "product", "kind", "startedAt", "completedAt", "confidence"}.issubset(
+        payload["buildOrder"][0]
+    )
     assert {
         "mineralLosses",
         "vespeneLosses",
