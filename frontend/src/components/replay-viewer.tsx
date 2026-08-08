@@ -469,6 +469,12 @@ export function ReplayViewer() {
     const playerBuildOrder = (replay.buildOrder ?? []).filter((milestone) => milestone.playerId === player.id);
     const recentMilestones = playerBuildOrder.filter((milestone) => milestone.completedAt <= currentTime).slice(-2);
     const upcomingMilestone = playerBuildOrder.find((milestone) => milestone.completedAt > currentTime);
+    const armyComposition = [...(currentFrame?.units ?? [])
+      .filter((unit) => unit.ownerId === player.id && unit.isArmy)
+      .reduce((types, unit) => types.set(unit.type, (types.get(unit.type) ?? 0) + 1), new Map<string, number>())
+      .entries()]
+      .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+      .slice(0, 4);
     const armyValueDelta = (stats?.armyValue ?? 0) - (opponentStats?.armyValue ?? 0);
     const workerDelta = (stats?.workers ?? 0) - (opponentStats?.workers ?? 0);
     const deltaClass = (value: number) => value > 0 ? "leading" : value < 0 ? "trailing" : "tied";
@@ -490,6 +496,7 @@ export function ReplayViewer() {
             <div><small>{t("watcher.army")}</small><strong>{stats?.armySupply ?? 0} <em>supply</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
             <div><small>{t("watcher.workers")}</small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
           </div>
+          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}</span><div>{armyComposition.map(([type, count]) => <b key={type} title={cleanType(type)}>{count}× {cleanType(type)}</b>)}</div></div>}
           <div className="combat-ledger">
             <span>{t("watcher.inProgress")} <b>{compactNumber(stats?.armyInProgress ?? 0)}</b></span>
             <span>{t("watcher.lost")} <b>{compactNumber(stats?.armyLost ?? 0)}</b></span>

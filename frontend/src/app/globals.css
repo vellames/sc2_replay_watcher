@@ -133,6 +133,10 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .metric-delta.leading { color: #75d6a0; background: rgba(70, 190, 120, .09); }
 .metric-delta.trailing { color: #dc8190; background: rgba(210, 80, 100, .08); }
 .metric-delta.tied { color: #637887; background: rgba(110, 140, 158, .06); }
+.army-composition-mini { margin: 8px 0 2px; padding: 8px 0; border-top: 1px solid rgba(116, 167, 195, .08); }
+.army-composition-mini > span { display: flex; align-items: center; gap: 5px; color: #607989; font: 650 8px var(--font-geist-mono); letter-spacing: .06em; }
+.army-composition-mini > div { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.army-composition-mini b { max-width: calc(50% - 2px); padding: 3px 5px; overflow: hidden; color: color-mix(in srgb, var(--player-color) 70%, #b8cad4); border: 1px solid color-mix(in srgb, var(--player-color) 15%, transparent); border-radius: 2px; background: color-mix(in srgb, var(--player-color) 5%, transparent); font: 600 7px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
 .combat-ledger { display: grid; grid-template-columns: repeat(3, 1fr); margin: 8px 0 10px; }
 .combat-ledger span { color: #536b7b; font: 500 8px var(--font-geist-mono); text-align: center; border-right: 1px solid var(--line); }
 .combat-ledger span:last-child { border: 0; }
