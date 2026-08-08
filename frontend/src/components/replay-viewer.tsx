@@ -119,6 +119,7 @@ export function ReplayViewer() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [selection, setSelection] = useState<MapSelection | null>(null);
   const [isPanning, setIsPanning] = useState(false);
+  const [cameraPlayers, setCameraPlayers] = useState<Record<number, boolean>>({});
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     terrain: true,
     army: true,
@@ -430,7 +431,7 @@ export function ReplayViewer() {
       ...camera,
       frameTime: camera.recordedAt,
       opacity: Math.max(.15, 1 - (currentTime - camera.recordedAt) / 10),
-    })));
+    }))).filter((camera) => cameraPlayers[camera.playerId] !== false);
   const toggleLayer = (layer: LayerKey) => {
     if (layer === "buildings" && layers.buildings && selection?.kind === "group" && selection.groupType === "base") setSelection(null);
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
@@ -696,7 +697,7 @@ export function ReplayViewer() {
                   const color = playerById.get(camera.playerId)?.color ?? "#8edcff";
                   return <i key={`camera-trail-${camera.playerId}-${camera.frameTime}`} className="camera-trail-dot" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, background: color, opacity: camera.opacity * .42, "--camera-color": color } as React.CSSProperties} />;
                 })}
-                {layers.cameras && renderedCameras.map((camera) => {
+                {layers.cameras && renderedCameras.filter((camera) => cameraPlayers[camera.playerId] !== false).map((camera) => {
                   const point = toPercent(camera.x, camera.y);
                   const player = playerById.get(camera.playerId);
                   const color = player?.color ?? "#8edcff";
@@ -794,6 +795,10 @@ export function ReplayViewer() {
                     {layers[layer] ? <Eye size={12} /> : <EyeOff size={12} />}<span>{layerLabels[layer]}</span>
                   </button>
                 ))}
+                {layers.cameras && replay.players.slice(0, 2).map((player, index) => {
+                  const active = cameraPlayers[player.id] !== false;
+                  return <button key={`camera-player-${player.id}`} className={`camera-player-toggle ${active ? "active" : ""}`} aria-pressed={active} onClick={() => setCameraPlayers((current) => ({ ...current, [player.id]: !active }))} title={`${t("watcher.cameraPlayer")} · ${player.name}`} style={{ "--camera-player-color": player.color } as React.CSSProperties}><Scan size={11} /><span>P{index + 1}</span></button>;
+                })}
                 <i />
                 <button onClick={() => setZoom((value) => Math.max(0.7, value - 0.25))} aria-label={t("watcher.zoomOut")}><Minus size={13} /></button>
                 <b>{Math.round(zoom * 100)}%</b>
