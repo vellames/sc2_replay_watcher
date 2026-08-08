@@ -270,6 +270,14 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .inspector-section:last-child { border-bottom: 0; }
 .inspector-section h3 { margin: 0 0 7px; display: flex; align-items: center; gap: 5px; color: #607d8d; font: 650 7px var(--font-geist-mono); letter-spacing: .08em; }
 .inspector-section h3 > em { margin-left: auto; color: var(--selection-color); font-size: 6px; font-style: normal; letter-spacing: 0; }
+.confidence-section > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.confidence-section span { position: relative; min-width: 0; height: 29px; padding: 6px; overflow: hidden; border: 1px solid rgba(100, 150, 175, .08); background: rgba(7, 15, 22, .5); }
+.confidence-section span i { position: absolute; left: 0; bottom: 0; height: 2px; background: #70b8d2; }
+.confidence-section span.derived i { background: #8e9ed0; }
+.confidence-section span.estimated i { background: #c08a78; }
+.confidence-section span b, .confidence-section span em { display: block; overflow: hidden; font: 550 6px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
+.confidence-section span b { color: #526b7a; }
+.confidence-section span em { margin-top: 3px; color: #a3b6c0; font-style: normal; }
 .composition-row { min-height: 25px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; border-bottom: 1px solid rgba(92, 140, 162, .07); }
 .composition-row:last-child { border-bottom: 0; }
 .composition-row > span { min-width: 0; display: flex; align-items: center; gap: 5px; color: var(--selection-color); }

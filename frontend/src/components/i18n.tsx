@@ -139,6 +139,9 @@ const translations = {
     "watcher.noProductionHere": "Nenhuma produção nesta estrutura",
     "watcher.addon": "ADD-ON",
     "watcher.positionConfidence": "Confiança da posição",
+    "watcher.confidence.recorded": "Registrada",
+    "watcher.confidence.derived": "Derivada",
+    "watcher.confidence.estimated": "Estimada",
   },
   en: {
     "header.newReplay": "New replay",
@@ -276,6 +279,9 @@ const translations = {
     "watcher.noProductionHere": "No production at this structure",
     "watcher.addon": "ADD-ON",
     "watcher.positionConfidence": "Position confidence",
+    "watcher.confidence.recorded": "Recorded",
+    "watcher.confidence.derived": "Derived",
+    "watcher.confidence.estimated": "Estimated",
   },
 } as const;
 

@@ -393,6 +393,10 @@ export function ReplayViewer() {
   const inspectedMinerals = economicUnits.reduce((sum, unit) => sum + (unit.mineralCost ?? 0), 0);
   const inspectedVespene = economicUnits.reduce((sum, unit) => sum + (unit.vespeneCost ?? 0), 0);
   const inspectedSupply = economicUnits.reduce((sum, unit) => sum + (unit.supplyCost ?? 0), 0);
+  const confidenceCounts = inspectedUnits.reduce((counts, unit) => {
+    counts[unit.positionSource] += 1;
+    return counts;
+  }, { recorded: 0, derived: 0, estimated: 0 });
   const composition = [...inspectedUnits.reduce((types, unit) => {
     const item = types.get(unit.type) ?? { type: unit.type, count: 0, minerals: 0, vespene: 0 };
     item.count += 1;
@@ -566,6 +570,14 @@ export function ReplayViewer() {
               <span><b>{compactNumber(inspectedMinerals)}</b> <Pickaxe size={10} /></span>
               <span><b>{compactNumber(inspectedVespene)}</b> <Zap size={10} /></span>
               <span><b>{inspectedSupply}</b> {t("watcher.supply")}</span>
+            </section>
+            <section className="inspector-section confidence-section">
+              <h3><Shield size={11} />{t("watcher.positionConfidence")}</h3>
+              <div>
+                {(["recorded", "derived", "estimated"] as const).map((source) => (
+                  <span key={source} className={source}><i style={{ width: `${(confidenceCounts[source] / inspectedUnits.length) * 100}%` }} /><b>{t(`watcher.confidence.${source}`)}</b><em>{confidenceCounts[source]}</em></span>
+                ))}
+              </div>
             </section>
             <section className="inspector-section composition-section">
               <h3><ListTree size={11} />{t("watcher.composition")}</h3>
