@@ -130,6 +130,11 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .combat-ledger span { color: #536b7b; font: 500 7px var(--font-geist-mono); text-align: center; border-right: 1px solid var(--line); }
 .combat-ledger span:last-child { border: 0; }
 .combat-ledger b { display: block; margin-top: 3px; color: #92a9b8; font-size: 8px; }
+.tech-state { margin: 9px 0 2px; padding: 8px 0 9px; border-top: 1px solid rgba(116, 167, 195, .08); }
+.tech-state > span { display: flex; align-items: center; gap: 5px; color: #607989; font: 650 7px var(--font-geist-mono); letter-spacing: .07em; }
+.tech-state > span svg { color: #9186d4; }
+.tech-state > div { margin-top: 6px; display: flex; gap: 4px; overflow: hidden; }
+.tech-state b { min-width: 0; padding: 3px 5px; overflow: hidden; color: #9c96c9; border: 1px solid rgba(145, 134, 212, .14); border-radius: 2px; background: rgba(112, 96, 180, .06); font: 550 6px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
 .production-list { border-top: 1px solid rgba(116, 167, 195, .1); padding-top: 9px; }
 .production-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; color: #657d8e; font: 600 7px var(--font-geist-mono); letter-spacing: .08em; }
 .production-title span { display: flex; align-items: center; gap: 5px; }

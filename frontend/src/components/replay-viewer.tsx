@@ -456,6 +456,9 @@ export function ReplayViewer() {
     const supplyUsed = stats?.supplyUsed ?? 0;
     const supplyCap = Math.max(1, stats?.supplyCap ?? 0);
     const production = currentFrame?.production[String(player.id)] ?? [];
+    const completedUpgrades = replay.timeline
+      .filter((event) => event.type === "upgrade" && event.playerId === player.id && event.time <= currentTime)
+      .slice(-3);
     const armyValueDelta = (stats?.armyValue ?? 0) - (opponentStats?.armyValue ?? 0);
     const workerDelta = (stats?.workers ?? 0) - (opponentStats?.workers ?? 0);
     const deltaClass = (value: number) => value > 0 ? "leading" : value < 0 ? "trailing" : "tied";
@@ -478,6 +481,12 @@ export function ReplayViewer() {
             <span>{t("watcher.lost")} <b>{compactNumber(stats?.armyLost ?? 0)}</b></span>
             <span>{t("watcher.killed")} <b>{compactNumber(stats?.resourcesKilled ?? 0)}</b></span>
           </div>
+          {completedUpgrades.length > 0 && (
+            <div className="tech-state">
+              <span><FlaskConical size={10} />{t("watcher.completedUpgrades")}</span>
+              <div>{completedUpgrades.map((upgrade, index) => <b key={`${upgrade.time}-${upgrade.label}-${index}`} title={`${formatTime(upgrade.time)} · ${cleanType(upgrade.label)}`}>{cleanType(upgrade.label)}</b>)}</div>
+            </div>
+          )}
           <div className="production-list side-production-list">
             <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}</span><b>{production.length}</b></div>
             {production.length === 0 ? <small className="queue-empty">{t("watcher.queueEmpty")}</small> : production.slice(0, 8).map((order) => (
