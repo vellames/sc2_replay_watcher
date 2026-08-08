@@ -736,9 +736,9 @@ export function ReplayViewer() {
                 <span><Factory size={12} />{structures}</span>
                 <span><Flame size={12} />{currentFrame?.deaths.length ?? 0}</span>
               </div>
-              <div className="map-toolbar" aria-label={t("watcher.mapLayers")}>
+              <div className="map-toolbar" role="toolbar" aria-label={t("watcher.mapLayers")}>
                 {(["terrain", "army", "workers", "buildings", "resources", "cameras"] as LayerKey[]).map((layer) => (
-                  <button key={layer} className={layers[layer] ? "active" : ""} onClick={() => toggleLayer(layer)} title={layerLabels[layer]}>
+                  <button key={layer} className={layers[layer] ? "active" : ""} aria-pressed={layers[layer]} onClick={() => toggleLayer(layer)} title={layerLabels[layer]}>
                     {layers[layer] ? <Eye size={12} /> : <EyeOff size={12} />}<span>{layerLabels[layer]}</span>
                   </button>
                 ))}

@@ -407,6 +407,8 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   .compact-scoreboard section > div { margin-top: 7px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .compact-scoreboard section > div span { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 3px; color: #849ba9; font: 600 7px var(--font-geist-mono); }
   .compact-scoreboard section > div svg { flex: 0 0 auto; color: var(--player-color); }
+  .next-event { top: 52px; right: 12px; max-width: calc(100% - 24px); }
+  .macro-viewer-grid .reconstruction-status, .coordinates { display: none; }
   .feature-strip { grid-template-columns: 1fr; }
   .feature-strip div { border-right: 0; border-bottom: 1px solid var(--line); }
 }
