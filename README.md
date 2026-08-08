@@ -1,0 +1,60 @@
+# SC2 Replay Watcher
+
+MVP full-stack que transforma arquivos `.SC2Replay` em uma visualização tática 2D. O frontend oferece upload, reprodução da linha do tempo e inspeção das unidades; o backend compila o replay em estados do mundo com a `sc2_world_engine`.
+
+## Stack
+
+- Frontend: Next.js, React, TypeScript, Tailwind CSS
+- Backend: Python, FastAPI, `sc2_world_engine`
+
+## Rodando localmente
+
+### Backend
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8010
+```
+
+A API fica em `http://localhost:8010` e a documentação em `http://localhost:8010/docs`.
+
+### Frontend
+
+```bash
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Abra `http://localhost:3000`. A página inicial envia o replay ao FastAPI, que o compila com o projeto independente `../sc2_world_engine`. O backend adapta o `.sc2world` validado para o contrato do watcher; o frontend apenas reproduz e renderiza os estados recebidos. Depois do processamento, o app navega para `/watcher`, onde ficam mapa, timeline e controles.
+
+A interface está disponível em português e inglês. O seletor `PT / EN` fica no cabeçalho e salva a preferência no navegador.
+
+## Replay de exemplo
+
+Use `samples/HSC-XXIX-Grand-Final-G4-2026.SC2Replay`. É o jogo 4 da Grand Final da HomeStory Cup XXIX: Serral vs Clem, uma partida de 34:24 jogada na versão 5.0.16.97425. A origem, os detalhes e o checksum estão documentados em `samples/README.md`.
+
+## Limitações atuais
+
+O formato de replay registra apenas amostras de posição em determinados eventos. Por isso, o movimento entre amostras é uma aproximação visual marcada como `estimated`, não uma reconstrução exata do motor do jogo. Terreno, visão e física detalhada ficam fora do escopo atual.
+
+O watcher exibe supply, composição e valor do exército, renda, perdas, abates e produção inferida.
+O mapa possui filtros de camadas, zoom/pan, agrupamento de exércitos, áreas de bases, atividade de
+combate e destinos das unidades selecionadas.
+
+Quando a referência `.s2ma` do replay está disponível no depot da Blizzard, a world engine monta um
+bootstrap estático com níveis do terreno, cliffs, rampas e bloqueios destrutíveis. O watcher desenha
+essa geometria antes do frame zero e usa o minimapa oficial apenas como asset de referência. Se o mapa
+não estiver disponível ou o download falhar, a resposta usa o cenário procedural sem interromper a
+leitura do replay.
+
+Quando essas camadas estão presentes, movimentos terrestres estimados usam uma malha caminhável com
+clearance e corredores A* compartilhados por comando. Unidades voadoras continuam em linha direta e
+posições registradas pelo tracker nunca são substituídas pelo pathfinder.
+
+As câmeras dos jogadores usam as amostras originais de `CameraEvent`: o watcher mantém a última
+posição registrada até a próxima amostra e nunca interpola coordenadas entre dois eventos.
