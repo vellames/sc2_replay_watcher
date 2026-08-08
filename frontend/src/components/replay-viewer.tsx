@@ -256,7 +256,8 @@ export function ReplayViewer() {
   const combatUnits = ownedUnits.filter((unit) => unit.isArmy).length;
   const workers = ownedUnits.filter((unit) => unit.category === "worker").length;
   const structures = ownedUnits.filter((unit) => unit.category === "building" && unit.attachmentId == null).length;
-  const nextEvent = replay.timeline.find((event) => event.time > currentTime);
+  const nextEvent = replay.timeline.find((event) => event.time > currentTime && event.type !== "movement");
+  const nextEventPlayer = nextEvent ? playerById.get(nextEvent.playerId) : undefined;
   const productionByProducer = new Map<number, number>();
   for (const orders of Object.values(currentFrame?.production ?? {})) {
     for (const order of orders) {
@@ -799,7 +800,7 @@ export function ReplayViewer() {
                 <button onClick={() => setZoom((value) => Math.min(3, value + 0.25))} aria-label={t("watcher.zoomIn")}><Plus size={13} /></button>
                 <button onClick={resetMap} aria-label={t("watcher.resetMap")}><Target size={13} /></button>
               </div>
-              {nextEvent && <div className="next-event"><small>{t("watcher.nextEvent")} · {formatTime(nextEvent.time)}</small><strong>{nextEvent.type === "upgrade" ? t("watcher.upgrade") : nextEvent.type === "base" ? t("watcher.newBase") : nextEvent.type === "engagement" ? t("watcher.engagement") : nextEvent.type === "supply" ? t("watcher.supplyBlock") : t("watcher.majorMovement")} · {cleanType(nextEvent.label)}</strong></div>}
+              {nextEvent && <div className="next-event" style={{ "--event-color": nextEventPlayer?.color ?? "#6eb5d2" } as React.CSSProperties}><small><i />{t("watcher.nextEvent")} · {t("watcher.inTime")} {formatTime(nextEvent.time - currentTime)}{nextEventPlayer ? ` · ${nextEventPlayer.name}` : ""}</small><strong>{nextEvent.type === "upgrade" ? t("watcher.upgrade") : nextEvent.type === "base" ? t("watcher.newBase") : nextEvent.type === "engagement" ? t("watcher.engagement") : t("watcher.supplyBlock")} · {cleanType(nextEvent.label)}</strong></div>}
               <div className="reconstruction-status"><i /><span><strong>{t(replay.meta.capabilities.mapNavigation ? "watcher.routedMovement" : "watcher.reconstructedMovement")}</strong><small>{compactNumber(replay.meta.capabilities.mapNavigation ? replay.meta.routedSegments : replay.meta.movementOrders)} {t(replay.meta.capabilities.mapNavigation ? "watcher.routedHint" : "watcher.reconstructedHint")}</small></span></div>
               <div className="coordinates">X {Math.round(bounds.minX)}–{Math.round(bounds.maxX)} · Y {Math.round(bounds.minY)}–{Math.round(bounds.maxY)}</div>
             </div>
