@@ -530,7 +530,6 @@ export function ReplayViewer() {
 
   return (
     <div className="app-shell watcher-shell">
-      <SiteHeader compact />
       <main className="watcher-main">
         <section className="workspace" aria-label="Visualizador do replay">
           <div className="matchbar">
