@@ -54,6 +54,7 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .vs { font: 500 9px var(--font-geist-mono); color: #536878; border-left: 1px solid var(--line); border-right: 1px solid var(--line); padding: 12px 15px; margin-right: 15px; }
 .match-meta { justify-self: end; text-align: right; }
 .match-meta strong { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 5px; font: 500 13px var(--font-geist-mono); }
+.compact-scoreboard { display: none; }
 .viewer-grid { min-height: 570px; display: grid; grid-template-columns: 248px minmax(0, 1fr); }
 .stats-panel { padding: 22px 20px; background: #0a121a; border-right: 1px solid var(--line); }
 .panel-heading { display: flex; justify-content: space-between; align-items: center; padding-bottom: 17px; border-bottom: 1px solid var(--line); }
@@ -383,8 +384,17 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   .macro-viewer-grid { grid-template-columns: 1fr; }
   .map-toolbar button span { display: none; }
   .map-stage { min-height: 520px; }
-  .versus { display: none; }
-  .matchbar { grid-template-columns: 1fr 1fr; }
+  .map-title, .versus, .match-meta { display: none; }
+  .matchbar { height: 78px; grid-template-columns: 1fr; padding: 8px 12px; }
+  .compact-scoreboard { min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .compact-scoreboard section { min-width: 0; padding: 7px 9px; border: 1px solid rgba(108, 164, 193, .12); border-left: 2px solid var(--player-color); border-radius: 3px; background: rgba(10, 20, 29, .75); }
+  .compact-scoreboard header { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 5px; }
+  .compact-scoreboard header span { color: var(--player-color); font: 700 7px var(--font-geist-mono); }
+  .compact-scoreboard header strong { overflow: hidden; color: #c7d9e3; font-size: 9px; white-space: nowrap; text-overflow: ellipsis; }
+  .compact-scoreboard header small { color: #587080; font: 600 6px var(--font-geist-mono); text-transform: uppercase; }
+  .compact-scoreboard section > div { margin-top: 7px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .compact-scoreboard section > div span { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 3px; color: #849ba9; font: 600 7px var(--font-geist-mono); }
+  .compact-scoreboard section > div svg { flex: 0 0 auto; color: var(--player-color); }
   .feature-strip { grid-template-columns: 1fr; }
   .feature-strip div { border-right: 0; border-bottom: 1px solid var(--line); }
 }

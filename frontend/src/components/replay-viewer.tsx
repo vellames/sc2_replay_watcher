@@ -554,6 +554,22 @@ export function ReplayViewer() {
               ))}
             </div>
             <div className="match-meta"><small>{replay.meta.filename}</small><strong><Clock3 size={15} /> {formatTime(replay.meta.duration)}</strong></div>
+            <div className="compact-scoreboard" aria-label={t("watcher.compactScoreboard")}>
+              {replay.players.slice(0, 2).map((player, index) => {
+                const stats = currentFrame?.stats[String(player.id)];
+                return (
+                  <section key={player.id} style={{ "--player-color": player.color } as React.CSSProperties}>
+                    <header><span>P{index + 1}</span><strong>{player.name}</strong><small>{player.race}</small></header>
+                    <div>
+                      <span title={t("watcher.supply")}><Package size={10} />{stats?.supplyUsed ?? 0}/{stats?.supplyCap ?? 0}</span>
+                      <span title={t("watcher.workers")}><Pickaxe size={10} />{stats?.workers ?? 0}</span>
+                      <span title={t("watcher.armyValue")}><Swords size={10} />{compactNumber(stats?.armyValue ?? 0)}</span>
+                      <span title={t("watcher.bank")}><Database size={10} />{compactNumber((stats?.minerals ?? 0) + (stats?.vespene ?? 0))}</span>
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
           </div>
 
           <div className="viewer-grid macro-viewer-grid">
