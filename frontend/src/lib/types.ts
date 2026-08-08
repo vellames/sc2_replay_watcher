@@ -194,6 +194,7 @@ export type ReplayData = {
     x?: number;
     y?: number;
     end?: number;
+    duration?: number;
     engagementId?: string;
     armyGroupId?: string;
   }>;

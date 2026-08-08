@@ -767,7 +767,12 @@ export function ReplayViewer() {
             <div className="timeline-shell">
               <input className="timeline" aria-label="Tempo do replay" type="range" min="0" max={replay.meta.duration} step="0.1" value={currentTime} onChange={(event) => setCurrentTime(Number(event.target.value))} style={{ "--progress": `${(currentTime / replay.meta.duration) * 100}%` } as React.CSSProperties} />
               <div className="timeline-events" aria-label={t("watcher.analyticTimeline")}>
-                {replay.timeline.filter((event) => event.time > 0).map((event, index) => <button key={`${event.type}-${event.time}-${index}`} className={`timeline-event ${event.type}`} style={{ left: `${(event.time / replay.meta.duration) * 100}%` }} onClick={() => { setCurrentTime(event.time); setPlaying(false); if (event.engagementId) setSelection({ kind: "engagement", engagementId: event.engagementId }); }} title={`${formatTime(event.time)} · ${cleanType(event.label)}`} />)}
+                {replay.timeline.filter((event) => event.time > 0).map((event, index) => {
+                  const intervalEnd = event.end != null ? Math.min(replay.meta.duration, Math.max(event.time, event.end)) : null;
+                  const intervalWidth = intervalEnd != null ? ((intervalEnd - event.time) / replay.meta.duration) * 100 : null;
+                  const label = `${formatTime(event.time)}${intervalEnd != null ? `–${formatTime(intervalEnd)}` : ""} · ${cleanType(event.label)}`;
+                  return <button key={`${event.type}-${event.time}-${index}`} aria-label={label} className={`timeline-event ${event.type} ${intervalWidth != null ? "interval" : ""}`} style={{ left: `${(event.time / replay.meta.duration) * 100}%`, width: intervalWidth != null ? `max(2px, ${intervalWidth}%)` : undefined }} onClick={() => { setCurrentTime(event.time); setPlaying(false); if (event.engagementId) setSelection({ kind: "engagement", engagementId: event.engagementId }); }} title={label} />;
+                })}
               </div>
             </div>
             <span className="control-time muted">{formatTime(replay.meta.duration)}</span>
