@@ -59,6 +59,10 @@ export type ReplayEngagement = {
   participants: number[];
   losses: Record<string, number>;
   unitsLost: Record<string, number>;
+  mineralLosses?: Record<string, number>;
+  vespeneLosses?: Record<string, number>;
+  supplyLost?: Record<string, number>;
+  tradeEfficiency?: Record<string, number>;
   winnerId: number | null;
 };
 

@@ -247,6 +247,7 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .engagement-breakdown > div span { min-width: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; color: #a9bdc8; font: 600 8px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
 .engagement-breakdown > div span i { width: 5px; height: 5px; flex: 0 0 auto; border-radius: 50%; background: var(--combat-color); box-shadow: 0 0 6px var(--combat-color); }
 .engagement-breakdown > div strong { color: #d4e3e9; font: 650 9px var(--font-geist-mono); }
+.engagement-breakdown > div strong em { margin-left: 5px; color: var(--combat-color); font-size: 6px; font-style: normal; }
 .engagement-breakdown > div small { grid-column: 1 / -1; padding: 0 0 5px 11px; color: #506a79; font: 500 6px var(--font-geist-mono); }
 .trade-leader { padding: 9px 10px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3px 8px; background: color-mix(in srgb, var(--selection-color) 5%, transparent); }
 .trade-leader small { color: #587181; font: 650 6px var(--font-geist-mono); letter-spacing: .09em; }

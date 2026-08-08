@@ -505,7 +505,8 @@ export function ReplayViewer() {
   const renderSelectionInspector = () => {
     if (selectedEngagement) {
       const totalLoss = Object.values(selectedEngagement.losses).reduce((sum, value) => sum + value, 0);
-      const tradeLeader = selectedEngagement.winnerId ? playerById.get(selectedEngagement.winnerId) : undefined;
+      const efficiencyLeaderId = Object.entries(selectedEngagement.tradeEfficiency ?? {}).sort((left, right) => right[1] - left[1])[0]?.[0];
+      const tradeLeader = playerById.get(efficiencyLeaderId != null ? Number(efficiencyLeaderId) : selectedEngagement.winnerId ?? 0);
       return (
         <aside className="selection-inspector engagement-inspector" style={{ "--selection-color": tradeLeader?.color ?? "#e88a58" } as React.CSSProperties}>
           <header>
@@ -524,7 +525,14 @@ export function ReplayViewer() {
               const player = playerById.get(playerId);
               const loss = selectedEngagement.losses[String(playerId)] ?? 0;
               const unitsLost = selectedEngagement.unitsLost[String(playerId)] ?? 0;
-              return <div key={playerId} style={{ "--combat-color": player?.color ?? "#7b8794" } as React.CSSProperties}><span><i />{player?.name ?? playerId}</span><strong>{compactNumber(loss)}</strong><small>{unitsLost} {t("watcher.unitsLost")}</small></div>;
+              const minerals = selectedEngagement.mineralLosses?.[String(playerId)];
+              const vespene = selectedEngagement.vespeneLosses?.[String(playerId)];
+              const supply = selectedEngagement.supplyLost?.[String(playerId)];
+              const efficiency = selectedEngagement.tradeEfficiency?.[String(playerId)];
+              const detail = minerals != null && vespene != null
+                ? `${compactNumber(minerals)} M · ${compactNumber(vespene)} G · ${supply ?? 0} ${t("watcher.supply")} · ${unitsLost} ${t("watcher.unitsLost")}`
+                : `${unitsLost} ${t("watcher.unitsLost")}`;
+              return <div key={playerId} style={{ "--combat-color": player?.color ?? "#7b8794" } as React.CSSProperties}><span><i />{player?.name ?? playerId}</span><strong>{compactNumber(loss)}{efficiency != null && <em>×{efficiency.toFixed(2)}</em>}</strong><small>{detail}</small></div>;
             })}
           </section>
           {tradeLeader && <section className="trade-leader"><small>{t("watcher.tradeAdvantage")}</small><strong><i style={{ background: tradeLeader.color }} />{tradeLeader.name}</strong><span>{t("watcher.estimatedFromLosses")}</span></section>}

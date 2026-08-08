@@ -61,6 +61,13 @@ def test_demo_is_compiled_by_world_engine() -> None:
     assert any(frame["bases"] for frame in payload["frames"])
     assert any(frame["armyGroups"] for frame in payload["frames"])
     assert "engagements" in payload
+    assert payload["engagements"]
+    assert {
+        "mineralLosses",
+        "vespeneLosses",
+        "supplyLost",
+        "tradeEfficiency",
+    }.issubset(payload["engagements"][0])
     assert sum(len(samples) for samples in payload["cameraSamples"].values()) > 0
     assert payload["mapVisual"]["source"] in {"official", "procedural"}
     if payload["mapVisual"]["source"] == "official":
