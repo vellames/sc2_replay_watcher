@@ -67,6 +67,11 @@ function compactNumber(value: number) {
   return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
+function signedCompactNumber(value: number) {
+  if (value === 0) return "±0";
+  return `${value > 0 ? "+" : "−"}${compactNumber(Math.abs(value))}`;
+}
+
 type UnitVisual = {
   kind: "addon" | "air" | "army" | "creep-node" | "defense" | "gas" | "production" | "resource" | "supply" | "tech" | "town-hall" | "worker";
   icon: LucideIcon;
@@ -425,9 +430,14 @@ export function ReplayViewer() {
   };
   const renderPlayerPanel = (player: (typeof replay.players)[number], side: "left" | "right") => {
     const stats = currentFrame?.stats[String(player.id)];
+    const opponent = replay.players.find((candidate) => candidate.id !== player.id);
+    const opponentStats = opponent ? currentFrame?.stats[String(opponent.id)] : undefined;
     const supplyUsed = stats?.supplyUsed ?? 0;
     const supplyCap = Math.max(1, stats?.supplyCap ?? 0);
     const production = currentFrame?.production[String(player.id)] ?? [];
+    const armyValueDelta = (stats?.armyValue ?? 0) - (opponentStats?.armyValue ?? 0);
+    const workerDelta = (stats?.workers ?? 0) - (opponentStats?.workers ?? 0);
+    const deltaClass = (value: number) => value > 0 ? "leading" : value < 0 ? "trailing" : "tied";
     return (
       <aside className={`stats-panel macro-panel player-side player-side-${side}`}>
         <div className="panel-heading"><span>PLAYER {side === "left" ? "1" : "2"}</span><Activity size={15} /></div>
@@ -439,8 +449,8 @@ export function ReplayViewer() {
           <div className="macro-player-title"><span>{t("watcher.supply")}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
           <div className="supply-track"><i style={{ width: `${Math.min(100, (supplyUsed / supplyCap) * 100)}%` }} /></div>
           <div className="macro-metrics side-macro-metrics">
-            <div><small>{t("watcher.army")}</small><strong>{stats?.armySupply ?? 0} <em>supply</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)}</span></div>
-            <div><small>{t("watcher.workers")}</small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /></span></div>
+            <div><small>{t("watcher.army")}</small><strong>{stats?.armySupply ?? 0} <em>supply</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
+            <div><small>{t("watcher.workers")}</small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
           </div>
           <div className="combat-ledger">
             <span>{t("watcher.inProgress")} <b>{compactNumber(stats?.armyInProgress ?? 0)}</b></span>
