@@ -52,6 +52,7 @@ import type { ReplayUnit } from "@/lib/types";
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type MapSelection =
   | { kind: "unit"; unitId: number }
+  | { kind: "engagement"; engagementId: string }
   | { kind: "group"; groupType: "army" | "base" | "workers" | "structures" | "resources"; unitIds: number[] };
 
 function formatTime(seconds: number) {
@@ -372,6 +373,9 @@ export function ReplayViewer() {
   const selectedUnitId = selection?.kind === "unit" ? selection.unitId : null;
   if (selectedUnitId != null) clusteredIds.delete(selectedUnitId);
   const selectedUnit = visibleUnits.find((unit) => unit.id === selectedUnitId) ?? null;
+  const selectedEngagement = selection?.kind === "engagement"
+    ? replay.engagements.find((engagement) => engagement.id === selection.engagementId) ?? null
+    : null;
   const selectedAddon = selectedUnit ? attachedAddonByParent.get(selectedUnit.id) ?? null : null;
   const selectedGroupUnits = selection?.kind === "group"
     ? renderedUnits.filter((unit) => selection.unitIds.includes(unit.id))
@@ -473,6 +477,34 @@ export function ReplayViewer() {
     );
   };
   const renderSelectionInspector = () => {
+    if (selectedEngagement) {
+      const totalLoss = Object.values(selectedEngagement.losses).reduce((sum, value) => sum + value, 0);
+      const tradeLeader = selectedEngagement.winnerId ? playerById.get(selectedEngagement.winnerId) : undefined;
+      return (
+        <aside className="selection-inspector engagement-inspector" style={{ "--selection-color": tradeLeader?.color ?? "#e88a58" } as React.CSSProperties}>
+          <header>
+            <span className="selection-icon"><Flame size={15} /></span>
+            <div><small>{t("watcher.combatReview")}</small><strong>{t("watcher.engagement")}</strong><em>{formatTime(selectedEngagement.start)}–{formatTime(selectedEngagement.end)} · {Math.max(0, Math.round(selectedEngagement.end - selectedEngagement.start))}s</em></div>
+            <button onClick={() => setSelection(null)} aria-label={t("watcher.closeInspector")}><X size={14} /></button>
+          </header>
+          <section className="inspector-economy single-economy">
+            <div><small>{t("watcher.totalLosses")}</small><strong>{compactNumber(totalLoss)}</strong></div>
+            <span><b>{selectedEngagement.participants.length}</b> {t("watcher.players")}</span>
+            <span><b>{Object.values(selectedEngagement.unitsLost).reduce((sum, value) => sum + value, 0)}</b> {t("watcher.units")}</span>
+          </section>
+          <section className="inspector-section engagement-breakdown">
+            <h3><Swords size={11} />{t("watcher.lossesByPlayer")}</h3>
+            {selectedEngagement.participants.map((playerId) => {
+              const player = playerById.get(playerId);
+              const loss = selectedEngagement.losses[String(playerId)] ?? 0;
+              const unitsLost = selectedEngagement.unitsLost[String(playerId)] ?? 0;
+              return <div key={playerId} style={{ "--combat-color": player?.color ?? "#7b8794" } as React.CSSProperties}><span><i />{player?.name ?? playerId}</span><strong>{compactNumber(loss)}</strong><small>{unitsLost} {t("watcher.unitsLost")}</small></div>;
+            })}
+          </section>
+          {tradeLeader && <section className="trade-leader"><small>{t("watcher.tradeAdvantage")}</small><strong><i style={{ background: tradeLeader.color }} />{tradeLeader.name}</strong><span>{t("watcher.estimatedFromLosses")}</span></section>}
+        </aside>
+      );
+    }
     if (!selection || inspectedUnits.length === 0) return null;
     const isGroup = selection.kind === "group";
     const primaryUnit = inspectedUnits[0];
@@ -632,7 +664,7 @@ export function ReplayViewer() {
                 {visibleEngagements.map((engagement) => {
                   const point = toPercent(engagement.x, engagement.y);
                   const totalLoss = Object.values(engagement.losses).reduce((sum, value) => sum + value, 0);
-                  return <button key={engagement.id} className="engagement-marker" style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => setCurrentTime(engagement.start)} title={`${t("watcher.engagement")} · ${compactNumber(totalLoss)}`}><Flame size={10} /><b>{compactNumber(totalLoss)}</b></button>;
+                  return <button key={engagement.id} className={`engagement-marker ${selectedEngagement?.id === engagement.id ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => { setCurrentTime(engagement.start); setPlaying(false); setSelection({ kind: "engagement", engagementId: engagement.id }); }} title={`${t("watcher.engagement")} · ${compactNumber(totalLoss)}`}><Flame size={10} /><b>{compactNumber(totalLoss)}</b></button>;
                 })}
                 {showBaseMarkers && (currentFrame?.bases ?? []).map((base) => {
                   const point = toPercent(base.x, base.y);
@@ -730,7 +762,7 @@ export function ReplayViewer() {
             <div className="timeline-shell">
               <input className="timeline" aria-label="Tempo do replay" type="range" min="0" max={replay.meta.duration} step="0.1" value={currentTime} onChange={(event) => setCurrentTime(Number(event.target.value))} style={{ "--progress": `${(currentTime / replay.meta.duration) * 100}%` } as React.CSSProperties} />
               <div className="timeline-events" aria-label={t("watcher.analyticTimeline")}>
-                {replay.timeline.filter((event) => event.time > 0).map((event, index) => <button key={`${event.type}-${event.time}-${index}`} className={`timeline-event ${event.type}`} style={{ left: `${(event.time / replay.meta.duration) * 100}%` }} onClick={() => { setCurrentTime(event.time); setPlaying(false); }} title={`${formatTime(event.time)} · ${cleanType(event.label)}`} />)}
+                {replay.timeline.filter((event) => event.time > 0).map((event, index) => <button key={`${event.type}-${event.time}-${index}`} className={`timeline-event ${event.type}`} style={{ left: `${(event.time / replay.meta.duration) * 100}%` }} onClick={() => { setCurrentTime(event.time); setPlaying(false); if (event.engagementId) setSelection({ kind: "engagement", engagementId: event.engagementId }); }} title={`${formatTime(event.time)} · ${cleanType(event.label)}`} />)}
               </div>
             </div>
             <span className="control-time muted">{formatTime(replay.meta.duration)}</span>

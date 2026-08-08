@@ -236,6 +236,18 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .selection-inspector header em { margin-top: 2px; overflow: hidden; color: var(--selection-color); font: 550 7px var(--font-geist-mono); font-style: normal; white-space: nowrap; text-overflow: ellipsis; }
 .selection-inspector header button { width: 24px; height: 24px; display: grid; place-items: center; color: #557080; border: 0; border-radius: 3px; background: transparent; cursor: pointer; }
 .selection-inspector header button:hover { color: #d8edf6; background: rgba(102, 176, 207, .1); }
+.engagement-marker.selected { outline: 1px solid #ffd6bd; outline-offset: 3px; }
+.engagement-breakdown > div { min-height: 31px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 8px; border-bottom: 1px solid rgba(92, 140, 162, .08); }
+.engagement-breakdown > div:last-child { border-bottom: 0; }
+.engagement-breakdown > div span { min-width: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; color: #a9bdc8; font: 600 8px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
+.engagement-breakdown > div span i { width: 5px; height: 5px; flex: 0 0 auto; border-radius: 50%; background: var(--combat-color); box-shadow: 0 0 6px var(--combat-color); }
+.engagement-breakdown > div strong { color: #d4e3e9; font: 650 9px var(--font-geist-mono); }
+.engagement-breakdown > div small { grid-column: 1 / -1; padding: 0 0 5px 11px; color: #506a79; font: 500 6px var(--font-geist-mono); }
+.trade-leader { padding: 9px 10px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3px 8px; background: color-mix(in srgb, var(--selection-color) 5%, transparent); }
+.trade-leader small { color: #587181; font: 650 6px var(--font-geist-mono); letter-spacing: .09em; }
+.trade-leader strong { display: flex; align-items: center; gap: 5px; color: #c9dce4; font: 650 8px var(--font-geist-mono); }
+.trade-leader strong i { width: 5px; height: 5px; border-radius: 50%; }
+.trade-leader span { grid-column: 1 / -1; color: #405866; font: 500 6px var(--font-geist-mono); }
 .inspector-economy { min-height: 48px; padding: 8px 10px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; border-bottom: 1px solid rgba(100, 150, 175, .1); }
 .inspector-economy > div { grid-row: span 2; }
 .inspector-economy > div small, .inspector-economy > div strong { display: block; }
