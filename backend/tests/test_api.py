@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app import main
 from app.main import app
 
 client = TestClient(app)
@@ -24,6 +25,30 @@ def test_rejects_invalid_replay() -> None:
         files={"file": ("broken.SC2Replay", b"not a replay")},
     )
     assert response.status_code == 422
+
+
+def test_upload_compilation_runs_outside_the_event_loop(monkeypatch) -> None:
+    calls: list[tuple[object, tuple, dict]] = []
+
+    def fake_parse(path, *, filename):
+        assert path.exists()
+        return {"filename": filename}
+
+    async def fake_threadpool(function, *args, **kwargs):
+        calls.append((function, args, kwargs))
+        return function(*args, **kwargs)
+
+    monkeypatch.setattr(main, "parse_replay", fake_parse)
+    monkeypatch.setattr(main, "run_in_threadpool", fake_threadpool)
+
+    response = client.post(
+        "/api/replays/parse",
+        files={"file": ("match.SC2Replay", b"replay contents")},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"filename": "match.SC2Replay"}
+    assert calls and calls[0][0] is fake_parse
 
 
 def test_demo_is_compiled_by_world_engine() -> None:

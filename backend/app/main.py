@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
@@ -83,7 +84,7 @@ async def upload_replay(file: Annotated[UploadFile, File()]) -> dict:
         ) as temporary:
             temporary.write(content)
             temp_path = Path(temporary.name)
-        return parse_replay(temp_path, filename=filename)
+        return await run_in_threadpool(parse_replay, temp_path, filename=filename)
     except HTTPException:
         raise
     except Exception as exc:
