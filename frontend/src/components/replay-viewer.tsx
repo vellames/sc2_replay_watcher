@@ -65,6 +65,7 @@ import {
 import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
 import { Sc2ResourceLayer3D } from "@/components/sc2-resource-layer-3d";
+import { Sc2UnitMarker3D } from "@/components/sc2-unit-marker-3d";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
 import { TerrainLayer3D } from "@/components/terrain-layer-3d";
@@ -72,7 +73,6 @@ import { createIsometricProjection, playableBounds, projectedHeading } from "@/l
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayProduction, ReplayUnit } from "@/lib/types";
-import { Sc2Model3D } from "@/components/sc2-model-3d";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type ComparisonView = "composition" | "upgrades";
@@ -221,6 +221,7 @@ export function ReplayViewer() {
   const resumePlaybackRef = useRef(false);
   const audioRef = useRef<ReplayAudioEngine | null>(null);
   const previousAudioTimeRef = useRef(0);
+  const selectUnit = useCallback((unitId: number) => setSelection((current) => current?.kind === "unit" && current.unitId === unitId ? null : { kind: "unit", unitId }), []);
 
   const playSound = useCallback((sound: ReplaySound) => {
     if (!soundEnabled) return;
@@ -1061,7 +1062,7 @@ export function ReplayViewer() {
                   const isSelected = selection?.kind === "group" && selection.groupType === "resources" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`resource-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "resources", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.layer.resources")}`}><Database size={8} /><b>{cluster.units.length}</b></button>;
                 })}
-                {is3D && resourceModels3D.length > 0 && <Sc2ResourceLayer3D resources={resourceModels3D} onSelect={(unitId) => setSelection((current) => current?.kind === "unit" && current.unitId === unitId ? null : { kind: "unit", unitId })} />}
+                {is3D && resourceModels3D.length > 0 && <Sc2ResourceLayer3D resources={resourceModels3D} onSelect={selectUnit} />}
                 {individualUnits.map((unit) => {
                   const player = playerById.get(unit.ownerId);
                   const visual = unitVisual(unit);
@@ -1073,21 +1074,21 @@ export function ReplayViewer() {
                   const screenHeading = projectedHeading(toPercent, unit.x, unit.y, unit.heading);
                   const productionCount = (productionByProducer.get(unit.id) ?? 0) + (addon ? productionByProducer.get(addon.id) ?? 0 : 0);
                   const productionRatio = Math.max(productionProgressByProducer.get(unit.id) ?? 0, addon ? productionProgressByProducer.get(addon.id) ?? 0 : 0);
+                  const stateName = sc2StateName(unit.type, locale);
+                  const title = `${entityName(unit.type)}${stateName ? ` · ${stateName}` : ""}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)}`;
+                  const ariaLabel = `${entityName(unit.type)}${stateName ? ` · ${stateName}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`;
+                  if (is3D) return <Sc2UnitMarker3D key={unit.id} unit={unit} visualKind={visual.kind} race={player?.race} color={color} left={point.left} bottom={point.bottom} heading={screenHeading} productionCount={productionCount} productionRatio={productionRatio} addon={addon} addonName={addon ? entityName(addon.type) : undefined} selected={selectedUnitId === unit.id} detailed={zoom >= 1.25 || unit.isBuilding || selectedUnitId === unit.id} title={title} ariaLabel={ariaLabel} onSelect={selectUnit} />;
                   return (
                     <button
                       key={unit.id}
                       className={`unit ${unit.category} role-${visual.kind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${productionCount > 0 ? "producing" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selectedUnitId === unit.id ? "selected" : ""}`}
                       style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, zIndex: is3D ? 1000 - Math.round(point.bottom * 5) : undefined, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${screenHeading}deg`, "--production-angle": `${productionRatio * 360}deg` } as React.CSSProperties}
-                      title={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)}`}
-                      aria-label={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`}
-                      onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
+                      title={title}
+                      aria-label={ariaLabel}
+                      onClick={() => selectUnit(unit.id)}
                     >
-                      {is3D
-                        ? <Sc2Model3D type={unit.type} race={player?.race} completed={unit.completed} moving={unit.isMoving} detailed={zoom >= 1.25 || unit.isBuilding || selectedUnitId === unit.id} />
-                        : unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
-                      {addon && (is3D
-                        ? <b className={`tactical-addon-3d ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>
-                        : <b className={`addon-badge ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>)}
+                      {unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
+                      {addon && <b className={`addon-badge ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>}
                       {productionCount > 0 && <b className="production-badge">{productionCount}</b>}
                     </button>
                   );
