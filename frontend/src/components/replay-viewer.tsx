@@ -76,13 +76,13 @@ function formatTime(seconds: number) {
   return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, "0")}`;
 }
 
-function compactNumber(value: number) {
-  return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);
+function formatCompactNumber(value: number, locale: "pt" | "en") {
+  return new Intl.NumberFormat(locale === "pt" ? "pt-BR" : "en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
-function signedCompactNumber(value: number) {
+function formatSignedCompactNumber(value: number, locale: "pt" | "en") {
   if (value === 0) return "±0";
-  return `${value > 0 ? "+" : "−"}${compactNumber(Math.abs(value))}`;
+  return `${value > 0 ? "+" : "−"}${formatCompactNumber(Math.abs(value), locale)}`;
 }
 
 function InfoTip({ label, side = "left", children }: { label: string; side?: "left" | "right"; children: React.ReactNode }) {
@@ -177,6 +177,8 @@ export function ReplayViewer() {
   const { replay } = useReplay();
   const { locale, t } = useI18n();
   const entityName = (type: string) => sc2Name(type, locale);
+  const compactNumber = (value: number) => formatCompactNumber(value, locale);
+  const signedCompactNumber = (value: number) => formatSignedCompactNumber(value, locale);
   const activityName = (activity: ReplayUnit["activity"]) => activity === "moving" ? t("watcher.moving") : activity === "harvesting" ? t("watcher.harvesting") : t("watcher.idle");
   const confidenceName = (source: ReplayUnit["positionSource"]) => source === "recorded" ? t("watcher.confidence.recorded") : source === "derived" ? t("watcher.confidence.derived") : t("watcher.confidence.estimated");
   const [currentTime, setCurrentTime] = useState(0);
@@ -815,7 +817,7 @@ export function ReplayViewer() {
                 </div>
               ))}
             </div>
-            <div className="match-meta" title={replay.meta.filename}><small>{t("watcher.patch")} {replay.meta.gameVersion}{replay.meta.playedAt ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(replay.meta.playedAt))}` : ""}</small><strong><Clock3 size={15} /> {formatTime(replay.meta.duration)}</strong></div>
+            <div className="match-meta" title={replay.meta.filename}><small>{t("watcher.patch")} {replay.meta.gameVersion}{replay.meta.playedAt ? ` · ${new Intl.DateTimeFormat(locale === "pt" ? "pt-BR" : "en-US", { dateStyle: "medium" }).format(new Date(replay.meta.playedAt))}` : ""}</small><strong><Clock3 size={15} /> {formatTime(replay.meta.duration)}</strong></div>
             <div className="compact-scoreboard" aria-label={t("watcher.compactScoreboard")}>
               {replay.players.slice(0, 2).map((player, index) => {
                 const stats = currentFrame?.stats[String(player.id)];
