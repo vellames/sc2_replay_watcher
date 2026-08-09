@@ -242,8 +242,11 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .general-state strong { color: #d2e5ee; font: 600 11px var(--font-geist-mono); }
 .general-state small { color: #4c6373; font: 500 7px var(--font-geist-mono); }
 .general-state > i { width: 1px; height: 16px; background: var(--line); }
+.general-state > em { color: #4e6675; font: 700 6px var(--font-geist-mono); font-style: normal; letter-spacing: .08em; }
 .general-state span { display: flex; align-items: center; gap: 3px; font: 550 8px var(--font-geist-mono); }
 .general-state span svg { color: #56badd; }
+.general-state span.positive { color: #74cfa0; }
+.general-state span.negative { color: #d47a89; }
 .macro-viewer-grid .reconstruction-status { top: 53px; bottom: auto; }
 .death-marker { position: absolute; width: 18px; height: 18px; margin: -9px; z-index: 5; opacity: .86; pointer-events: none; }
 .death-marker i { position: absolute; left: 8px; top: 1px; width: 1px; height: 16px; background: currentColor; box-shadow: 0 0 8px currentColor; transform: rotate(45deg); }

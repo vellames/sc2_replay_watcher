@@ -287,13 +287,16 @@ export function ReplayViewer() {
   const width = Math.max(1, bounds.maxX - bounds.minX);
   const height = Math.max(1, bounds.maxY - bounds.minY);
   const playerById = new Map(replay.players.map((player) => [player.id, player]));
+  const playerOneStats = replay.players[0] ? currentFrame?.stats[String(replay.players[0].id)] : undefined;
+  const playerTwoStats = replay.players[1] ? currentFrame?.stats[String(replay.players[1].id)] : undefined;
+  const playerOneDeltas = {
+    armySupply: (playerOneStats?.armySupply ?? 0) - (playerTwoStats?.armySupply ?? 0),
+    workers: (playerOneStats?.workers ?? 0) - (playerTwoStats?.workers ?? 0),
+    income: ((playerOneStats?.mineralRate ?? 0) + (playerOneStats?.vespeneRate ?? 0)) - ((playerTwoStats?.mineralRate ?? 0) + (playerTwoStats?.vespeneRate ?? 0)),
+  };
   const attachedAddonByParent = new Map(
     renderedUnits.filter((unit) => unit.attachmentId != null).map((addon) => [addon.attachmentId as number, addon]),
   );
-  const ownedUnits = currentFrame?.units.filter((unit) => playerById.has(unit.ownerId)) ?? [];
-  const combatUnits = ownedUnits.filter((unit) => unit.isArmy).length;
-  const workers = ownedUnits.filter((unit) => unit.category === "worker").length;
-  const structures = ownedUnits.filter((unit) => unit.category === "building" && unit.attachmentId == null).length;
   const nextEvent = replay.timeline.find((event) => event.time > currentTime && event.type !== "movement");
   const nextEventPlayer = nextEvent ? playerById.get(nextEvent.playerId) : undefined;
   const productionByProducer = new Map<number, number>();
@@ -841,10 +844,10 @@ export function ReplayViewer() {
               <div className="general-state">
                 <strong>{formatTime(currentTime)}</strong><small>/ {formatTime(replay.meta.duration)}</small>
                 <i />
-                <span><Swords size={12} />{combatUnits}</span>
-                <span><Hammer size={12} />{workers}</span>
-                <span><Factory size={12} />{structures}</span>
-                <span><Flame size={12} />{currentFrame?.deaths.length ?? 0}</span>
+                <em>P1 Δ</em>
+                <span className={playerOneDeltas.armySupply > 0 ? "positive" : playerOneDeltas.armySupply < 0 ? "negative" : ""} title={t("watcher.armySupplyDelta")}><Swords size={12} />{signedCompactNumber(playerOneDeltas.armySupply)}</span>
+                <span className={playerOneDeltas.workers > 0 ? "positive" : playerOneDeltas.workers < 0 ? "negative" : ""} title={t("watcher.workerDelta")}><Hammer size={12} />{signedCompactNumber(playerOneDeltas.workers)}</span>
+                <span className={playerOneDeltas.income > 0 ? "positive" : playerOneDeltas.income < 0 ? "negative" : ""} title={t("watcher.incomeDelta")}><Zap size={12} />{signedCompactNumber(playerOneDeltas.income)}</span>
               </div>
               <div className="map-toolbar" role="toolbar" aria-label={t("watcher.mapLayers")}>
                 {(["terrain", "army", "workers", "buildings", "resources", "cameras"] as LayerKey[]).map((layer) => (
