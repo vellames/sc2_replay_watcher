@@ -16,6 +16,7 @@ import {
   CircleDot,
   Clock3,
   Crosshair,
+  Cog,
   Crown,
   Database,
   Eye,
@@ -28,6 +29,7 @@ import {
   Footprints,
   Hammer,
   Home,
+  Gem,
   CircleHelp,
   Landmark,
   ListTree,
@@ -216,6 +218,12 @@ function hudEntityIcon(value: string): LucideIcon {
   if (/barracks|factory|starport|gateway|warpgate|roboticsfacility|stargate|spawningpool|roachwarren|hydraliskden/.test(type)) return Factory;
   if (/refinery|extractor|assimilator/.test(type)) return Database;
   return FlaskConical;
+}
+
+function raceIcon(race: string): LucideIcon {
+  if (race.toLowerCase() === "zerg") return Bug;
+  if (race.toLowerCase() === "protoss") return Gem;
+  return Cog;
 }
 
 export function ReplayViewer() {
@@ -638,13 +646,14 @@ export function ReplayViewer() {
     const armyValueDelta = (stats?.armyValue ?? 0) - (opponentStats?.armyValue ?? 0);
     const workerDelta = (stats?.workers ?? 0) - (opponentStats?.workers ?? 0);
     const deltaClass = (value: number) => value > 0 ? "leading" : value < 0 ? "trailing" : "tied";
+    const RaceIcon = raceIcon(player.race);
     return (
       <aside className={`stats-panel macro-panel player-side player-side-${side}`}>
-        <div className="panel-heading"><span>PLAYER {side === "left" ? "1" : "2"}</span><Activity size={15} /></div>
+        <div className="panel-heading"><span>{t("watcher.player")} {side === "left" ? "1" : "2"}</span><Activity size={15} /></div>
         <section className="macro-player side-macro-player" style={{ "--player-color": player.color } as React.CSSProperties}>
           <div className="side-player-identity">
             <span><i />{player.name}</span>
-            <small>{player.race}</small>
+            <small><RaceIcon size={9} />{player.race}</small>
             <InfoTip label={t("watcher.help.playerHud")} side={side}>{t("watcher.help.playerHudText")}</InfoTip>
           </div>
           <div className="macro-player-title"><span>{t("watcher.supply")}<InfoTip label={t("watcher.supply")} side={side}>{t("watcher.help.supply")}</InfoTip>{isSupplyBlocked && <em>{t("watcher.blocked")}{activeSupplyBlock ? ` ${formatTime(currentTime - activeSupplyBlock.time)}` : ""}</em>}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
@@ -655,7 +664,7 @@ export function ReplayViewer() {
             <span><Zap size={10} /><b>{compactNumber(stats?.vespene ?? 0)}</b><small>{t("watcher.vespene")}</small></span>
           </div>
           <div className="macro-metrics side-macro-metrics">
-            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{stats?.armySupply ?? 0} <em>supply</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
+            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{stats?.armySupply ?? 0} <em>{t("watcher.supplyUnit")}</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
             <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
           </div>
           {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map(([type, count]) => { const EntityIcon = hudEntityIcon(type); return <b key={type} title={entityName(type)}><EntityIcon size={9} />{count}× {entityName(type)}</b>; })}</div></div>}
