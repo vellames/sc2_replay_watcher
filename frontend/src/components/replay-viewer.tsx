@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Activity,
@@ -71,6 +71,7 @@ import { createIsometricProjection, playableBounds, projectedHeading } from "@/l
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayProduction, ReplayUnit } from "@/lib/types";
+import { Sc2Model3D } from "@/components/sc2-model-3d";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type ComparisonView = "composition" | "upgrades";
@@ -174,19 +175,6 @@ function raceIcon(race: string): LucideIcon {
   if (race.toLowerCase() === "protoss") return Gem;
   return Cog;
 }
-
-const TacticalModel3D = memo(function TacticalModel3D({ unit, visualKind, icon: Icon, race }: { unit: ReplayUnit; visualKind: UnitVisual["kind"]; icon: LucideIcon; race?: string }) {
-  const modelClass = unit.category === "resource" ? "resource" : unit.isBuilding ? `structure ${visualKind}` : `${visualKind} ${sc2IconKey(unit.type)} ${unit.isMoving ? "moving" : ""}`;
-  return (
-    <span className={`tactical-model-3d ${modelClass} race-${race?.toLowerCase() ?? "neutral"} ${!unit.completed ? "constructing" : ""}`} aria-hidden="true">
-      <i className="model-shadow" />
-      <i className="model-left" />
-      <i className="model-right" />
-      <i className="model-top"><Icon /></i>
-      {visualKind === "air" && <i className="model-altitude" />}
-    </span>
-  );
-});
 
 export function ReplayViewer() {
   const { replay } = useReplay();
@@ -1087,7 +1075,7 @@ export function ReplayViewer() {
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
                     >
                       {is3D
-                        ? <><TacticalModel3D unit={unit} visualKind={visual.kind} icon={UnitIcon} race={player?.race} /><span className="model-label-3d" aria-hidden="true">{entityName(unit.type)}</span></>
+                        ? <><Sc2Model3D type={unit.type} race={player?.race} completed={unit.completed} moving={unit.isMoving} /><span className="model-label-3d" aria-hidden="true">{entityName(unit.type)}</span></>
                         : unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
                       {addon && (is3D
                         ? <b className={`tactical-addon-3d ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>

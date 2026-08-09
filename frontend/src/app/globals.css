@@ -231,50 +231,31 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .unit.town-hall { width: 23px; height: 23px; margin: -11.5px; z-index: 3; }
 .unit.town-hall > svg { width: 9px; height: 9px; }
 .map-canvas.view-3d .unit { width: 1px; height: 1px; margin: 0; overflow: visible; border: 0; border-radius: 0; background: transparent !important; box-shadow: none !important; transform: none; opacity: 1; }
-.map-canvas.view-3d .unit > svg, .map-canvas.view-3d .unit::before, .map-canvas.view-3d .unit::after { display: none; }
-.tactical-model-3d { --model-w: 11px; --model-h: 7px; position: absolute; left: 0; bottom: -2px; width: var(--model-w); height: calc(var(--model-h) + var(--model-w) * .5); transform: translateX(-50%); pointer-events: none; }
-.tactical-model-3d > i { position: absolute; display: block; pointer-events: none; }
-.tactical-model-3d .model-shadow { left: 4%; bottom: -3px; width: 92%; height: 5px; border-radius: 50%; background: rgba(0, 0, 0, .58); filter: blur(2px); }
-.tactical-model-3d .model-top { left: 0; top: 0; width: 100%; height: 50%; display: grid; place-items: center; color: rgba(239, 251, 255, .9); background: color-mix(in srgb, var(--unit-color) 62%, #d8f4ff); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--unit-color) 48%, transparent)); }
-.tactical-model-3d .model-left { left: 0; top: 25%; width: 50%; height: calc(75% - 1px); background: color-mix(in srgb, var(--unit-color) 44%, #061018); clip-path: polygon(0 0, 100% 33.333%, 100% 100%, 0 66.667%); }
-.tactical-model-3d .model-right { right: 0; top: 25%; width: 50%; height: calc(75% - 1px); background: color-mix(in srgb, var(--unit-color) 28%, #02070b); clip-path: polygon(0 33.333%, 100% 0, 100% 66.667%, 0 100%); }
-.tactical-model-3d .model-top svg { width: 45%; height: 45%; stroke-width: 2.3; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .6)); }
-.tactical-model-3d.race-protoss .model-top { background: color-mix(in srgb, var(--unit-color) 52%, #d6f7ff); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--unit-color) 66%, transparent)); }
-.tactical-model-3d.race-protoss .model-left, .tactical-model-3d.race-protoss .model-right { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.tactical-model-3d.race-zerg .model-top { border-radius: 50%; clip-path: polygon(50% 0, 88% 20%, 100% 58%, 68% 100%, 30% 92%, 0 58%, 12% 20%); }
-.tactical-model-3d.race-zerg .model-left, .tactical-model-3d.race-zerg .model-right { border-radius: 0 0 55% 55%; }
-.tactical-model-3d.constructing { opacity: .62; filter: saturate(.55); }
-.tactical-model-3d.constructing .model-left, .tactical-model-3d.constructing .model-right { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--unit-color) 28%, #061018) 0 2px, transparent 2px 4px); outline: 1px dashed color-mix(in srgb, var(--unit-color) 46%, transparent); }
-.tactical-model-3d.constructing .model-top { background: color-mix(in srgb, var(--unit-color) 16%, transparent); outline: 1px dashed color-mix(in srgb, var(--unit-color) 58%, transparent); animation: construction-hologram 1.3s ease-in-out infinite; }
-.tactical-model-3d.structure { --model-w: 17px; --model-h: 12px; }
-.tactical-model-3d.structure.production { --model-w: 21px; --model-h: 14px; }
-.tactical-model-3d.structure.town-hall { --model-w: 29px; --model-h: 19px; }
-.tactical-model-3d.structure.tech { --model-w: 16px; --model-h: 15px; }
-.tactical-model-3d.structure.defense { --model-w: 12px; --model-h: 17px; }
-.tactical-model-3d.structure.supply { --model-w: 11px; --model-h: 6px; }
-.tactical-model-3d.structure.gas { --model-w: 15px; --model-h: 10px; }
-.tactical-model-3d.structure.town-hall .model-top::after { content: ""; width: 28%; height: 48%; border: 1px solid rgba(238, 252, 255, .72); border-radius: 50%; background: var(--unit-color); box-shadow: 0 0 5px var(--unit-color); }
-.tactical-model-3d.structure.production .model-top::after { content: ""; position: absolute; right: 22%; top: -4px; width: 3px; height: 7px; border: 1px solid color-mix(in srgb, var(--unit-color) 70%, #d9f5ff); background: #07121a; box-shadow: 0 0 3px var(--unit-color); }
-.tactical-model-3d.structure.defense .model-top::after { content: ""; width: 38%; height: 70%; border-radius: 50%; background: #071119; border: 1px solid color-mix(in srgb, var(--unit-color) 75%, white); box-shadow: 0 0 4px var(--unit-color); }
-.tactical-model-3d.structure.gas .model-top::after { content: ""; width: 42%; height: 74%; border-radius: 50% 50% 35% 35%; background: color-mix(in srgb, var(--unit-color) 72%, #b6ffe7); box-shadow: 0 0 6px color-mix(in srgb, var(--unit-color) 72%, transparent); }
-.tactical-model-3d.structure.supply .model-top::after { content: ""; width: 54%; height: 1px; background: rgba(238, 252, 255, .68); box-shadow: 0 0 3px var(--unit-color); }
-.tactical-model-3d.siege .model-top::after, .tactical-model-3d.heavy .model-top::after { content: ""; position: absolute; left: 48%; top: 39%; width: 9px; height: 1px; transform-origin: left center; transform: rotate(var(--heading)); background: color-mix(in srgb, var(--unit-color) 55%, white); box-shadow: 0 0 2px var(--unit-color); }
-.tactical-model-3d.worker { --model-w: 7px; --model-h: 4px; }
-.tactical-model-3d.melee, .tactical-model-3d.scout { --model-w: 8px; --model-h: 5px; }
-.tactical-model-3d.caster, .tactical-model-3d.medic, .tactical-model-3d.detector { --model-w: 10px; --model-h: 7px; }
-.tactical-model-3d.heavy, .tactical-model-3d.siege, .tactical-model-3d.mechanical { --model-w: 14px; --model-h: 8px; }
-.tactical-model-3d.massive { --model-w: 18px; --model-h: 13px; }
-.tactical-model-3d.capital { --model-w: 21px; --model-h: 8px; bottom: 11px; }
-.tactical-model-3d.air { --model-w: 14px; --model-h: 4px; bottom: 8px; }
-.tactical-model-3d.air.massive { --model-w: 18px; --model-h: 7px; bottom: 10px; }
-.tactical-model-3d.air.capital { --model-w: 21px; --model-h: 8px; bottom: 12px; }
-.tactical-model-3d.air .model-shadow { bottom: -12px; opacity: .72; }
-.tactical-model-3d.air .model-altitude { left: 50%; top: 72%; width: 1px; height: 10px; border-left: 1px dotted color-mix(in srgb, var(--unit-color) 42%, transparent); }
-.tactical-model-3d.resource { --model-w: 5px; --model-h: 6px; opacity: .38; filter: saturate(.72); }
-.tactical-model-3d.resource .model-top { height: 75%; background: color-mix(in srgb, var(--unit-color) 86%, #d8f4ff); clip-path: polygon(50% 0, 100% 72%, 50% 100%, 0 72%); }
-.tactical-model-3d.resource .model-left, .tactical-model-3d.resource .model-right { top: 54%; height: 46%; }
-.tactical-model-3d.moving::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 16px; height: 1px; transform-origin: left center; transform: rotate(calc(var(--heading) + 180deg)); background: linear-gradient(90deg, color-mix(in srgb, var(--unit-color) 52%, transparent), transparent); opacity: .55; }
-.map-canvas.view-3d .unit.selected .tactical-model-3d { filter: drop-shadow(0 0 5px #d8f5ff); }
+.map-canvas.view-3d .unit > svg:not(.sc2-model-3d), .map-canvas.view-3d .unit::before, .map-canvas.view-3d .unit::after { display: none; }
+.sc2-model-3d { --asset-w: 13px; position: absolute; left: 0; bottom: -5px; width: var(--asset-w); height: calc(var(--asset-w) * 1.125); overflow: visible; color: var(--unit-color); transform: translateX(-50%); transform-origin: 50% 72%; pointer-events: none; }
+.sc2-model-3d.faces-heading { transform: translateX(-50%) rotate(var(--heading)); }
+.sc2-model-3d.footprint-tiny { --asset-w: 8px; }
+.sc2-model-3d.footprint-small { --asset-w: 11px; }
+.sc2-model-3d.footprint-medium { --asset-w: 15px; }
+.sc2-model-3d.footprint-large { --asset-w: 20px; }
+.sc2-model-3d.footprint-massive { --asset-w: 28px; }
+.sc2-model-3d.elevation-hover { bottom: -1px; }
+.sc2-model-3d.elevation-air { bottom: 5px; }
+.sc2-model-3d.elevation-high-air { bottom: 9px; }
+.sc2-model-3d .model-shadow { fill: rgba(0, 0, 0, .48); }
+.sc2-model-3d.elevation-air .model-shadow { transform: translateY(7px); opacity: .7; }
+.sc2-model-3d.elevation-high-air .model-shadow { transform: translateY(11px); opacity: .62; }
+.sc2-model-3d .model-extrusion { fill: color-mix(in srgb, var(--unit-color) 24%, #02070b); stroke: rgba(0, 0, 0, .72); stroke-width: 1.25; stroke-linejoin: round; }
+.sc2-model-3d .model-hull { fill: color-mix(in srgb, var(--unit-color) 62%, #bedee8); stroke: color-mix(in srgb, var(--unit-color) 48%, #effcff); stroke-width: .85; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.sc2-model-3d .model-inset { fill: color-mix(in srgb, var(--unit-color) 24%, #061018); opacity: .92; }
+.sc2-model-3d .model-detail { fill: color-mix(in srgb, var(--unit-color) 40%, #effcff); stroke: color-mix(in srgb, var(--unit-color) 58%, white); stroke-width: .45; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.sc2-model-3d.race-zerg .model-hull { fill: color-mix(in srgb, var(--unit-color) 54%, #785869); }
+.sc2-model-3d.race-protoss .model-hull { fill: color-mix(in srgb, var(--unit-color) 48%, #d6eef3); }
+.sc2-model-3d.race-protoss .model-detail { fill: #c7fbff; }
+.sc2-model-3d.constructing { opacity: .58; }
+.sc2-model-3d.constructing .model-hull { fill: transparent; stroke-dasharray: 2 1.4; }
+.sc2-model-3d.moving .model-extrusion { opacity: .84; }
+.map-canvas.view-3d .unit.selected .sc2-model-3d { filter: drop-shadow(0 0 3px #d8f5ff); }
 .map-canvas.view-3d .unit.selected::before { content: ""; position: absolute; left: 0; bottom: -5px; width: 22px; height: 10px; display: block; translate: -50% 50%; border: 1px solid #d8f5ff; border-radius: 50%; background: color-mix(in srgb, var(--unit-color) 10%, transparent); box-shadow: 0 0 8px color-mix(in srgb, var(--unit-color) 65%, transparent); animation: selected-model-pulse 1.4s ease-in-out infinite; }
 .map-canvas.view-3d .unit.producing::after { content: ""; position: absolute; left: 0; bottom: -7px; width: 24px; height: 11px; display: block; translate: -50% 50%; border-radius: 50%; background: conic-gradient(from 90deg, color-mix(in srgb, var(--unit-color) 88%, white) var(--production-angle), rgba(51, 75, 88, .22) 0); mask: radial-gradient(ellipse, transparent 49%, #000 53%); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--unit-color) 55%, transparent)); opacity: .72; }
 .model-label-3d { position: absolute; left: 0; bottom: 20px; max-width: 110px; padding: 3px 5px; translate: -50% 0; overflow: hidden; color: #d9edf5; border: 1px solid color-mix(in srgb, var(--unit-color) 42%, rgba(100, 150, 170, .2)); border-radius: 2px; background: rgba(5, 12, 18, .94); box-shadow: 0 5px 10px rgba(0, 0, 0, .34); font: 600 6px var(--font-geist-mono); text-overflow: ellipsis; white-space: nowrap; opacity: 0; scale: .94; transform-origin: 50% 100%; transition: opacity .12s, scale .12s; pointer-events: none; z-index: 8; }
