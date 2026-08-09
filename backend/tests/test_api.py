@@ -9,7 +9,9 @@ client = TestClient(app)
 def test_health() -> None:
     response = client.get("/api/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json()["status"] == "ok"
+    assert response.json()["engineVersion"]
+    assert response.json()["schemaVersion"] == "1.9"
 
 
 def test_rejects_wrong_extension() -> None:

@@ -18,6 +18,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .top-actions a:hover { color: #dff6ff; }
 .status { display: flex; align-items: center; gap: 8px; }
 .status i { width: 6px; height: 6px; border-radius: 50%; background: #5ce28a; box-shadow: 0 0 9px #5ce28a; }
+.status.checking i { background: #c9ad66; box-shadow: 0 0 8px rgba(201, 173, 102, .55); }
+.status.offline { color: #a7757c; }
+.status.offline i { background: #d66574; box-shadow: 0 0 8px rgba(214, 101, 116, .55); }
 .locale-switch { min-height: 30px; display: flex; align-items: center; gap: 5px; color: #435969; border-left: 1px solid var(--line); border-right: 1px solid var(--line); padding: 0 12px; }
 .locale-switch svg { color: #668091; margin-right: 3px; }
 .locale-switch button { color: #526a7a; border: 0; background: transparent; padding: 3px 1px; font: 600 9px var(--font-geist-mono); cursor: pointer; }

@@ -13,6 +13,8 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from sc2_world_engine import __version__ as engine_version
+from sc2_world_engine.archive import SCHEMA_VERSION
 
 from .world_adapter import parse_replay
 
@@ -63,7 +65,7 @@ def _remember_upload(digest: str, payload: dict) -> None:
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "engineVersion": engine_version, "schemaVersion": SCHEMA_VERSION}
 
 
 @lru_cache(maxsize=1)

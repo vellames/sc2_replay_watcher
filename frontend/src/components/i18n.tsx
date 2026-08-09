@@ -6,6 +6,9 @@ const translations = {
   pt: {
     "header.newReplay": "Novo replay",
     "header.parserOnline": "World engine online",
+    "header.parserOffline": "World engine offline",
+    "header.parserChecking": "Verificando engine",
+    "header.engineVersion": "Versão da engine",
     "header.api": "API",
     "header.github": "GitHub",
     "footer.experimental": "SC2 Replay Watcher · MVP experimental",
@@ -161,6 +164,9 @@ const translations = {
   en: {
     "header.newReplay": "New replay",
     "header.parserOnline": "World engine online",
+    "header.parserOffline": "World engine offline",
+    "header.parserChecking": "Checking engine",
+    "header.engineVersion": "Engine version",
     "header.api": "API",
     "header.github": "GitHub",
     "footer.experimental": "SC2 Replay Watcher · Experimental MVP",
