@@ -10,6 +10,17 @@ import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import type { ReplayData } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8010";
+const API_TIMEOUT_MS = 120_000;
+
+async function fetchApi(input: string, init?: RequestInit) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
 
 export function UploadScreen() {
   const router = useRouter();
@@ -38,7 +49,7 @@ export function UploadScreen() {
     form.append("file", file);
 
     try {
-      const response = await fetch(`${API_URL}/api/replays/parse`, { method: "POST", body: form });
+      const response = await fetchApi(`${API_URL}/api/replays/parse`, { method: "POST", body: form });
       const body = await response.json();
       if (!response.ok) {
         const fallback = response.status === 413 ? t("upload.tooLarge") : response.status === 415 ? t("upload.invalid") : t("upload.failed");
@@ -46,7 +57,7 @@ export function UploadScreen() {
       }
       openWatcher(body as ReplayData);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t("upload.unavailable"));
+      setError(reason instanceof DOMException && reason.name === "AbortError" ? t("upload.timeout") : reason instanceof Error ? reason.message : t("upload.unavailable"));
     } finally {
       setUploading(false);
     }
@@ -56,11 +67,11 @@ export function UploadScreen() {
     setUploading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/replays/demo`);
+      const response = await fetchApi(`${API_URL}/api/replays/demo`);
       if (!response.ok) throw new Error(t("upload.failed"));
       openWatcher(await response.json() as ReplayData);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t("upload.unavailable"));
+      setError(reason instanceof DOMException && reason.name === "AbortError" ? t("upload.timeout") : reason instanceof Error ? reason.message : t("upload.unavailable"));
     } finally {
       setUploading(false);
     }
