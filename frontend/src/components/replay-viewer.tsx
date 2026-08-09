@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Activity,
@@ -52,6 +52,8 @@ import {
   Skull,
   Swords,
   Target,
+  Volume2,
+  VolumeX,
   Wrench,
   X,
   Zap,
@@ -62,6 +64,7 @@ import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
+import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayCamera, ReplayProduction, ReplayUnit } from "@/lib/types";
 
@@ -220,6 +223,7 @@ export function ReplayViewer() {
   const [cameraPlayers, setCameraPlayers] = useState<Record<number, boolean>>({});
   const [timelineHint, setTimelineHint] = useState<{ label: string; position: number } | null>(null);
   const [comparisonView, setComparisonView] = useState<ComparisonView | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     terrain: true,
     army: true,
@@ -231,6 +235,19 @@ export function ReplayViewer() {
   const drag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const currentTimeRef = useRef(0);
   const resumePlaybackRef = useRef(false);
+  const audioRef = useRef<ReplayAudioEngine | null>(null);
+  const previousAudioTimeRef = useRef(0);
+
+  const playSound = useCallback((sound: ReplaySound) => {
+    if (!soundEnabled) return;
+    audioRef.current ??= new ReplayAudioEngine();
+    audioRef.current.play(sound);
+  }, [soundEnabled]);
+
+  const togglePlayback = useCallback(() => {
+    playSound(playing ? "pause" : "play");
+    setPlaying((value) => !value);
+  }, [playSound, playing]);
 
   const openComparison = (view: ComparisonView) => {
     if (comparisonView == null) resumePlaybackRef.current = playing;
@@ -246,6 +263,16 @@ export function ReplayViewer() {
   useEffect(() => {
     currentTimeRef.current = currentTime;
   }, [currentTime]);
+
+  useEffect(() => () => audioRef.current?.dispose(), []);
+
+  useEffect(() => {
+    const previous = previousAudioTimeRef.current;
+    previousAudioTimeRef.current = currentTime;
+    if (!playing || !replay || currentTime <= previous || currentTime - previous > 2) return;
+    const event = replay.timeline.find((item) => item.time > previous && item.time <= currentTime && ["engagement", "upgrade", "base"].includes(item.type));
+    if (event) playSound(event.type as ReplaySound);
+  }, [currentTime, playing, replay, playSound]);
 
   const { currentFrame, nextFrame, frameProgress } = useMemo(() => {
     if (!replay?.frames.length) return { currentFrame: null, nextFrame: null, frameProgress: 0 };
@@ -357,7 +384,7 @@ export function ReplayViewer() {
       if (comparisonView) return;
       if (event.code === "Space") {
         event.preventDefault();
-        setPlaying((value) => !value);
+        togglePlayback();
       }
       const seekStep = event.shiftKey ? 1 : 5;
       if (event.code === "ArrowLeft") setCurrentTime((value) => Math.max(0, value - seekStep));
@@ -387,7 +414,7 @@ export function ReplayViewer() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [replay, comparisonView]);
+  }, [replay, comparisonView, togglePlayback]);
 
   if (!replay) {
     return (
@@ -1056,8 +1083,8 @@ export function ReplayViewer() {
           </div>
 
           <div className="controls">
-            <button className="icon-button" onClick={() => { setCurrentTime(0); setPlaying(false); }} aria-label={t("watcher.restart")}><RotateCcw size={17} /></button>
-            <button className="play-button" onClick={() => setPlaying((value) => !value)} aria-keyshortcuts="Space" aria-label={playing ? t("watcher.pause") : t("watcher.play")}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
+            <button className="icon-button" onClick={() => { playSound("seek"); setCurrentTime(0); setPlaying(false); }} aria-label={t("watcher.restart")}><RotateCcw size={17} /></button>
+            <button className="play-button" onClick={togglePlayback} aria-keyshortcuts="Space" aria-label={playing ? t("watcher.pause") : t("watcher.play")}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
             <div className="event-nav">
               <button onClick={() => seekRelevantEvent(-1)} aria-label={t("watcher.previousEvent")} title={`${t("watcher.previousEvent")} · [`}><SkipBack size={13} /></button>
               <button onClick={() => seekRelevantEvent(1)} aria-label={t("watcher.nextRelevantEvent")} title={`${t("watcher.nextRelevantEvent")} · ]`}><SkipForward size={13} /></button>
@@ -1080,6 +1107,7 @@ export function ReplayViewer() {
             </div>
             <span className="control-time muted">{formatTime(replay.meta.duration)}</span>
             <label className="speed"><FastForward size={15} /><select value={speed} onChange={(event) => setSpeed(Number(event.target.value))} aria-label={t("watcher.speed")}><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select><ChevronDown size={14} /></label>
+            <button className="icon-button sound-toggle" aria-pressed={soundEnabled} aria-label={soundEnabled ? t("watcher.soundOn") : t("watcher.soundOff")} title={soundEnabled ? t("watcher.soundOn") : t("watcher.soundOff")} onClick={() => { const next = !soundEnabled; setSoundEnabled(next); if (next) { audioRef.current ??= new ReplayAudioEngine(); audioRef.current.play("upgrade"); } }}>{soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}</button>
             <InfoTip label={t("watcher.timelineLegend")} side="right">{t("watcher.help.timelineLegend")}</InfoTip>
           </div>
         </section>
