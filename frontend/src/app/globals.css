@@ -252,7 +252,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .tactical-model-3d.structure.defense .model-top::after { content: ""; width: 38%; height: 70%; border-radius: 50%; background: #071119; border: 1px solid color-mix(in srgb, var(--unit-color) 75%, white); box-shadow: 0 0 4px var(--unit-color); }
 .tactical-model-3d.structure.gas .model-top::after { content: ""; width: 42%; height: 74%; border-radius: 50% 50% 35% 35%; background: color-mix(in srgb, var(--unit-color) 72%, #b6ffe7); box-shadow: 0 0 6px color-mix(in srgb, var(--unit-color) 72%, transparent); }
 .tactical-model-3d.structure.supply .model-top::after { content: ""; width: 54%; height: 1px; background: rgba(238, 252, 255, .68); box-shadow: 0 0 3px var(--unit-color); }
-.tactical-model-3d.siege .model-top::after, .tactical-model-3d.heavy .model-top::after { content: ""; position: absolute; left: 48%; top: 39%; width: 9px; height: 1px; transform-origin: left center; transform: rotate(calc(var(--heading) * -1)); background: color-mix(in srgb, var(--unit-color) 55%, white); box-shadow: 0 0 2px var(--unit-color); }
+.tactical-model-3d.siege .model-top::after, .tactical-model-3d.heavy .model-top::after { content: ""; position: absolute; left: 48%; top: 39%; width: 9px; height: 1px; transform-origin: left center; transform: rotate(var(--heading)); background: color-mix(in srgb, var(--unit-color) 55%, white); box-shadow: 0 0 2px var(--unit-color); }
 .tactical-model-3d.worker { --model-w: 7px; --model-h: 4px; }
 .tactical-model-3d.melee, .tactical-model-3d.scout { --model-w: 8px; --model-h: 5px; }
 .tactical-model-3d.caster, .tactical-model-3d.medic, .tactical-model-3d.detector { --model-w: 10px; --model-h: 7px; }

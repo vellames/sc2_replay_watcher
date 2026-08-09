@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createIsometricProjection, playableBounds, type MapGeometry } from "./map-projection.ts";
+import { createIsometricProjection, playableBounds, projectedHeading, type MapGeometry } from "./map-projection.ts";
 
 const geometry: MapGeometry = {
   source: "s2ma", width: 200, height: 200,
@@ -49,4 +49,13 @@ test("rotates every world point through the same isometric projection", () => {
   const rotated = createIsometricProjection(geometry, bounds, 1).project(bounds.maxX, bounds.minY, 1);
   assert.notDeepEqual(rotated, original);
   assert.ok(rotated.bottom > original.bottom);
+});
+
+test("projects unit heading together with map rotation", () => {
+  const bounds = playableBounds(geometry, { minX: 0, maxX: 200, minY: 0, maxY: 200 });
+  const originalProjection = createIsometricProjection(geometry, bounds, 0).project;
+  const rotatedProjection = createIsometricProjection(geometry, bounds, 1).project;
+  const original = projectedHeading(originalProjection, 100, 100, 0);
+  const rotated = projectedHeading(rotatedProjection, 100, 100, 0);
+  assert.ok(Math.abs(original - rotated) > 40);
 });

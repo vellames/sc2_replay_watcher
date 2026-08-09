@@ -64,3 +64,10 @@ export function createIsometricProjection(geometry: MapGeometry, bounds: MapBoun
   };
   return { project, sampleLevel, minLevel, maxLevel };
 }
+
+export function projectedHeading(project: (x: number, y: number) => { left: number; bottom: number }, x: number, y: number, heading: number) {
+  const radians = heading * Math.PI / 180;
+  const origin = project(x, y);
+  const target = project(x + Math.cos(radians) * 2, y + Math.sin(radians) * 2);
+  return Math.atan2(-(target.bottom - origin.bottom), target.left - origin.left) * 180 / Math.PI;
+}

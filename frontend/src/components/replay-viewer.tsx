@@ -67,7 +67,7 @@ import { useReplay } from "@/components/replay-context";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
 import { TerrainLayer3D } from "@/components/terrain-layer-3d";
-import { createIsometricProjection, playableBounds } from "@/lib/map-projection";
+import { createIsometricProjection, playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayProduction, ReplayUnit } from "@/lib/types";
@@ -1051,12 +1051,13 @@ export function ReplayViewer() {
                   const resourceColor = unit.type.toLowerCase().includes("vespene") ? "#54b994" : "#73bde0";
                   const color = unit.category === "resource" ? resourceColor : player?.color ?? "#7b8794";
                   const point = toPercent(unit.x, unit.y);
+                  const screenHeading = projectedHeading(toPercent, unit.x, unit.y, unit.heading);
                   const productionCount = (productionByProducer.get(unit.id) ?? 0) + (addon ? productionByProducer.get(addon.id) ?? 0 : 0);
                   return (
                     <button
                       key={unit.id}
                       className={`unit ${unit.category} role-${visual.kind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selectedUnitId === unit.id ? "selected" : ""}`}
-                      style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, zIndex: is3D ? 1000 - Math.round(point.bottom * 5) : undefined, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${unit.heading}deg` } as React.CSSProperties}
+                      style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, zIndex: is3D ? 1000 - Math.round(point.bottom * 5) : undefined, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${screenHeading}deg` } as React.CSSProperties}
                       title={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)}`}
                       aria-label={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`}
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
