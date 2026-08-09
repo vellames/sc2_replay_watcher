@@ -976,6 +976,7 @@ export function ReplayViewer() {
                 <strong>{formatTime(currentTime)}</strong><small>/ {formatTime(replay.meta.duration)}</small>
                 <i />
                 <em>P1 Δ</em>
+                <InfoTip label={t("watcher.playerOneDelta")}>{t("watcher.help.playerOneDelta")}</InfoTip>
                 <span className={playerOneDeltas.armySupply > 0 ? "positive" : playerOneDeltas.armySupply < 0 ? "negative" : ""} title={t("watcher.armySupplyDelta")}><Swords size={12} />{signedCompactNumber(playerOneDeltas.armySupply)}</span>
                 <span className={playerOneDeltas.workers > 0 ? "positive" : playerOneDeltas.workers < 0 ? "negative" : ""} title={t("watcher.workerDelta")}><Hammer size={12} />{signedCompactNumber(playerOneDeltas.workers)}</span>
                 <span className={playerOneDeltas.income > 0 ? "positive" : playerOneDeltas.income < 0 ? "negative" : ""} title={t("watcher.incomeDelta")}><Zap size={12} />{signedCompactNumber(playerOneDeltas.income)}</span>

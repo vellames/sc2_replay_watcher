@@ -266,6 +266,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .general-state small { color: #4c6373; font: 500 7px var(--font-geist-mono); }
 .general-state > i { width: 1px; height: 16px; background: var(--line); }
 .general-state > em { color: #4e6675; font: 700 6px var(--font-geist-mono); font-style: normal; letter-spacing: .08em; }
+.general-state > .info-tip { width: 17px; height: 17px; flex-basis: 17px; }
 .general-state span { display: flex; align-items: center; gap: 3px; font: 550 8px var(--font-geist-mono); }
 .general-state span svg { color: #56badd; }
 .general-state span.positive { color: #74cfa0; }
