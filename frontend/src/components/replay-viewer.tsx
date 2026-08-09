@@ -62,7 +62,7 @@ import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
-import { sc2Name } from "@/lib/sc2-catalog";
+import { sc2CategoryName, sc2Name } from "@/lib/sc2-catalog";
 import type { ReplayCamera, ReplayUnit } from "@/lib/types";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
@@ -719,7 +719,7 @@ export function ReplayViewer() {
       <aside className="selection-inspector" style={{ "--selection-color": inspectedPlayer?.color ?? "#7b8794" } as React.CSSProperties}>
         <header>
           <span className="selection-icon"><SelectionIcon size={15} /></span>
-          <div><small>{t("watcher.inspector")}</small><strong>{title}</strong><em>{inspectedPlayer?.name ?? t("watcher.unknownPlayer")} · {isGroup ? `${inspectedUnits.length} ${t("watcher.units")}` : entityName(primaryUnit.category)}</em></div>
+          <div><small>{t("watcher.inspector")}</small><strong>{title}</strong><em>{inspectedPlayer?.name ?? t("watcher.unknownPlayer")} · {isGroup ? `${inspectedUnits.length} ${t("watcher.units")}` : sc2CategoryName(primaryUnit.category, locale)}</em></div>
           <button onClick={() => setSelection(null)} aria-label={t("watcher.closeInspector")}><X size={14} /></button>
         </header>
 

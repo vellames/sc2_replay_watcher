@@ -63,6 +63,14 @@ const entities: Record<string, LocalizedName> = {
   zerglingmovementspeed: { pt: "Aprimoramento Metabólico", en: "Metabolic Boost" }, zerglingattackspeed: { pt: "Glândulas Adrenais", en: "Adrenal Glands" },
   glialreconstitution: { pt: "Reconstituição Glial", en: "Glial Reconstitution" }, tunnelingclaws: { pt: "Garras Escavadoras", en: "Tunneling Claws" },
   burrow: { pt: "Escavação", en: "Burrow" }, centrifugalhooks: { pt: "Ganchos Centrífugos", en: "Centrifugal Hooks" },
+  centrificalhooks: { pt: "Ganchos Centrífugos", en: "Centrifugal Hooks" }, bansheecloak: { pt: "Camuflagem de Banshee", en: "Banshee Cloak" },
+  shieldwall: { pt: "Escudo de Combate", en: "Combat Shield" }, punishergrenades: { pt: "Projéteis Concussivos", en: "Concussive Shells" },
+  chitinousplating: { pt: "Revestimento Quitinoso", en: "Chitinous Plating" }, anabolicsynthesis: { pt: "Síntese Anabólica", en: "Anabolic Synthesis" },
+  overlordspeed: { pt: "Carapaça Pneumatizada", en: "Pneumatized Carapace" }, hisecautotracking: { pt: "Rastreamento de Alta Segurança", en: "Hi-Sec Auto Tracking" },
+  terranbuildingarmor: { pt: "Armadura de Construções Terranas", en: "Terran Building Armor" }, liberatoragrangeupgrade: { pt: "Balística Avançada", en: "Advanced Ballistics" },
+  personalcloaking: { pt: "Camuflagem Pessoal", en: "Personal Cloaking" }, medivaccaduceusreactor: { pt: "Reator Caduceu", en: "Caduceus Reactor" },
+  main: { pt: "Exército principal", en: "Main army" }, detachment: { pt: "Destacamento", en: "Detachment" },
+  engagement: { pt: "Confronto", en: "Engagement" }, supplyblock: { pt: "Bloqueio de suprimento", en: "Supply block" },
 };
 
 const genericFamilies: Array<[RegExp, LocalizedName]> = [
@@ -70,7 +78,7 @@ const genericFamilies: Array<[RegExp, LocalizedName]> = [
   [/terraninfantryarmorslevel(\d)/, { pt: "Blindagem de Infantaria Terrana", en: "Terran Infantry Armor" }],
   [/terranvehicleweaponslevel(\d)/, { pt: "Armas de Veículos Terranos", en: "Terran Vehicle Weapons" }],
   [/terranvehicleandshiparmorslevel(\d)/, { pt: "Blindagem Mecânica Terrana", en: "Terran Vehicle and Ship Plating" }],
-  [/terranbattlecruiserweaponrefitlevel(\d)/, { pt: "Armas de Naves Terranas", en: "Terran Ship Weapons" }],
+  [/terranshipweaponslevel(\d)/, { pt: "Armas de Naves Terranas", en: "Terran Ship Weapons" }],
   [/zergmeleeweaponslevel(\d)/, { pt: "Ataques Corpo a Corpo Zerg", en: "Zerg Melee Attacks" }],
   [/zergmissileweaponslevel(\d)/, { pt: "Ataques de Projéteis Zerg", en: "Zerg Missile Attacks" }],
   [/zerggroundarmorslevel(\d)/, { pt: "Carapaça Terrestre Zerg", en: "Zerg Ground Carapace" }],
@@ -106,4 +114,14 @@ export function sc2Name(value: string, locale: Locale) {
 export function hasLocalizedSc2Name(value: string) {
   const key = normalizeSc2Type(value);
   return Boolean(entities[key] || genericFamilies.some(([pattern]) => pattern.test(key)));
+}
+
+const categories: Record<string, LocalizedName> = {
+  army: { pt: "Unidade militar", en: "Army unit" }, building: { pt: "Estrutura", en: "Structure" },
+  worker: { pt: "Trabalhador", en: "Worker" }, resource: { pt: "Recurso", en: "Resource" },
+  unit: { pt: "Unidade", en: "Unit" }, addon: { pt: "Add-on", en: "Add-on" },
+};
+
+export function sc2CategoryName(value: string, locale: Locale) {
+  return categories[normalizeSc2Type(value)]?.[locale] ?? readableSc2Type(value);
 }
