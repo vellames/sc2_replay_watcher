@@ -10,7 +10,9 @@ type ResourceModel = {
   type: string;
 };
 
-export const Sc2ResourceLayer3D = memo(function Sc2ResourceLayer3D({ resources, onSelect }: { resources: ResourceModel[]; onSelect: (id: number) => void }) {
+type Props = { resources: ResourceModel[]; onSelect: (id: number) => void };
+
+function ResourceLayer3D({ resources, onSelect }: Props) {
   return (
     <svg className="resource-layer-3d" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="World resources">
       {resources.map((resource) => {
@@ -36,5 +38,17 @@ export const Sc2ResourceLayer3D = memo(function Sc2ResourceLayer3D({ resources, 
       })}
     </svg>
   );
-});
+}
 
+export const Sc2ResourceLayer3D = memo(ResourceLayer3D, (previous, next) => previous.onSelect === next.onSelect
+  && previous.resources.length === next.resources.length
+  && previous.resources.every((resource, index) => {
+    const candidate = next.resources[index];
+    return resource.id === candidate.id
+      && resource.left === candidate.left
+      && resource.bottom === candidate.bottom
+      && resource.selected === candidate.selected
+      && resource.type === candidate.type
+      && resource.color === candidate.color
+      && resource.label === candidate.label;
+  }));
