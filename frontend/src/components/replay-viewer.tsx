@@ -64,6 +64,7 @@ import {
 
 import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
+import { Sc2ResourceLayer3D } from "@/components/sc2-resource-layer-3d";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
 import { TerrainLayer3D } from "@/components/terrain-layer-3d";
@@ -620,13 +621,18 @@ export function ReplayViewer() {
   const resourceStride3D = Math.max(1, Math.ceil(threeDimensionalResources.length / Math.max(1, resourceBudget3D)));
   const sampledResources3D = threeDimensionalResources.filter((_, index) => index % resourceStride3D === 0).slice(0, resourceBudget3D);
   const individualUnits = is3D
-    ? [...threeDimensionalWorldUnits, ...sampledResources3D].slice(0, 640)
+    ? threeDimensionalWorldUnits.slice(0, 640)
     : orderedIndividualUnits.slice(0, markerBudget);
   const toPercent = (x: number, y: number) => mapPresentation?.projection?.project(x, y) ?? ({
     left: ((x - bounds.minX) / width) * 100,
     bottom: ((y - bounds.minY) / height) * 100,
   });
   const visibleEngagements = (replay.engagements ?? []).filter((engagement) => currentTime >= engagement.start - 3 && currentTime <= engagement.end + 8);
+  const resourceModels3D = is3D ? sampledResources3D.map((unit) => {
+    const point = toPercent(unit.x, unit.y);
+    const color = unit.type.toLowerCase().includes("vespene") ? "#54b994" : "#73bde0";
+    return { id: unit.id, type: unit.type, left: point.left, bottom: point.bottom, color, label: entityName(unit.type), selected: selectedUnitId === unit.id };
+  }) : [];
   const activeEngagements = visibleEngagements.filter((engagement) => currentTime >= engagement.start && currentTime <= engagement.end);
   const combatLinks = activeEngagements.flatMap((engagement) => {
     const nearby = renderedUnits.filter((unit) => unit.isArmy && (unit.x - engagement.x) ** 2 + (unit.y - engagement.y) ** 2 <= 34 ** 2);
@@ -1055,6 +1061,7 @@ export function ReplayViewer() {
                   const isSelected = selection?.kind === "group" && selection.groupType === "resources" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`resource-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "resources", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.layer.resources")}`}><Database size={8} /><b>{cluster.units.length}</b></button>;
                 })}
+                {is3D && resourceModels3D.length > 0 && <Sc2ResourceLayer3D resources={resourceModels3D} onSelect={(unitId) => setSelection((current) => current?.kind === "unit" && current.unitId === unitId ? null : { kind: "unit", unitId })} />}
                 {individualUnits.map((unit) => {
                   const player = playerById.get(unit.ownerId);
                   const visual = unitVisual(unit);

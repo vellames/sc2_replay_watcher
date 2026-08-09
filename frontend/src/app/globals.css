@@ -206,6 +206,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .camera-focus small { position: absolute; right: 3px; bottom: 2px; max-width: 45px; overflow: hidden; color: color-mix(in srgb, var(--camera-color) 78%, white); font: 600 6px var(--font-geist-mono); text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
 .route-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
 .route-layer line { stroke: #a9e8ff; stroke-width: .22; stroke-dasharray: 1 1; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px #55cfff); }
+.resource-layer-3d { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 2; pointer-events: none; }
+.resource-layer-3d path { fill: color-mix(in srgb, var(--resource-color) 72%, #d9f7ff); stroke: color-mix(in srgb, var(--resource-color) 62%, #effcff); stroke-width: .35; vector-effect: non-scaling-stroke; opacity: .5; pointer-events: auto; cursor: pointer; }
+.resource-layer-3d path.geyser { fill: color-mix(in srgb, var(--resource-color) 46%, #0b322c); opacity: .58; }
+.resource-layer-3d path:hover, .resource-layer-3d path:focus-visible, .resource-layer-3d path.selected { opacity: .94; outline: none; stroke: #eaffff; stroke-width: .8; }
 .unit { appearance: none; padding: 0; position: absolute; width: 10px; height: 10px; margin: -5px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.3); border-radius: 50%; transition: left 120ms linear, bottom 120ms linear, outline-color .15s, filter .15s; z-index: 3; cursor: pointer; }
 .map-canvas.view-3d .unit { transition-duration: 170ms, 170ms, .15s, .15s; }
 .unit > svg { width: 6px; height: 6px; color: rgba(242, 251, 255, .92); stroke-width: 2.2; filter: drop-shadow(0 1px 1px rgba(0,0,0,.7)); pointer-events: none; }
