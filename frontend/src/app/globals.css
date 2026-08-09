@@ -106,6 +106,10 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .info-tip-card { position: fixed; z-index: 100; width: 220px; max-height: calc(100vh - 20px); padding: 10px 11px; display: grid; gap: 4px; overflow-y: auto; color: #8fa7b6; border: 1px solid rgba(105, 188, 218, .24); border-radius: 4px; background: rgba(7, 16, 24, .98); box-shadow: 0 10px 28px rgba(0, 0, 0, .45); pointer-events: none; animation: info-tip-in .14s ease both; text-align: left; }
 .info-tip-card b { color: #cae0eb; font: 650 9px var(--font-geist-mono); letter-spacing: .03em; }
 .info-tip-card small { color: #78909f; font: 500 9px/1.45 var(--font-geist-sans); letter-spacing: 0; text-transform: none; }
+.icon-legend-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
+.icon-legend-list > span { display: flex; align-items: center; gap: 5px; color: #8da7b5; font: 550 8px var(--font-geist-mono); }
+.icon-legend-list > span svg { color: #6cc6e6; }
+.icon-legend-list > em { grid-column: 1 / -1; padding-top: 5px; color: #597282; border-top: 1px solid rgba(103, 158, 186, .1); font: 500 8px/1.35 var(--font-geist-sans); font-style: normal; }
 @keyframes info-tip-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
 button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:focus-visible { outline: 1px solid rgba(111, 211, 245, .8); outline-offset: 2px; }
 .side-macro-player .macro-player-title > span { color: #5b7181; font: 600 8px var(--font-geist-mono); letter-spacing: .1em; }
