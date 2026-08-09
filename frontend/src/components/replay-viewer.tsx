@@ -716,7 +716,7 @@ export function ReplayViewer() {
                 </div>
               ))}
             </div>
-            <div className="match-meta"><small>{replay.meta.filename}</small><strong><Clock3 size={15} /> {formatTime(replay.meta.duration)}</strong></div>
+            <div className="match-meta" title={replay.meta.filename}><small>{t("watcher.patch")} {replay.meta.gameVersion}{replay.meta.playedAt ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(replay.meta.playedAt))}` : ""}</small><strong><Clock3 size={15} /> {formatTime(replay.meta.duration)}</strong></div>
             <div className="compact-scoreboard" aria-label={t("watcher.compactScoreboard")}>
               {replay.players.slice(0, 2).map((player, index) => {
                 const stats = currentFrame?.stats[String(player.id)];
