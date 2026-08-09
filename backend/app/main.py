@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import os
 import tempfile
+from collections import OrderedDict
 from functools import lru_cache
+from hashlib import sha256
 from pathlib import Path
+from threading import Lock
 from typing import Annotated
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -14,6 +17,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from .world_adapter import parse_replay
 
 MAX_REPLAY_SIZE = 50 * 1024 * 1024
+UPLOAD_CACHE_SIZE = 2
 DEMO_REPLAY_PATH = (
     Path(__file__).resolve().parents[2]
     / "samples"
@@ -35,6 +39,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
+
+_upload_cache: OrderedDict[str, dict] = OrderedDict()
+_upload_cache_lock = Lock()
+
+
+def _cached_upload(digest: str, filename: str) -> dict | None:
+    with _upload_cache_lock:
+        payload = _upload_cache.get(digest)
+        if payload is None:
+            return None
+        _upload_cache.move_to_end(digest)
+        return {**payload, "meta": {**payload["meta"], "filename": filename}}
+
+
+def _remember_upload(digest: str, payload: dict) -> None:
+    with _upload_cache_lock:
+        _upload_cache[digest] = payload
+        _upload_cache.move_to_end(digest)
+        while len(_upload_cache) > UPLOAD_CACHE_SIZE:
+            _upload_cache.popitem(last=False)
 
 
 @app.get("/api/health")
@@ -77,6 +101,11 @@ async def upload_replay(file: Annotated[UploadFile, File()]) -> dict:
             status_code=413, detail="O replay excede o limite de 50 MB."
         )
 
+    digest = sha256(content).hexdigest()
+    cached = _cached_upload(digest, filename)
+    if cached is not None:
+        return cached
+
     temp_path: Path | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -84,7 +113,9 @@ async def upload_replay(file: Annotated[UploadFile, File()]) -> dict:
         ) as temporary:
             temporary.write(content)
             temp_path = Path(temporary.name)
-        return await run_in_threadpool(parse_replay, temp_path, filename=filename)
+        payload = await run_in_threadpool(parse_replay, temp_path, filename=filename)
+        _remember_upload(digest, payload)
+        return payload
     except HTTPException:
         raise
     except Exception as exc:

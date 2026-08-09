@@ -40,6 +40,7 @@ def test_upload_compilation_runs_outside_the_event_loop(monkeypatch) -> None:
 
     monkeypatch.setattr(main, "parse_replay", fake_parse)
     monkeypatch.setattr(main, "run_in_threadpool", fake_threadpool)
+    main._upload_cache.clear()
 
     response = client.post(
         "/api/replays/parse",
@@ -49,6 +50,31 @@ def test_upload_compilation_runs_outside_the_event_loop(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json() == {"filename": "match.SC2Replay"}
     assert calls and calls[0][0] is fake_parse
+
+
+def test_repeated_upload_reuses_compiled_payload(monkeypatch) -> None:
+    compiled = 0
+
+    def fake_parse(path, *, filename):
+        nonlocal compiled
+        compiled += 1
+        return {"meta": {"filename": filename}, "frames": []}
+
+    monkeypatch.setattr(main, "parse_replay", fake_parse)
+    main._upload_cache.clear()
+
+    first = client.post(
+        "/api/replays/parse",
+        files={"file": ("first.SC2Replay", b"same valid replay")},
+    )
+    second = client.post(
+        "/api/replays/parse",
+        files={"file": ("renamed.SC2Replay", b"same valid replay")},
+    )
+
+    assert first.status_code == second.status_code == 200
+    assert compiled == 1
+    assert second.json()["meta"]["filename"] == "renamed.SC2Replay"
 
 
 def test_demo_is_compiled_by_world_engine() -> None:
