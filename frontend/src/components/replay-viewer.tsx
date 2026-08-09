@@ -49,6 +49,7 @@ import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
+import { sc2Name } from "@/lib/sc2-catalog";
 import type { ReplayCamera, ReplayUnit } from "@/lib/types";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
@@ -60,10 +61,6 @@ type MapSelection =
 function formatTime(seconds: number) {
   const value = Math.max(0, Math.round(seconds));
   return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, "0")}`;
-}
-
-function cleanType(type: string) {
-  return type.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
 
 function compactNumber(value: number) {
@@ -132,7 +129,8 @@ function unitVisual(unit: ReplayUnit): UnitVisual {
 
 export function ReplayViewer() {
   const { replay } = useReplay();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const entityName = (type: string) => sc2Name(type, locale);
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -567,7 +565,7 @@ export function ReplayViewer() {
             <div><small>{t("watcher.army")}</small><strong>{stats?.armySupply ?? 0} <em>supply</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
             <div><small>{t("watcher.workers")}</small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
           </div>
-          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}</span><div>{armyComposition.map(([type, count]) => <b key={type} title={cleanType(type)}>{count}× {cleanType(type)}</b>)}</div></div>}
+          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}</span><div>{armyComposition.map(([type, count]) => <b key={type} title={entityName(type)}>{count}× {entityName(type)}</b>)}</div></div>}
           <div className="combat-ledger">
             <span>{t("watcher.inProgress")} <b>{compactNumber(stats?.armyInProgress ?? 0)}</b></span>
             <span>{t("watcher.lost")} <b>{compactNumber(stats?.armyLost ?? 0)}</b></span>
@@ -576,14 +574,14 @@ export function ReplayViewer() {
           {completedUpgrades.length > 0 && (
             <div className="tech-state">
               <span><FlaskConical size={10} />{t("watcher.completedUpgrades")}</span>
-              <div>{completedUpgrades.map((upgrade, index) => <b key={`${upgrade.time}-${upgrade.label}-${index}`} title={`${formatTime(upgrade.time)} · ${cleanType(upgrade.label)}`}>{cleanType(upgrade.label)}</b>)}</div>
+              <div>{completedUpgrades.map((upgrade, index) => <b key={`${upgrade.time}-${upgrade.label}-${index}`} title={`${formatTime(upgrade.time)} · ${entityName(upgrade.label)}`}>{entityName(upgrade.label)}</b>)}</div>
             </div>
           )}
           {(recentMilestones.length > 0 || upcomingMilestone) && (
             <div className="build-path">
               <span><ListTree size={10} />{t("watcher.buildPath")}</span>
-              {recentMilestones.map((milestone) => <div key={`${milestone.completedAt}-${milestone.product}`}><time>{formatTime(milestone.completedAt)}</time><b>{cleanType(milestone.product)}</b><small>{t("watcher.done")}</small></div>)}
-              {upcomingMilestone && <div className="upcoming"><time>{formatTime(upcomingMilestone.completedAt)}</time><b>{cleanType(upcomingMilestone.product)}</b><small>{t("watcher.next")}</small></div>}
+              {recentMilestones.map((milestone) => <div key={`${milestone.completedAt}-${milestone.product}`}><time>{formatTime(milestone.completedAt)}</time><b>{entityName(milestone.product)}</b><small>{t("watcher.done")}</small></div>)}
+              {upcomingMilestone && <div className="upcoming"><time>{formatTime(upcomingMilestone.completedAt)}</time><b>{entityName(upcomingMilestone.product)}</b><small>{t("watcher.next")}</small></div>}
             </div>
           )}
           {layers.cameras && cameraAnalytics && <div className="camera-rhythm" title={`${t("watcher.cameraThreshold")} ${cameraAnalytics.jumpDistance}`}><span><Scan size={10} /><small>{t("watcher.cameraJumps")}</small><b>{cameraAnalytics.jumpsPerMinute}</b></span><span><Clock3 size={10} /><small>{t("watcher.averageDwell")}</small><b>{cameraAnalytics.averageDwellSeconds}s</b></span></div>}
@@ -591,7 +589,7 @@ export function ReplayViewer() {
             <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}</span><b>{production.length}</b></div>
             {production.length === 0 ? <small className="queue-empty">{t("watcher.queueEmpty")}</small> : production.slice(0, 8).map((order) => (
               <div className={`production-order ${order.confidence}`} key={order.id} title={`${order.ability} · ${order.confidence}`}>
-                <span>{cleanType(order.product)}</span>
+                <span>{entityName(order.product)}</span>
                 <b>{order.queued ? t("watcher.queued") : `${order.confidence === "estimated" ? "~" : ""}${Math.round(order.progress * 100)}%`}</b>
                 <i><em style={{ width: `${order.progress * 100}%` }} /></i>
               </div>
@@ -646,7 +644,7 @@ export function ReplayViewer() {
     const SelectionIcon = isGroup ? ListTree : visual.icon;
     const title = isGroup
       ? (selection.groupType === "base" ? t("watcher.baseGroup") : selection.groupType === "workers" ? t("watcher.workerGroup") : selection.groupType === "structures" ? t("watcher.structureGroup") : selection.groupType === "resources" ? t("watcher.resourceGroup") : t("watcher.unitGroup"))
-      : cleanType(primaryUnit.type);
+      : entityName(primaryUnit.type);
     const activityLabel = primaryUnit.activity === "moving"
       ? t("watcher.moving")
       : primaryUnit.activity === "harvesting" ? t("watcher.harvesting") : t("watcher.idle");
@@ -655,7 +653,7 @@ export function ReplayViewer() {
       <aside className="selection-inspector" style={{ "--selection-color": inspectedPlayer?.color ?? "#7b8794" } as React.CSSProperties}>
         <header>
           <span className="selection-icon"><SelectionIcon size={15} /></span>
-          <div><small>{t("watcher.inspector")}</small><strong>{title}</strong><em>{inspectedPlayer?.name ?? t("watcher.unknownPlayer")} · {isGroup ? `${inspectedUnits.length} ${t("watcher.units")}` : cleanType(primaryUnit.category)}</em></div>
+          <div><small>{t("watcher.inspector")}</small><strong>{title}</strong><em>{inspectedPlayer?.name ?? t("watcher.unknownPlayer")} · {isGroup ? `${inspectedUnits.length} ${t("watcher.units")}` : entityName(primaryUnit.category)}</em></div>
           <button onClick={() => setSelection(null)} aria-label={t("watcher.closeInspector")}><X size={14} /></button>
         </header>
 
@@ -680,7 +678,7 @@ export function ReplayViewer() {
               {composition.map((item) => {
                 const member = inspectedUnits.find((unit) => unit.type === item.type) ?? primaryUnit;
                 const MemberIcon = unitVisual(member).icon;
-                return <div className="composition-row" key={item.type}><span><MemberIcon size={10} /><b>{cleanType(item.type)}</b></span><strong>×{item.count}</strong><small>{compactNumber(item.minerals)} <Pickaxe size={8} /> · {compactNumber(item.vespene)} <Zap size={8} /></small></div>;
+                return <div className="composition-row" key={item.type}><span><MemberIcon size={10} /><b>{entityName(item.type)}</b></span><strong>×{item.count}</strong><small>{compactNumber(item.minerals)} <Pickaxe size={8} /> · {compactNumber(item.vespene)} <Zap size={8} /></small></div>;
               })}
             </section>
           </>
@@ -692,12 +690,12 @@ export function ReplayViewer() {
               <span><b>{compactNumber(inspectedVespene)}</b> <Zap size={10} /></span>
               <span><b>{inspectedSupply}</b> {t("watcher.supply")}</span>
             </section>
-            {selectedAddon && <section className="inspector-addon"><span><Wrench size={11} />{t("watcher.addon")}</span><strong>{cleanType(selectedAddon.type)}</strong><small>{selectedAddon.completed ? t("watcher.completed") : t("watcher.underConstruction")}</small></section>}
+            {selectedAddon && <section className="inspector-addon"><span><Wrench size={11} />{t("watcher.addon")}</span><strong>{entityName(selectedAddon.type)}</strong><small>{selectedAddon.completed ? t("watcher.completed") : t("watcher.underConstruction")}</small></section>}
             {primaryUnit.isBuilding && (
               <section className="inspector-section inspector-production">
                 <h3><Factory size={11} />{t("watcher.producingNow")}<em>{primaryUnit.completed ? t("watcher.completed") : t("watcher.underConstruction")}</em></h3>
                 {selectedProduction.length === 0 ? <p>{t("watcher.noProductionHere")}</p> : selectedProduction.map((order) => (
-                  <div className={`inspector-order ${order.confidence}`} key={order.id}><span><b>{cleanType(order.product)}</b><small>{order.queued ? t("watcher.queued") : `${order.confidence === "estimated" ? "~" : ""}${Math.round(order.progress * 100)}%`}</small></span><i><em style={{ width: `${order.progress * 100}%` }} /></i></div>
+                  <div className={`inspector-order ${order.confidence}`} key={order.id}><span><b>{entityName(order.product)}</b><small>{order.queued ? t("watcher.queued") : `${order.confidence === "estimated" ? "~" : ""}${Math.round(order.progress * 100)}%`}</small></span><i><em style={{ width: `${order.progress * 100}%` }} /></i></div>
                 ))}
               </section>
             )}
@@ -824,7 +822,7 @@ export function ReplayViewer() {
                   const dominantUnit = cluster.units.find((unit) => unit.type === dominantType) ?? cluster.units[0];
                   const ClusterIcon = unitVisual(dominantUnit).icon;
                   const isSelected = selection?.kind === "group" && selection.groupType === "army" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
-                  return <button key={cluster.id} className={`army-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "army", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.armyUnits")} · ${cleanType(dominantUnit.type)}`}><ClusterIcon size={11} /><b>{cluster.units.length}</b></button>;
+                  return <button key={cluster.id} className={`army-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "army", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.armyUnits")} · ${entityName(dominantUnit.type)}`}><ClusterIcon size={11} /><b>{cluster.units.length}</b></button>;
                 })}
                 {workerClusters.map((cluster) => {
                   const point = toPercent(cluster.x, cluster.y);
@@ -857,12 +855,12 @@ export function ReplayViewer() {
                       key={unit.id}
                       className={`unit ${unit.category} role-${visual.kind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selectedUnitId === unit.id ? "selected" : ""}`}
                       style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${unit.heading}deg` } as React.CSSProperties}
-                      title={`${cleanType(unit.type)}${addon ? ` + ${cleanType(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${unit.activity} • ${unit.positionSource}`}
-                      aria-label={`${cleanType(unit.type)} · ${player?.name ?? t("watcher.unknownPlayer")}`}
+                      title={`${entityName(unit.type)}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${unit.activity} • ${unit.positionSource}`}
+                      aria-label={`${entityName(unit.type)} · ${player?.name ?? t("watcher.unknownPlayer")}`}
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
                     >
                       {unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
-                      {addon && <b className={`addon-badge ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={cleanType(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>}
+                      {addon && <b className={`addon-badge ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>}
                       {productionCount > 0 && <b className="production-badge">{productionCount}</b>}
                     </button>
                   );
@@ -894,7 +892,7 @@ export function ReplayViewer() {
                 <button onClick={() => setZoom((value) => Math.min(3, value + 0.25))} aria-label={t("watcher.zoomIn")}><Plus size={13} /></button>
                 <button onClick={resetMap} aria-label={t("watcher.resetMap")}><Target size={13} /></button>
               </div>
-              {nextEvent && <div className="next-event" style={{ "--event-color": nextEventPlayer?.color ?? "#6eb5d2" } as React.CSSProperties}><small><i />{t("watcher.nextEvent")} · {t("watcher.inTime")} {formatTime(nextEvent.time - currentTime)}{nextEventPlayer ? ` · ${nextEventPlayer.name}` : ""}</small><strong>{nextEvent.type === "upgrade" ? t("watcher.upgrade") : nextEvent.type === "base" ? t("watcher.newBase") : nextEvent.type === "engagement" ? t("watcher.engagement") : t("watcher.supplyBlock")} · {cleanType(nextEvent.label)}</strong></div>}
+              {nextEvent && <div className="next-event" style={{ "--event-color": nextEventPlayer?.color ?? "#6eb5d2" } as React.CSSProperties}><small><i />{t("watcher.nextEvent")} · {t("watcher.inTime")} {formatTime(nextEvent.time - currentTime)}{nextEventPlayer ? ` · ${nextEventPlayer.name}` : ""}</small><strong>{nextEvent.type === "upgrade" ? t("watcher.upgrade") : nextEvent.type === "base" ? t("watcher.newBase") : nextEvent.type === "engagement" ? t("watcher.engagement") : t("watcher.supplyBlock")} · {entityName(nextEvent.label)}</strong></div>}
               <div className="reconstruction-status"><i /><span><strong>{t(replay.meta.capabilities.mapNavigation ? "watcher.routedMovement" : "watcher.reconstructedMovement")}</strong><small>{compactNumber(replay.meta.capabilities.mapNavigation ? replay.meta.routedSegments : replay.meta.movementOrders)} {t(replay.meta.capabilities.mapNavigation ? "watcher.routedHint" : "watcher.reconstructedHint")} · {Math.round(replay.meta.estimatedPositionRatio * 100)}% {t("watcher.estimatedPositions")}</small></span></div>
               <div className="coordinates">X {Math.round(bounds.minX)}–{Math.round(bounds.maxX)} · Y {Math.round(bounds.minY)}–{Math.round(bounds.maxY)}</div>
             </div>
@@ -916,7 +914,7 @@ export function ReplayViewer() {
                 {replay.timeline.filter((event) => event.time > 0).map((event, index) => {
                   const intervalEnd = event.end != null ? Math.min(replay.meta.duration, Math.max(event.time, event.end)) : null;
                   const intervalWidth = intervalEnd != null ? ((intervalEnd - event.time) / replay.meta.duration) * 100 : null;
-                  const label = `${formatTime(event.time)}${intervalEnd != null ? `–${formatTime(intervalEnd)}` : ""} · ${cleanType(event.label)}`;
+                  const label = `${formatTime(event.time)}${intervalEnd != null ? `–${formatTime(intervalEnd)}` : ""} · ${entityName(event.label)}`;
                   return <button key={`${event.type}-${event.time}-${index}`} aria-label={label} className={`timeline-event ${event.type} ${intervalWidth != null ? "interval" : ""}`} style={{ left: `${(event.time / replay.meta.duration) * 100}%`, width: intervalWidth != null ? `max(2px, ${intervalWidth}%)` : undefined }} onClick={() => { setCurrentTime(event.time); setPlaying(false); if (event.engagementId) setSelection({ kind: "engagement", engagementId: event.engagementId }); }} title={label} />;
                 })}
               </div>
