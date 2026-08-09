@@ -176,20 +176,29 @@ export function sc2ModelAsset(type: string): Sc2ModelAsset {
   const key = canonicalSc2Type(type);
   const neutral = /xelnaga.*tower/.test(key)
     ? { shape: "neutral-tower", footprint: "medium", detail: "energy" } satisfies Sc2ModelAsset
+    : /streetlight|streetlamp/.test(key)
+      ? { shape: "neutral-tower", footprint: "tiny" } satisfies Sc2ModelAsset
+      : /ursadak|critter/.test(key)
+        ? { shape: "quadruped", footprint: "tiny", facing: true } satisfies Sc2ModelAsset
     : /rock|debris|collapsible/.test(key)
       ? { shape: "neutral-rock", footprint: "large" } satisfies Sc2ModelAsset
+      : undefined;
+  const resource = /mineralfield/.test(key)
+    ? { shape: "mineral", footprint: "tiny" } satisfies Sc2ModelAsset
+    : /vespenegeyser|geyser/.test(key)
+      ? { shape: "gas", footprint: "small", detail: "energy" } satisfies Sc2ModelAsset
       : undefined;
   const transient = /^changeling/.test(key)
     ? { shape: "humanoid", footprint: "tiny", facing: true } satisfies Sc2ModelAsset
     : /cocoon|egg/.test(key)
       ? { shape: "orb", footprint: "small" } satisfies Sc2ModelAsset
       : undefined;
-  return terran[key] ?? zerg[key] ?? protoss[key] ?? shared[key] ?? neutral ?? transient ?? fallback;
+  return terran[key] ?? zerg[key] ?? protoss[key] ?? shared[key] ?? neutral ?? resource ?? transient ?? fallback;
 }
 
 export function hasDedicatedSc2Model(type: string) {
   const key = canonicalSc2Type(type);
-  return Boolean(terran[key] || zerg[key] || protoss[key] || shared[key] || /xelnaga.*tower|rock|debris|collapsible|^changeling|cocoon|egg/.test(key));
+  return Boolean(terran[key] || zerg[key] || protoss[key] || shared[key] || /xelnaga.*tower|streetlight|streetlamp|ursadak|critter|rock|debris|collapsible|mineralfield|vespenegeyser|geyser|^changeling|cocoon|egg/.test(key));
 }
 
 export function sc2AttackVisual(type: string): { kind: Sc2AttackVisual; range: number } {

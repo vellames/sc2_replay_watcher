@@ -73,3 +73,10 @@ test("covers the complete core LotV unit and structure inventory", () => {
   const missing = [...terran, ...zerg, ...protoss].filter((type) => !hasDedicatedSc2Model(type));
   assert.deepEqual(missing, []);
 });
+
+test("covers neutral and resource aliases observed in current replays", () => {
+  const observed = ["DesertPlanetStreetlight", "UrsadakCalf", "RichMineralField750", "PurifierVespeneGeyser", "CollapsibleTerranTowerDiagonal"];
+  assert.deepEqual(observed.filter((type) => !hasDedicatedSc2Model(type)), []);
+  assert.equal(sc2ModelAsset("UrsadakCalf").shape, "quadruped");
+  assert.equal(sc2ModelAsset("RichMineralField750").shape, "mineral");
+});
