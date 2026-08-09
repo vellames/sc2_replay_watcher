@@ -621,6 +621,28 @@ export function ReplayViewer() {
     bottom: ((y - bounds.minY) / height) * 100,
   });
   const visibleEngagements = (replay.engagements ?? []).filter((engagement) => currentTime >= engagement.start - 3 && currentTime <= engagement.end + 8);
+  const activeEngagements = visibleEngagements.filter((engagement) => currentTime >= engagement.start && currentTime <= engagement.end);
+  const combatLinks = activeEngagements.flatMap((engagement) => {
+    const nearby = renderedUnits.filter((unit) => unit.isArmy && (unit.x - engagement.x) ** 2 + (unit.y - engagement.y) ** 2 <= 34 ** 2);
+    const links: Array<{ key: string; source: ReplayUnit; target: ReplayUnit; color: string; delay: number }> = [];
+    for (const source of nearby) {
+      const target = nearby
+        .filter((candidate) => candidate.ownerId !== source.ownerId)
+        .map((candidate) => ({ candidate, distance: (candidate.x - source.x) ** 2 + (candidate.y - source.y) ** 2 }))
+        .filter((item) => item.distance <= 17 ** 2)
+        .sort((left, right) => left.distance - right.distance)[0]?.candidate;
+      if (!target || source.id > target.id) continue;
+      links.push({
+        key: `${engagement.id}-${source.id}-${target.id}`,
+        source,
+        target,
+        color: playerById.get(source.ownerId)?.color ?? "#ffbd76",
+        delay: -((source.id + target.id) % 7) * .09,
+      });
+      if (links.length >= 12) break;
+    }
+    return links;
+  });
   const toggleLayer = (layer: LayerKey) => {
     if (layer === "buildings" && layers.buildings && selection?.kind === "group" && selection.groupType === "base") setSelection(null);
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
@@ -943,8 +965,25 @@ export function ReplayViewer() {
                 {currentFrame?.deaths.map((death) => {
                   const point = toPercent(death.x, death.y);
                   const color = playerById.get(death.ownerId)?.color ?? "#ff7180";
-                  return <div key={`heat-${death.id}-${death.time}`} className="combat-heat" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, background: color }} />;
+                  return is3D
+                    ? <div key={`burst-${death.id}-${death.time}`} className="death-burst-3d" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, "--combat-color": color } as React.CSSProperties}><i /><i /><i /><i /><b /></div>
+                    : <div key={`heat-${death.id}-${death.time}`} className="combat-heat" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, background: color }} />;
                 })}
+                {is3D && activeEngagements.map((engagement) => {
+                  const point = toPercent(engagement.x, engagement.y);
+                  const totalLoss = Object.values(engagement.losses).reduce((sum, value) => sum + value, 0);
+                  const diameter = Math.min(78, 34 + Math.sqrt(totalLoss) * .8);
+                  return <i key={`combat-zone-${engagement.id}`} className="combat-zone-3d" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, width: diameter, height: diameter * .48 }} />;
+                })}
+                {is3D && combatLinks.length > 0 && (
+                  <svg className="combat-links-3d" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                    {combatLinks.map((link) => {
+                      const source = toPercent(link.source.x, link.source.y);
+                      const target = toPercent(link.target.x, link.target.y);
+                      return <line key={link.key} x1={source.left} y1={100 - source.bottom} x2={target.left} y2={100 - target.bottom} style={{ "--combat-color": link.color, animationDelay: `${link.delay}s` } as React.CSSProperties} />;
+                    })}
+                  </svg>
+                )}
                 {layers.cameras && renderedCameras.filter((camera) => cameraPlayers[camera.playerId] !== false).map((camera) => {
                   const point = toPercent(camera.x, camera.y);
                   const player = playerById.get(camera.playerId);
