@@ -233,6 +233,13 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .tactical-model-3d .model-left { left: 0; top: 25%; width: 50%; height: calc(75% - 1px); background: color-mix(in srgb, var(--unit-color) 44%, #061018); clip-path: polygon(0 0, 100% 33.333%, 100% 100%, 0 66.667%); }
 .tactical-model-3d .model-right { right: 0; top: 25%; width: 50%; height: calc(75% - 1px); background: color-mix(in srgb, var(--unit-color) 28%, #02070b); clip-path: polygon(0 33.333%, 100% 0, 100% 66.667%, 0 100%); }
 .tactical-model-3d .model-top svg { width: 45%; height: 45%; stroke-width: 2.3; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .6)); }
+.tactical-model-3d.race-protoss .model-top { background: color-mix(in srgb, var(--unit-color) 52%, #d6f7ff); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--unit-color) 66%, transparent)); }
+.tactical-model-3d.race-protoss .model-left, .tactical-model-3d.race-protoss .model-right { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.tactical-model-3d.race-zerg .model-top { border-radius: 50%; clip-path: polygon(50% 0, 88% 20%, 100% 58%, 68% 100%, 30% 92%, 0 58%, 12% 20%); }
+.tactical-model-3d.race-zerg .model-left, .tactical-model-3d.race-zerg .model-right { border-radius: 0 0 55% 55%; }
+.tactical-model-3d.constructing { opacity: .62; filter: saturate(.55); }
+.tactical-model-3d.constructing .model-left, .tactical-model-3d.constructing .model-right { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--unit-color) 28%, #061018) 0 2px, transparent 2px 4px); outline: 1px dashed color-mix(in srgb, var(--unit-color) 46%, transparent); }
+.tactical-model-3d.constructing .model-top { background: color-mix(in srgb, var(--unit-color) 16%, transparent); outline: 1px dashed color-mix(in srgb, var(--unit-color) 58%, transparent); animation: construction-hologram 1.3s ease-in-out infinite; }
 .tactical-model-3d.structure { --model-w: 17px; --model-h: 12px; }
 .tactical-model-3d.structure.production { --model-w: 21px; --model-h: 14px; }
 .tactical-model-3d.structure.town-hall { --model-w: 29px; --model-h: 19px; }
@@ -255,6 +262,9 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .tactical-model-3d.resource .model-left, .tactical-model-3d.resource .model-right { top: 54%; height: 46%; }
 .tactical-model-3d.moving::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 16px; height: 1px; transform-origin: left center; transform: rotate(calc(var(--heading) + 180deg)); background: linear-gradient(90deg, color-mix(in srgb, var(--unit-color) 52%, transparent), transparent); opacity: .55; }
 .map-canvas.view-3d .unit.selected .tactical-model-3d { filter: drop-shadow(0 0 5px #d8f5ff); }
+.tactical-addon-3d { position: absolute; left: 8px; bottom: -2px; min-width: 8px; height: 7px; display: grid; place-items: center; color: #e1f8ff; border: 1px solid color-mix(in srgb, var(--unit-color) 62%, white); background: color-mix(in srgb, var(--unit-color) 32%, #061018); clip-path: polygon(50% 0, 100% 30%, 100% 78%, 50% 100%, 0 78%, 0 30%); box-shadow: 0 3px 4px rgba(0, 0, 0, .42); font: 750 4px var(--font-geist-mono); z-index: 2; }
+.tactical-addon-3d.reactor { border-radius: 50%; }
+.map-canvas.view-3d .production-badge { right: -18px; top: -22px; transform: none; z-index: 4; }
 .production-badge { position: absolute; right: -9px; top: -9px; min-width: 13px; height: 13px; padding: 0 3px; display: grid; place-items: center; color: #071119; background: #9ce7ff; border-radius: 7px; font: 750 7px var(--font-geist-mono); transform: rotate(-45deg); box-shadow: 0 0 8px rgba(77, 204, 255, .65); }
 .addon-badge { position: absolute; right: -8px; bottom: -8px; width: 12px; height: 10px; display: grid; place-items: center; color: #d8f4ff; border: 1px solid color-mix(in srgb, var(--unit-color) 58%, #d8f4ff); border-radius: 2px; background: #0a1720; font: 750 6px var(--font-geist-mono); transform: rotate(-45deg); box-shadow: 0 0 7px color-mix(in srgb, var(--unit-color) 45%, transparent); }
 .addon-badge.reactor { border-radius: 5px; }
@@ -603,3 +613,4 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
 @keyframes combat-link-fire { from { opacity: .95; } to { stroke-dashoffset: -10; opacity: .46; } }
 @keyframes death-spark { from { opacity: 1; } to { opacity: 0; translate: 0 -8px; scale: .25; } }
 @keyframes death-core { from { opacity: .9; scale: .6; } to { opacity: 0; scale: 1.8; } }
+@keyframes construction-hologram { 50% { opacity: .35; filter: brightness(1.6); } }

@@ -174,10 +174,10 @@ function raceIcon(race: string): LucideIcon {
   return Cog;
 }
 
-function TacticalModel3D({ unit, visual, icon: Icon }: { unit: ReplayUnit; visual: UnitVisual; icon: LucideIcon }) {
+function TacticalModel3D({ unit, visual, icon: Icon, race }: { unit: ReplayUnit; visual: UnitVisual; icon: LucideIcon; race?: string }) {
   const modelClass = unit.category === "resource" ? "resource" : unit.isBuilding ? `structure ${visual.kind}` : `${visual.kind} ${sc2IconKey(unit.type)} ${unit.isMoving ? "moving" : ""}`;
   return (
-    <span className={`tactical-model-3d ${modelClass}`} aria-hidden="true">
+    <span className={`tactical-model-3d ${modelClass} race-${race?.toLowerCase() ?? "neutral"} ${!unit.completed ? "constructing" : ""}`} aria-hidden="true">
       <i className="model-shadow" />
       <i className="model-left" />
       <i className="model-right" />
@@ -1059,8 +1059,10 @@ export function ReplayViewer() {
                       aria-label={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`}
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
                     >
-                      {is3D ? <TacticalModel3D unit={unit} visual={visual} icon={UnitIcon} /> : unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
-                      {addon && <b className={`addon-badge ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>}
+                      {is3D ? <TacticalModel3D unit={unit} visual={visual} icon={UnitIcon} race={player?.race} /> : unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
+                      {addon && (is3D
+                        ? <b className={`tactical-addon-3d ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>
+                        : <b className={`addon-badge ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>)}
                       {productionCount > 0 && <b className="production-badge">{productionCount}</b>}
                     </button>
                   );
