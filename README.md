@@ -42,9 +42,26 @@ Use `samples/HSC-XXIX-Grand-Final-G4-2026.SC2Replay`. É o jogo 4 da Grand Final
 
 O formato de replay registra apenas amostras de posição em determinados eventos. Por isso, o movimento entre amostras é uma aproximação visual marcada como `estimated`, não uma reconstrução exata do motor do jogo. Terreno, visão e física detalhada ficam fora do escopo atual.
 
-O watcher exibe supply, composição e valor do exército, renda, perdas, abates e produção inferida.
-O mapa possui filtros de camadas, zoom/pan, agrupamento de exércitos, áreas de bases, atividade de
-combate e destinos das unidades selecionadas.
+O watcher exibe supply, banco, composição e valor do exército, renda, deltas entre jogadores,
+perdas, produção e build path sincronizado. A timeline separa tech, macro, movimentos e combates,
+mostra intervalos de supply block/confronto e plota o histórico da vantagem militar. Confrontos são
+clicáveis e abrem perdas de mineral, gás, supply, unidades e eficiência estimada da troca.
+
+O mapa possui filtros de camadas, zoom/pan, agrupamento semântico de exércitos, bases, atividade de
+combate, destinos e confiança das posições. As câmeras podem ser isoladas por jogador e, quando a
+camada está ativa, o HUD mostra ritmo derivado de atenção sem tratá-lo como APM.
+
+Atalhos do watcher:
+
+- `Space`: play/pause;
+- `←` / `→`: voltar/avançar 5 segundos;
+- `Shift` + `←` / `→`: voltar/avançar 1 segundo;
+- `[` / `]`: evento analítico relevante anterior/seguinte;
+- `Home` / `End`: início/fim do replay;
+- `Escape`: fechar o inspector.
+
+Uploads repetidos com o mesmo conteúdo reutilizam um cache LRU pequeno identificado pelo SHA-256;
+a compilação pesada roda fora do event loop da API.
 
 Quando a referência `.s2ma` do replay está disponível no depot da Blizzard, a world engine monta um
 bootstrap estático com níveis do terreno, cliffs, rampas e bloqueios destrutíveis. O watcher desenha
