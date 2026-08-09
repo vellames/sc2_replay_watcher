@@ -655,7 +655,9 @@ export function ReplayViewer() {
     const overlapBuckets = new Map<string, ReplayUnit[]>();
     for (const unit of individualUnits.filter((candidate) => !candidate.isBuilding && candidate.positionSource === "estimated")) {
       const key = `${unit.ownerId}:${Math.round(unit.x * 10)}:${Math.round(unit.y * 10)}`;
-      overlapBuckets.set(key, [...(overlapBuckets.get(key) ?? []), unit]);
+      const bucket = overlapBuckets.get(key);
+      if (bucket) bucket.push(unit);
+      else overlapBuckets.set(key, [unit]);
     }
     for (const bucket of overlapBuckets.values()) {
       if (bucket.length < 2) continue;
