@@ -32,6 +32,20 @@ watcher's low-noise visual language instead of copying game textures or art.
 - Keep static timeline events memoized outside the playback tick.
 - Prefer one path or sprite reference over nested CSS faces. Any new persistent
   node is multiplied by roughly 400–650 in late-game scenes.
+- Couple transient animation state to replay playback. A paused replay must not
+  keep combat, construction or selection loops running in the compositor.
+
+## Dense-scene baseline
+
+Use the Rainfall demo at 14:44 as a regression scene. On the August 2026 asset
+catalog it renders 476 world models, 121 resources in one batched layer, about
+3,700 DOM nodes, 99 sprite paths and no fallback silhouette. The earlier
+per-entity implementation used about 5,500 nodes and repeated roughly 2,000
+model paths in the same scene.
+
+The supported viewport checks are 390×844, 1280×720, 1920×1080 and
+2560×1080. They must have no document overflow, clipped tactical controls or
+overlap between the compact HUD and analysis toolbar.
 
 ## Adding a model
 
