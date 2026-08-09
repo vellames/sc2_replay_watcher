@@ -308,6 +308,8 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .inspector-economy > div { grid-row: span 2; }
 .inspector-economy > div small, .inspector-economy > div strong { display: block; }
 .inspector-economy > div small { color: #526c7c; font: 650 6px var(--font-geist-mono); letter-spacing: .08em; }
+.inspector-label-help { display: flex !important; align-items: center; gap: 5px; }
+.inspector-label-help .info-tip, .inspector-section h3 .info-tip, .trade-leader small .info-tip { width: 15px; height: 15px; flex-basis: 15px; }
 .inspector-economy > div strong { margin-top: 2px; color: #d4e4eb; font: 650 14px var(--font-geist-mono); }
 .inspector-economy > span { display: flex; align-items: center; justify-content: flex-end; gap: 3px; color: #647e8d; font: 550 7px var(--font-geist-mono); }
 .inspector-economy > span b { color: #a1b4be; font-weight: 600; }

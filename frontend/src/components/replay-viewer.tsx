@@ -740,7 +740,7 @@ export function ReplayViewer() {
               return <div key={playerId} style={{ "--combat-color": player?.color ?? "#7b8794" } as React.CSSProperties}><span><i />{player?.name ?? playerId}</span><strong>{compactNumber(loss)}{efficiency != null && <em>×{efficiency.toFixed(2)}</em>}</strong><small>{detail}</small></div>;
             })}
           </section>
-          {tradeLeader && <section className="trade-leader"><small>{t("watcher.tradeAdvantage")}</small><strong><i style={{ background: tradeLeader.color }} />{tradeLeader.name}</strong><span>{t("watcher.estimatedFromLosses")}</span></section>}
+          {tradeLeader && <section className="trade-leader"><small>{t("watcher.tradeAdvantage")}<InfoTip label={t("watcher.tradeAdvantage")} side="right">{t("watcher.help.tradeAdvantage")}</InfoTip></small><strong><i style={{ background: tradeLeader.color }} />{tradeLeader.name}</strong><span>{t("watcher.estimatedFromLosses")}</span></section>}
         </aside>
       );
     }
@@ -765,13 +765,13 @@ export function ReplayViewer() {
         {isGroup ? (
           <>
             <section className="inspector-economy">
-              <div><small>{t("watcher.economicValue")}</small><strong>{compactNumber(inspectedMinerals + inspectedVespene)}</strong></div>
+              <div><small className="inspector-label-help">{t("watcher.economicValue")}<InfoTip label={t("watcher.economicValue")} side="right">{t("watcher.help.economicValue")}</InfoTip></small><strong>{compactNumber(inspectedMinerals + inspectedVespene)}</strong></div>
               <span><b>{compactNumber(inspectedMinerals)}</b> <Pickaxe size={10} /></span>
               <span><b>{compactNumber(inspectedVespene)}</b> <Zap size={10} /></span>
               <span><b>{inspectedSupply}</b> {t("watcher.supply")}</span>
             </section>
             <section className="inspector-section confidence-section">
-              <h3><Shield size={11} />{t("watcher.positionConfidence")}</h3>
+              <h3><Shield size={11} />{t("watcher.positionConfidence")}<InfoTip label={t("watcher.positionConfidence")} side="right">{t("watcher.help.positionConfidence")}</InfoTip></h3>
               <div>
                 {(["recorded", "derived", "estimated"] as const).map((source) => (
                   <span key={source} className={source}><i style={{ width: `${(confidenceCounts[source] / inspectedUnits.length) * 100}%` }} /><b>{t(`watcher.confidence.${source}`)}</b><em>{confidenceCounts[source]}</em></span>
@@ -790,7 +790,7 @@ export function ReplayViewer() {
         ) : (
           <>
             <section className="inspector-economy single-economy">
-              <div><small>{t("watcher.economicValue")}</small><strong>{compactNumber(inspectedMinerals + inspectedVespene)}</strong></div>
+              <div><small className="inspector-label-help">{t("watcher.economicValue")}<InfoTip label={t("watcher.economicValue")} side="right">{t("watcher.help.economicValue")}</InfoTip></small><strong>{compactNumber(inspectedMinerals + inspectedVespene)}</strong></div>
               <span><b>{compactNumber(inspectedMinerals)}</b> <Pickaxe size={10} /></span>
               <span><b>{compactNumber(inspectedVespene)}</b> <Zap size={10} /></span>
               <span><b>{inspectedSupply}</b> {t("watcher.supply")}</span>
