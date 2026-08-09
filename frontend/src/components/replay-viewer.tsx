@@ -613,15 +613,22 @@ export function ReplayViewer() {
   const selectedProduction = selectedUnit
     ? Object.values(currentFrame?.production ?? {}).flat().filter((order) => order.producerId === selectedUnit.id || order.producerId === selectedAddon?.id)
     : [];
-  const markerBudget = is3D ? 420 : strategicView ? 48 : zoom < 1.7 ? 140 : 260;
-  const individualUnits = visibleUnits
+  const markerBudget = strategicView ? 48 : zoom < 1.7 ? 140 : 260;
+  const orderedIndividualUnits = visibleUnits
     .filter((unit) => !clusteredIds.has(unit.id) && unit.attachmentId == null)
     .filter((unit) => !strategicView || unit.id === selectedUnitId || unit.isArmy || unit.isTownHall)
     .sort((left, right) => {
       const priority = (unit: ReplayUnit) => unit.id === selectedUnitId ? 0 : unit.isArmy ? 1 : unit.isTownHall ? 2 : unit.category === "building" ? 3 : unit.category === "worker" ? 4 : 5;
       return priority(left) - priority(right) || left.id - right.id;
-    })
-    .slice(0, markerBudget);
+    });
+  const threeDimensionalWorldUnits = orderedIndividualUnits.filter((unit) => unit.category !== "resource");
+  const threeDimensionalResources = orderedIndividualUnits.filter((unit) => unit.category === "resource");
+  const resourceBudget3D = Math.max(0, 640 - threeDimensionalWorldUnits.length);
+  const resourceStride3D = Math.max(1, Math.ceil(threeDimensionalResources.length / Math.max(1, resourceBudget3D)));
+  const sampledResources3D = threeDimensionalResources.filter((_, index) => index % resourceStride3D === 0).slice(0, resourceBudget3D);
+  const individualUnits = is3D
+    ? [...threeDimensionalWorldUnits, ...sampledResources3D].slice(0, 640)
+    : orderedIndividualUnits.slice(0, markerBudget);
   const toPercent = (x: number, y: number) => mapPresentation?.projection?.project(x, y) ?? ({
     left: ((x - bounds.minX) / width) * 100,
     bottom: ((y - bounds.minY) / height) * 100,
@@ -653,7 +660,7 @@ export function ReplayViewer() {
       if (links.length >= 12) break;
     }
     return links;
-  });
+  }).slice(0, 18);
   const toggleLayer = (layer: LayerKey) => {
     if (layer === "buildings" && layers.buildings && selection?.kind === "group" && selection.groupType === "base") setSelection(null);
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
