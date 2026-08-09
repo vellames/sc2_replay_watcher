@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { startTransition, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -64,18 +65,16 @@ import {
 
 import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
-import { Sc2ModelSpriteDefs } from "@/components/sc2-model-3d";
-import { Sc2ResourceLayer3D } from "@/components/sc2-resource-layer-3d";
-import { Sc2UnitMarker3D, type ModelTooltip } from "@/components/sc2-unit-marker-3d";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
-import { TerrainLayer3D } from "@/components/terrain-layer-3d";
 import { TimelineEventLayer, type TimelineEventPresentation } from "@/components/timeline-event-layer";
 import { createIsometricProjection, playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { sc2AttackVisual } from "@/lib/sc2-3d-assets";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayProduction, ReplayUnit } from "@/lib/types";
+
+const Sc2World3D = dynamic(() => import("@/components/sc2-world-3d").then((module) => module.Sc2World3D), { ssr: false });
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type ComparisonView = "composition" | "upgrades";
@@ -207,7 +206,6 @@ export function ReplayViewer() {
   const [isPanning, setIsPanning] = useState(false);
   const [cameraPlayers, setCameraPlayers] = useState<Record<number, boolean>>({});
   const [timelineHint, setTimelineHint] = useState<{ label: string; position: number } | null>(null);
-  const [modelTooltip, setModelTooltip] = useState<ModelTooltip | null>(null);
   const [comparisonView, setComparisonView] = useState<ComparisonView | null>(null);
   const [mapView, setMapView] = useState<MapView>("2d");
   const [mapRotation, setMapRotation] = useState(0);
@@ -646,42 +644,21 @@ export function ReplayViewer() {
       const priority = (unit: ReplayUnit) => unit.id === selectedUnitId ? 0 : unit.isArmy ? 1 : unit.isTownHall ? 2 : unit.category === "building" ? 3 : unit.category === "worker" ? 4 : 5;
       return priority(left) - priority(right) || left.id - right.id;
     });
-  const threeDimensionalWorldUnits = orderedIndividualUnits.filter((unit) => unit.category !== "resource");
-  const threeDimensionalResources = orderedIndividualUnits.filter((unit) => unit.category === "resource");
-  const resourceBudget3D = Math.max(0, 640 - threeDimensionalWorldUnits.length);
-  const resourceStride3D = Math.max(1, Math.ceil(threeDimensionalResources.length / Math.max(1, resourceBudget3D)));
-  const sampledResources3D = threeDimensionalResources.filter((_, index) => index % resourceStride3D === 0).slice(0, resourceBudget3D);
-  const individualUnits = is3D
-    ? threeDimensionalWorldUnits.slice(0, 640)
-    : orderedIndividualUnits.slice(0, markerBudget);
-  const overlapOffsets = new Map<number, { x: number; y: number }>();
-  if (is3D) {
-    const overlapBuckets = new Map<string, ReplayUnit[]>();
-    for (const unit of individualUnits.filter((candidate) => !candidate.isBuilding && candidate.positionSource === "estimated")) {
-      const key = `${unit.ownerId}:${Math.round(unit.x * 10)}:${Math.round(unit.y * 10)}`;
-      const bucket = overlapBuckets.get(key);
-      if (bucket) bucket.push(unit);
-      else overlapBuckets.set(key, [unit]);
-    }
-    for (const bucket of overlapBuckets.values()) {
-      if (bucket.length < 2) continue;
-      bucket.sort((left, right) => left.id - right.id).forEach((unit, index) => {
-        const angle = index * 137.508 * Math.PI / 180;
-        const radius = Math.min(8, 2 + Math.sqrt(index) * 2.1);
-        overlapOffsets.set(unit.id, { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius * .58 });
-      });
-    }
-  }
+  const individualUnits = orderedIndividualUnits.slice(0, markerBudget);
+  const worldUnits3D = is3D ? visibleUnits
+    .filter((unit) => unit.attachmentId == null)
+    .sort((left, right) => Number(right.isBuilding) - Number(left.isBuilding) || left.id - right.id)
+    .slice(0, 1000)
+    .map((unit) => {
+      const player = playerById.get(unit.ownerId);
+      const resourceColor = unit.type.toLowerCase().includes("vespene") ? "#54b994" : "#73bde0";
+      return { ...unit, color: unit.category === "resource" ? resourceColor : player?.color ?? "#7b8794", race: player?.race };
+    }) : [];
   const toPercent = (x: number, y: number) => mapPresentation?.projection?.project(x, y) ?? ({
     left: ((x - bounds.minX) / width) * 100,
     bottom: ((y - bounds.minY) / height) * 100,
   });
   const visibleEngagements = (replay.engagements ?? []).filter((engagement) => currentTime >= engagement.start - 3 && currentTime <= engagement.end + 8);
-  const resourceModels3D = is3D ? sampledResources3D.map((unit) => {
-    const point = toPercent(unit.x, unit.y);
-    const color = unit.type.toLowerCase().includes("vespene") ? "#54b994" : "#73bde0";
-    return { id: unit.id, type: unit.type, left: point.left, bottom: point.bottom, color, label: entityName(unit.type), selected: selectedUnitId === unit.id };
-  }) : [];
   const activeEngagements = visibleEngagements.filter((engagement) => currentTime >= engagement.start && currentTime <= engagement.end);
   const combatLinks = activeEngagements.flatMap((engagement) => {
     const nearby = renderedUnits.filter((unit) => unit.isArmy && (unit.x - engagement.x) ** 2 + (unit.y - engagement.y) ** 2 <= 34 ** 2);
@@ -959,7 +936,6 @@ export function ReplayViewer() {
 
   return (
     <div className="app-shell watcher-shell">
-      {modelTooltip && createPortal(<span className="world-model-tooltip" role="tooltip" style={{ left: modelTooltip.left, top: modelTooltip.top, "--unit-color": modelTooltip.color } as React.CSSProperties}>{modelTooltip.text}</span>, document.body)}
       <main className="watcher-main">
         <section className="workspace" aria-label="Visualizador do replay">
           <div className="matchbar">
@@ -1022,10 +998,8 @@ export function ReplayViewer() {
                   ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
                   : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
               >
-                {is3D && <Sc2ModelSpriteDefs />}
-                {layers.terrain && hasMapGeometry && (is3D
-                  ? <TerrainLayer3D geometry={replay.mapGeometry} bounds={bounds} rotation={mapRotation} />
-                  : <TerrainLayer geometry={replay.mapGeometry} bounds={bounds} />)}
+                {is3D && <Sc2World3D bounds={bounds} geometry={replay.mapGeometry} rotation={mapRotation} units={worldUnits3D} selectedUnitId={selectedUnitId} showTerrain={layers.terrain} onSelect={selectUnit} />}
+                {layers.terrain && hasMapGeometry && !is3D && <TerrainLayer geometry={replay.mapGeometry} bounds={bounds} />}
                 {layers.terrain && !is3D && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
                 {currentFrame?.deaths.map((death) => {
                   const point = toPercent(death.x, death.y);
@@ -1074,14 +1048,14 @@ export function ReplayViewer() {
                   const totalLoss = Object.values(engagement.losses).reduce((sum, value) => sum + value, 0);
                   return <button key={engagement.id} className={`engagement-marker ${selectedEngagement?.id === engagement.id ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => { setCurrentTime(engagement.start); setPlaying(false); setSelection({ kind: "engagement", engagementId: engagement.id }); }} title={`${t("watcher.engagement")} · ${compactNumber(totalLoss)}`}><Flame size={10} /><b>{compactNumber(totalLoss)}</b></button>;
                 })}
-                {showBaseMarkers && (currentFrame?.bases ?? []).map((base) => {
+                {!is3D && showBaseMarkers && (currentFrame?.bases ?? []).map((base) => {
                   const point = toPercent(base.x, base.y);
                   const color = playerById.get(base.ownerId)?.color ?? "#8295a5";
                   const memberIds = renderedUnits.filter((unit) => unit.baseId === base.id || unit.id === base.townHallId).map((unit) => unit.id);
                   const isSelected = selection?.kind === "group" && selection.groupType === "base" && memberIds.every((id) => selection.unitIds.includes(id));
                   return <button key={base.id} className={`base-marker ${base.status} ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "base", unitIds: memberIds })} title={`${t("watcher.base")} · ${base.workers} ${t("watcher.workers")} · ${base.structures} ${t("watcher.structures")}`}><Landmark size={10} /><b>{layers.workers ? base.workers : "–"}</b><small>{base.structures}</small></button>;
                 })}
-                {semanticArmyClusters.map((cluster) => {
+                {!is3D && semanticArmyClusters.map((cluster) => {
                   const point = toPercent(cluster.x, cluster.y);
                   const color = playerById.get(cluster.ownerId)?.color ?? "#8295a5";
                   const typeCounts = new Map<string, number>();
@@ -1092,25 +1066,24 @@ export function ReplayViewer() {
                   const isSelected = selection?.kind === "group" && selection.groupType === "army" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`army-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "army", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.armyUnits")} · ${entityName(dominantUnit.type)}`}><ClusterIcon size={11} /><b>{cluster.units.length}</b></button>;
                 })}
-                {workerClusters.map((cluster) => {
+                {!is3D && workerClusters.map((cluster) => {
                   const point = toPercent(cluster.x, cluster.y);
                   const color = playerById.get(cluster.ownerId)?.color ?? "#8295a5";
                   const isSelected = selection?.kind === "group" && selection.groupType === "workers" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`worker-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "workers", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.workers")}`}><Pickaxe size={9} /><b>{cluster.units.length}</b></button>;
                 })}
-                {structureClusters.map((cluster) => {
+                {!is3D && structureClusters.map((cluster) => {
                   const point = toPercent(cluster.x, cluster.y);
                   const color = playerById.get(cluster.ownerId)?.color ?? "#8295a5";
                   const isSelected = selection?.kind === "group" && selection.groupType === "structures" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`structure-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "structures", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.structures")}`}><Factory size={9} /><b>{cluster.units.length}</b></button>;
                 })}
-                {resourceClusters.map((cluster) => {
+                {!is3D && resourceClusters.map((cluster) => {
                   const point = toPercent(cluster.x, cluster.y);
                   const isSelected = selection?.kind === "group" && selection.groupType === "resources" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`resource-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "resources", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.layer.resources")}`}><Database size={8} /><b>{cluster.units.length}</b></button>;
                 })}
-                {is3D && resourceModels3D.length > 0 && <Sc2ResourceLayer3D resources={resourceModels3D} onSelect={selectUnit} />}
-                {individualUnits.map((unit) => {
+                {!is3D && individualUnits.map((unit) => {
                   const player = playerById.get(unit.ownerId);
                   const visual = unitVisual(unit);
                   const UnitIcon = visual.icon;
@@ -1124,11 +1097,6 @@ export function ReplayViewer() {
                   const stateName = sc2StateName(unit.type, locale);
                   const title = `${entityName(unit.type)}${stateName ? ` · ${stateName}` : ""}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)}`;
                   const ariaLabel = `${entityName(unit.type)}${stateName ? ` · ${stateName}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`;
-                  const assetRole = sc2IconKey(unit.type);
-                  const priorityDetail = unit.isBuilding || unit.isTownHall || assetRole === "massive" || assetRole === "capital" || assetRole === "siege";
-                  const detailed3D = selectedUnitId === unit.id || priorityDetail || (zoom >= 1.25 && individualUnits.length < 360);
-                  const overlapOffset = overlapOffsets.get(unit.id) ?? { x: 0, y: 0 };
-                  if (is3D) return <Sc2UnitMarker3D key={unit.id} unit={unit} visualKind={visual.kind} race={player?.race} color={color} left={point.left} bottom={point.bottom} heading={screenHeading} productionCount={productionCount} productionRatio={productionRatio} addon={addon} addonName={addon ? entityName(addon.type) : undefined} selected={selectedUnitId === unit.id} detailed={detailed3D} overview={zoom < 1.25} offsetX={overlapOffset.x} offsetY={overlapOffset.y} title={title} ariaLabel={ariaLabel} onSelect={selectUnit} onTooltip={setModelTooltip} />;
                   return (
                     <button
                       key={unit.id}

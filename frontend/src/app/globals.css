@@ -175,13 +175,17 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .macro-panel .winner { margin-top: 10px; }
 .map-canvas { position: absolute; inset: 0; transform-origin: 50% 50%; transition: transform .12s ease-out; }
 .map-canvas.geometric { inset: auto; left: 50%; top: 50%; width: min(100cqw, calc(100cqh * var(--map-aspect))); height: min(100cqh, calc(100cqw / var(--map-aspect))); }
+.map-canvas.geometric.view-3d { width: 100cqw; height: 100cqh; }
 .terrain-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .terrain-layer-3d { filter: drop-shadow(0 24px 22px rgba(0, 0, 0, .28)); }
+.sc2-world-3d { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: auto; }
+.sc2-world-3d canvas { width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
 .map-canvas.view-3d .army-cluster, .map-canvas.view-3d .worker-cluster, .map-canvas.view-3d .structure-cluster, .map-canvas.view-3d .resource-cluster, .map-canvas.view-3d .base-marker, .map-canvas.view-3d .engagement-marker { filter: drop-shadow(0 5px 4px rgba(0, 0, 0, .45)); }
 .map-stage.is-panning, .map-stage.is-panning .map-canvas { cursor: grabbing; }
 .map-grid { position: absolute; inset: 0; opacity: .28; background-image: linear-gradient(rgba(95, 142, 165, .12) 1px, transparent 1px), linear-gradient(90deg, rgba(95, 142, 165, .12) 1px, transparent 1px), linear-gradient(rgba(95, 142, 165, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(95, 142, 165, .05) 1px, transparent 1px); background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px; }
 .map-grid.over-terrain { display: none; }
 .map-vignette { position: absolute; inset: 0; box-shadow: inset 0 0 90px 30px rgba(0,0,0,.55); pointer-events: none; }
+.map-stage:has(.map-canvas.view-3d) .map-vignette { box-shadow: inset 0 0 52px 10px rgba(0, 0, 0, .28); }
 .combat-heat { position: absolute; width: 52px; height: 52px; margin: -26px; border-radius: 50%; opacity: .12; filter: blur(10px); animation: heat-fade 2.2s ease-in-out infinite; pointer-events: none; z-index: 1; }
 .combat-zone-3d { position: absolute; translate: -50% 50%; border: 1px solid rgba(255, 150, 91, .44); border-radius: 50%; background: radial-gradient(ellipse, rgba(255, 112, 68, .14), transparent 68%); box-shadow: inset 0 0 14px rgba(255, 114, 69, .13), 0 0 12px rgba(255, 100, 54, .12); animation: combat-zone-pulse 1.4s ease-in-out infinite; pointer-events: none; z-index: 2; }
 .combat-links-3d { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
@@ -202,10 +206,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .map-canvas.view-3d.is-paused .death-burst-3d > i,
 .map-canvas.view-3d.is-paused .death-burst-3d > b,
 .map-canvas.view-3d.is-paused .model-construction-ring,
+.map-canvas.view-3d.is-paused .model-light,
 .map-canvas.view-3d.is-paused .unit.selected::before { animation-play-state: paused; }
 .map-canvas.view-3d.dense-3d .combat-links-3d line,
 .map-canvas.view-3d.dense-3d .combat-links-3d circle,
 .map-canvas.view-3d.dense-3d .death-burst-3d > i { filter: none; }
+.map-canvas.view-3d.dense-3d .model-light { filter: none; animation: none; }
 .death-burst-3d { position: absolute; width: 1px; height: 1px; pointer-events: none; z-index: 1100; }
 .death-burst-3d > i { position: absolute; left: 0; bottom: 0; width: 2px; height: 9px; transform-origin: 50% 100%; background: linear-gradient(var(--combat-color), transparent); filter: drop-shadow(0 0 3px var(--combat-color)); animation: death-spark .75s ease-out infinite; }
 .death-burst-3d > i:nth-child(2) { transform: rotate(72deg); animation-delay: -.12s; }
@@ -269,6 +275,24 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .sc2-model-3d.elevation-air { bottom: 5px; }
 .sc2-model-3d.elevation-high-air { bottom: 9px; }
 .sc2-model-3d .model-shadow { fill: rgba(0, 0, 0, .48); }
+.sc2-model-3d .model-depth { fill: #02070a; stroke: color-mix(in srgb, currentColor 38%, #000); stroke-opacity: .82; }
+.sc2-model-3d .model-hull { fill: color-mix(in srgb, currentColor 68%, #11232b); fill-opacity: .94; stroke: color-mix(in srgb, currentColor 46%, #e7fbff); stroke-opacity: .88; }
+.sc2-model-3d .model-inset { fill: #061018; fill-opacity: .94; stroke: color-mix(in srgb, currentColor 34%, transparent); stroke-width: .45; }
+.sc2-model-3d .model-hardpoint, .sc2-model-3d .model-detail { fill: color-mix(in srgb, currentColor 28%, #e6fbff); stroke: color-mix(in srgb, currentColor 70%, #f2fdff); }
+.sc2-model-3d .model-identity { fill: color-mix(in srgb, currentColor 38%, #deeff2); fill-opacity: .88; stroke: color-mix(in srgb, currentColor 66%, #ecfdff); stroke-width: .52; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.sc2-model-3d .model-cut { fill: #02080c; fill-opacity: .88; stroke: currentColor; stroke-width: .35; }
+.sc2-model-3d .model-light { fill: #eaffff; stroke: currentColor; stroke-width: .42; filter: drop-shadow(0 0 1.7px currentColor); transform-box: fill-box; transform-origin: center; animation: model-reactor-pulse 1.8s ease-in-out infinite alternate; }
+.sc2-model-3d .model-specular { fill: none; stroke: #f4feff; stroke-width: .42; stroke-dasharray: 6 27; stroke-linecap: round; opacity: .68; vector-effect: non-scaling-stroke; }
+.sc2-model-3d.race-terran .model-hull { fill: color-mix(in srgb, currentColor 58%, #26333a); }
+.sc2-model-3d.race-terran .model-identity { fill: color-mix(in srgb, currentColor 28%, #c8d6da); }
+.sc2-model-3d.race-zerg .model-hull { fill: color-mix(in srgb, currentColor 64%, #25182d); stroke: color-mix(in srgb, currentColor 58%, #d9b9df); }
+.sc2-model-3d.race-zerg .model-depth { fill: #100914; stroke: color-mix(in srgb, currentColor 48%, #130917); }
+.sc2-model-3d.race-zerg .model-identity { fill: color-mix(in srgb, currentColor 54%, #a4cf8e); stroke: color-mix(in srgb, currentColor 62%, #ddf0c3); }
+.sc2-model-3d.race-protoss .model-hull { fill: color-mix(in srgb, currentColor 46%, #8f7845); stroke: color-mix(in srgb, currentColor 42%, #fff0a8); }
+.sc2-model-3d.race-protoss .model-depth { fill: #0b1018; stroke: color-mix(in srgb, currentColor 50%, #625733); }
+.sc2-model-3d.race-protoss .model-identity { fill: color-mix(in srgb, currentColor 32%, #ffe49a); stroke: color-mix(in srgb, currentColor 58%, #fff6c6); }
+.sc2-model-3d.race-protoss .model-light { fill: #eaffff; stroke: #8aeaff; filter: drop-shadow(0 0 2.2px currentColor); }
+.sc2-model-3d.lod-overview .model-specular { display: none; }
 .sc2-model-3d .model-altitude-line { stroke: currentColor; stroke-width: .75; stroke-dasharray: 1 2; vector-effect: non-scaling-stroke; opacity: .38; }
 .sc2-model-3d.elevation-air .model-shadow { transform: translateY(7px); opacity: .7; }
 .sc2-model-3d.elevation-high-air .model-shadow { transform: translateY(11px); opacity: .62; }
@@ -644,6 +668,7 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
 @keyframes combat-link-fire { from { opacity: .95; } to { stroke-dashoffset: -10; opacity: .46; } }
 @keyframes combat-beam { from { opacity: .45; } to { opacity: 1; } }
 @keyframes construction-ring { to { rotate: 360deg; } }
+@keyframes model-reactor-pulse { from { opacity: .62; scale: .82; } to { opacity: 1; scale: 1.18; } }
 @keyframes combat-impact { from { opacity: 1; scale: .45; } to { opacity: 0; scale: 1.9; } }
 @keyframes death-spark { from { opacity: 1; } to { opacity: 0; translate: 0 -8px; scale: .25; } }
 @keyframes death-core { from { opacity: .9; scale: .6; } to { opacity: 0; scale: 1.8; } }
