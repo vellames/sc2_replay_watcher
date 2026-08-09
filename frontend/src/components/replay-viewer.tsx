@@ -238,6 +238,7 @@ export function ReplayViewer() {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [selection, setSelection] = useState<MapSelection | null>(null);
+  const [compactPlayerId, setCompactPlayerId] = useState<number | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [cameraPlayers, setCameraPlayers] = useState<Record<number, boolean>>({});
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
@@ -823,6 +824,32 @@ export function ReplayViewer() {
     );
   };
 
+  const renderCompactPlayerDrawer = () => {
+    const player = replay.players.find((candidate) => candidate.id === compactPlayerId);
+    if (!player) return null;
+    const stats = currentFrame?.stats[String(player.id)];
+    const index = replay.players.findIndex((candidate) => candidate.id === player.id);
+    const RaceIcon = raceIcon(player.race);
+    const composition = [...(currentFrame?.units ?? [])
+      .filter((unit) => unit.ownerId === player.id && unit.isArmy)
+      .reduce((types, unit) => types.set(unit.type, (types.get(unit.type) ?? 0) + 1), new Map<string, number>())
+      .entries()]
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 4);
+    return (
+      <aside className={`compact-player-drawer compact-player-drawer-${index === 0 ? "left" : "right"}`} style={{ "--player-color": player.color } as React.CSSProperties}>
+        <header><span><i /><RaceIcon size={12} /></span><div><strong>{player.name}</strong><small>{player.race}</small></div><button onClick={() => setCompactPlayerId(null)} aria-label={t("watcher.closePlayerSummary")}><X size={13} /></button></header>
+        <div className="compact-player-metrics">
+          <span><Package size={11} /><small>{t("watcher.supply")}</small><b>{stats?.supplyUsed ?? 0}/{stats?.supplyCap ?? 0}</b></span>
+          <span><Pickaxe size={11} /><small>{t("watcher.workers")}</small><b>{stats?.workers ?? 0}</b></span>
+          <span><Swords size={11} /><small>{t("watcher.army")}</small><b>{stats?.armySupply ?? 0} {t("watcher.supplyUnit")}</b></span>
+          <span><Zap size={11} /><small>{t("watcher.income")}</small><b>{compactNumber((stats?.mineralRate ?? 0) + (stats?.vespeneRate ?? 0))}{t("watcher.perMinute")}</b></span>
+        </div>
+        {composition.length > 0 && <div className="compact-player-composition"><small>{t("watcher.armyComposition")}</small><div>{composition.map(([type, count]) => { const EntityIcon = hudEntityIcon(type); return <span key={type} title={entityName(type)}><EntityIcon size={9} /><b>{count}×</b>{entityName(type)}</span>; })}</div></div>}
+      </aside>
+    );
+  };
+
   return (
     <div className="app-shell watcher-shell">
       <main className="watcher-main">
@@ -845,7 +872,7 @@ export function ReplayViewer() {
                 const RaceIcon = raceIcon(player.race);
                 return (
                   <section key={player.id} style={{ "--player-color": player.color } as React.CSSProperties}>
-                    <header><span>P{index + 1}</span><strong>{player.name}</strong><small><RaceIcon size={8} />{player.race}</small><InfoTip label={t("watcher.compactScoreboard")} side={index === 0 ? "left" : "right"}>{t("watcher.help.compactScoreboard")}</InfoTip></header>
+                    <header><span>P{index + 1}</span><strong>{player.name}</strong><small><RaceIcon size={8} />{player.race}</small><InfoTip label={t("watcher.compactScoreboard")} side={index === 0 ? "left" : "right"}>{t("watcher.help.compactScoreboard")}</InfoTip><button className="compact-player-expand" aria-expanded={compactPlayerId === player.id} aria-label={t("watcher.openPlayerSummary").replace("{player}", player.name)} onClick={() => setCompactPlayerId((current) => current === player.id ? null : player.id)}><ChevronDown size={11} /></button></header>
                     <div>
                       <span title={t("watcher.supply")}><Package size={10} />{stats?.supplyUsed ?? 0}/{stats?.supplyCap ?? 0}</span>
                       <span title={t("watcher.workers")}><Pickaxe size={10} />{stats?.workers ?? 0}</span>
@@ -856,6 +883,7 @@ export function ReplayViewer() {
                 );
               })}
             </div>
+            {renderCompactPlayerDrawer()}
           </div>
 
           <div className="viewer-grid macro-viewer-grid">
