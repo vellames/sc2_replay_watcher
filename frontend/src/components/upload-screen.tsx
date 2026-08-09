@@ -105,7 +105,7 @@ export function UploadScreen() {
               onDrop={(event) => { event.preventDefault(); setDragging(false); uploadReplay(event.dataTransfer.files[0]); }}
             >
               <div className="scan-line" />
-              <input ref={fileInput} type="file" accept=".SC2Replay" hidden onChange={(event) => uploadReplay(event.target.files?.[0])} />
+              <input ref={fileInput} type="file" accept=".SC2Replay" hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; uploadReplay(file); }} />
               <div className={`upload-icon ${uploading ? "is-loading" : ""}`}><FileUp size={28} /></div>
               <div className="upload-message">
                 <strong>{uploading ? t("upload.processing") : t("upload.drop")}</strong>
