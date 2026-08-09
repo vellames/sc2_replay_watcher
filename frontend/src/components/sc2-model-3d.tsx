@@ -59,6 +59,7 @@ export const Sc2Model3D = memo(function Sc2Model3D({ type, race, completed, movi
       <use href={`#sc2-shape-${asset.shape}`} />
       {detailed && shape.inset && <use href={`#sc2-inset-${asset.shape}`} />}
       {detailed && detailId && <use href={`#${detailId}`} />}
+      {!completed && <circle className="model-construction-ring" cx="16" cy="18" r="12" />}
     </svg>
   );
 });

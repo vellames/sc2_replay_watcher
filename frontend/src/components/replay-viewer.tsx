@@ -1077,7 +1077,10 @@ export function ReplayViewer() {
                   const stateName = sc2StateName(unit.type, locale);
                   const title = `${entityName(unit.type)}${stateName ? ` · ${stateName}` : ""}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)}`;
                   const ariaLabel = `${entityName(unit.type)}${stateName ? ` · ${stateName}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`;
-                  if (is3D) return <Sc2UnitMarker3D key={unit.id} unit={unit} visualKind={visual.kind} race={player?.race} color={color} left={point.left} bottom={point.bottom} heading={screenHeading} productionCount={productionCount} productionRatio={productionRatio} addon={addon} addonName={addon ? entityName(addon.type) : undefined} selected={selectedUnitId === unit.id} detailed={zoom >= 1.25 || unit.isBuilding || selectedUnitId === unit.id} overview={zoom < 1.25} title={title} ariaLabel={ariaLabel} onSelect={selectUnit} />;
+                  const assetRole = sc2IconKey(unit.type);
+                  const priorityDetail = unit.isBuilding || unit.isTownHall || assetRole === "massive" || assetRole === "capital" || assetRole === "siege";
+                  const detailed3D = selectedUnitId === unit.id || priorityDetail || (zoom >= 1.25 && individualUnits.length < 360);
+                  if (is3D) return <Sc2UnitMarker3D key={unit.id} unit={unit} visualKind={visual.kind} race={player?.race} color={color} left={point.left} bottom={point.bottom} heading={screenHeading} productionCount={productionCount} productionRatio={productionRatio} addon={addon} addonName={addon ? entityName(addon.type) : undefined} selected={selectedUnitId === unit.id} detailed={detailed3D} overview={zoom < 1.25} title={title} ariaLabel={ariaLabel} onSelect={selectUnit} />;
                   return (
                     <button
                       key={unit.id}
