@@ -34,6 +34,29 @@ Abra `http://localhost:3000`. A página inicial envia o replay ao FastAPI, que o
 
 A interface está disponível em português e inglês. O seletor `PT / EN` fica no cabeçalho e salva a preferência no navegador.
 
+## Camada de apresentação do SC2
+
+Nomes, aliases, estados e papéis visuais de unidades, estruturas e upgrades ficam centralizados em
+`frontend/src/lib/sc2-catalog.ts`. A UI nunca deve traduzir identificadores do replay diretamente:
+
+- `sc2Name` fornece o nome localizado e mantém fallback legível para conteúdo futuro;
+- `canonicalSc2Type` agrupa formas transitórias na composição (enterrado, voando, modo de cerco);
+- `sc2StateName` preserva essa forma como detalhe no inspector e no hover;
+- `sc2IconKey` garante a mesma silhueta tática no mapa, HUD, produção e drawer responsivo.
+
+Ao incluir uma entidade, adicione o alias ao catálogo e um caso em `sc2-catalog.test.ts`. Para validar
+frontend, catálogo e build de produção:
+
+```bash
+cd frontend
+npm test
+npm run lint
+npm run build
+```
+
+Métricas reconstruídas ou inferidas precisam ser descritas como tal nos tooltips. Não apresente vida,
+escudo ou outro estado que o replay não registre como se fosse telemetria factual.
+
 ## Replay de exemplo
 
 Use `samples/HSC-XXIX-Grand-Final-G4-2026.SC2Replay`. É o jogo 4 da Grand Final da HomeStory Cup XXIX: Serral vs Clem, uma partida de 34:24 jogada na versão 5.0.16.97425. A origem, os detalhes e o checksum estão documentados em `samples/README.md`.
