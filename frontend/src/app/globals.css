@@ -147,11 +147,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .macro-metrics small { color: #546d7e; font: 600 8px var(--font-geist-mono); letter-spacing: .09em; text-transform: uppercase; }
 .macro-metrics .metric-help-title { min-height: 18px; display: flex; align-items: center; justify-content: space-between; }
 .macro-metrics .info-tip-card small { color: #78909f; font: 500 9px/1.45 var(--font-geist-sans); letter-spacing: 0; text-transform: none; }
-.macro-metrics strong { margin: 4px 0 3px; color: #c4d6e1; font: 600 12px var(--font-geist-mono); }
+.macro-metrics strong { min-width: 0; margin: 4px 0 3px; display: flex; align-items: center; color: #c4d6e1; font: 600 12px var(--font-geist-mono); }
 .macro-metrics strong em { color: #607687; font-size: 7px; font-style: normal; font-weight: 500; }
-.macro-metrics span { display: flex; align-items: center; gap: 3px; color: #688091; font: 500 8px var(--font-geist-mono); white-space: nowrap; }
-.macro-metrics span > small { display: inline; color: #4f6878; font-size: 6px; letter-spacing: 0; text-transform: none; }
-.macro-metrics .metric-delta { margin-left: auto; padding: 2px 4px; border-radius: 2px; font-size: 6px; font-style: normal; font-weight: 700; }
+.macro-metrics > div > span { min-width: 0; display: flex; align-items: center; gap: 3px; color: #688091; font: 500 8px var(--font-geist-mono); white-space: nowrap; }
+.macro-metrics .metric-detail > span { min-width: 0; display: flex; align-items: center; gap: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.macro-metrics .metric-detail > span > small { display: inline; color: #4f6878; font-size: 6px; letter-spacing: 0; text-transform: none; }
+.macro-metrics .metric-delta { margin-left: auto; padding: 2px 4px; flex: 0 0 auto; border-radius: 2px; font-size: 6px; font-style: normal; font-weight: 700; }
 .metric-delta.leading { color: #75d6a0; background: rgba(70, 190, 120, .09); }
 .metric-delta.trailing { color: #dc8190; background: rgba(210, 80, 100, .08); }
 .metric-delta.tied { color: #637887; background: rgba(110, 140, 158, .06); }
