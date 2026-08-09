@@ -102,8 +102,18 @@ function InfoTip({ label, side = "left", children }: { label: string; side?: "le
       : Math.max(10, rect.left - width - 8);
     setPosition({ left, top: Math.max(10, Math.min(window.innerHeight - 170, rect.top - 4)) });
   };
+  useEffect(() => {
+    if (!position) return;
+    const dismiss = () => setPosition(null);
+    window.addEventListener("resize", dismiss);
+    window.addEventListener("scroll", dismiss, true);
+    return () => {
+      window.removeEventListener("resize", dismiss);
+      window.removeEventListener("scroll", dismiss, true);
+    };
+  }, [position]);
   return (
-    <span ref={triggerRef} className={`info-tip info-tip-${side}`} tabIndex={0} aria-label={label} aria-describedby={position ? tooltipId : undefined} onMouseEnter={show} onMouseLeave={() => setPosition(null)} onFocus={show} onBlur={() => setPosition(null)}>
+    <span ref={triggerRef} className={`info-tip info-tip-${side}`} tabIndex={0} aria-label={label} aria-describedby={position ? tooltipId : undefined} onMouseEnter={show} onMouseLeave={() => setPosition(null)} onFocus={show} onBlur={() => setPosition(null)} onKeyDown={(event) => { if (event.key === "Escape") { setPosition(null); event.currentTarget.blur(); } }}>
       <CircleHelp size={11} aria-hidden="true" />
       {position && typeof document !== "undefined" && createPortal(<span id={tooltipId} className="info-tip-card" role="tooltip" style={position}><b>{label}</b><small>{children}</small></span>, document.body)}
     </span>
