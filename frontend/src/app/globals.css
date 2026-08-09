@@ -154,6 +154,11 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .build-path small { color: #4f7665; font-size: 6px; letter-spacing: .06em; }
 .build-path .upcoming b { color: var(--player-color); }
 .build-path .upcoming small { color: #7f8bc0; }
+.camera-rhythm { margin: 8px 0 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.camera-rhythm > span { min-width: 0; padding: 7px; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 5px; border: 1px solid rgba(91, 181, 214, .1); background: rgba(39, 116, 146, .035); }
+.camera-rhythm svg { grid-row: span 2; color: #579db8; }
+.camera-rhythm small { color: #506a79; font: 600 6px var(--font-geist-mono); }
+.camera-rhythm b { color: #9eb8c5; font: 650 9px var(--font-geist-mono); }
 .production-list { border-top: 1px solid rgba(116, 167, 195, .1); padding-top: 9px; }
 .production-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; color: #657d8e; font: 600 8px var(--font-geist-mono); letter-spacing: .08em; }
 .production-title span { display: flex; align-items: center; gap: 5px; }

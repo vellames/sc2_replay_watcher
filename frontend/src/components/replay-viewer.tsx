@@ -475,6 +475,7 @@ export function ReplayViewer() {
       .entries()]
       .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
       .slice(0, 4);
+    const cameraAnalytics = replay.cameraAnalytics?.[String(player.id)];
     const armyValueDelta = (stats?.armyValue ?? 0) - (opponentStats?.armyValue ?? 0);
     const workerDelta = (stats?.workers ?? 0) - (opponentStats?.workers ?? 0);
     const deltaClass = (value: number) => value > 0 ? "leading" : value < 0 ? "trailing" : "tied";
@@ -515,6 +516,7 @@ export function ReplayViewer() {
               {upcomingMilestone && <div className="upcoming"><time>{formatTime(upcomingMilestone.completedAt)}</time><b>{cleanType(upcomingMilestone.product)}</b><small>{t("watcher.next")}</small></div>}
             </div>
           )}
+          {layers.cameras && cameraAnalytics && <div className="camera-rhythm" title={`${t("watcher.cameraThreshold")} ${cameraAnalytics.jumpDistance}`}><span><Scan size={10} /><small>{t("watcher.cameraJumps")}</small><b>{cameraAnalytics.jumpsPerMinute}</b></span><span><Clock3 size={10} /><small>{t("watcher.averageDwell")}</small><b>{cameraAnalytics.averageDwellSeconds}s</b></span></div>}
           <div className="production-list side-production-list">
             <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}</span><b>{production.length}</b></div>
             {production.length === 0 ? <small className="queue-empty">{t("watcher.queueEmpty")}</small> : production.slice(0, 8).map((order) => (

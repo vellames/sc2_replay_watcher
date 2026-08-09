@@ -73,6 +73,10 @@ def test_demo_is_compiled_by_world_engine() -> None:
         "tradeEfficiency",
     }.issubset(payload["engagements"][0])
     assert sum(len(samples) for samples in payload["cameraSamples"].values()) > 0
+    assert payload["cameraAnalytics"]
+    assert {"jumpsPerMinute", "averageDwellSeconds"}.issubset(
+        next(iter(payload["cameraAnalytics"].values()))
+    )
     assert payload["mapVisual"]["source"] in {"official", "procedural"}
     if payload["mapVisual"]["source"] == "official":
         assert payload["mapVisual"]["dataUrl"].startswith("data:image/webp;base64,")

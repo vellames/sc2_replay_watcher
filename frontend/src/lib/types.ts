@@ -190,6 +190,13 @@ export type ReplayData = {
     staticObjects: Array<{ type: string; x: number; y: number; rotation: number }>;
   };
   cameraSamples: Record<string, ReplayCamera[]>;
+  cameraAnalytics: Record<string, {
+    sampleCount: number;
+    jumps: number;
+    jumpsPerMinute: number;
+    averageDwellSeconds: number;
+    jumpDistance: number;
+  }>;
   timeline: Array<{
     time: number;
     type: "base" | "upgrade" | "engagement" | "supply" | "movement";

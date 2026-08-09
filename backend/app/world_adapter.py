@@ -134,6 +134,7 @@ def watcher_payload(
             str(player_id): [camera.to_dict() for camera in samples]
             for player_id, samples in reader.camera_samples().items()
         },
+        "cameraAnalytics": manifest.get("cameraAnalytics", {}),
         "timeline": manifest.get("timeline", []),
         "buildOrder": manifest.get("buildOrder", []),
         "engagements": manifest.get("engagements", []),
