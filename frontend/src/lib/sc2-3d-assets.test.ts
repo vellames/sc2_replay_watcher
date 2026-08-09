@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { hasDedicatedSc2Model, sc2ModelAsset } from "./sc2-3d-assets.ts";
+import { hasDedicatedSc2Model, sc2AttackVisual, sc2ModelAsset } from "./sc2-3d-assets.ts";
 
 test("canonicalizes Terran state variants to the same tactical asset", () => {
   assert.deepEqual(sc2ModelAsset("SiegeTankSieged"), sc2ModelAsset("SiegeTank"));
@@ -40,4 +40,12 @@ test("covers Protoss energy, walkers and capital ships", () => {
   assert.equal(sc2ModelAsset("Nexus").shape, "protoss-nexus");
   assert.equal(sc2ModelAsset("Pylon").shape, "protoss-pylon");
   assert.deepEqual(sc2ModelAsset("WarpPrismPhasing"), sc2ModelAsset("WarpPrism"));
+});
+
+test("assigns restrained combat signatures and engagement ranges", () => {
+  assert.deepEqual(sc2AttackVisual("Zergling"), { kind: "contact", range: 3.5 });
+  assert.deepEqual(sc2AttackVisual("SiegeTankSieged"), { kind: "shell", range: 14 });
+  assert.equal(sc2AttackVisual("VoidRay").kind, "beam");
+  assert.equal(sc2AttackVisual("Marauder").kind, "missile");
+  assert.equal(sc2AttackVisual("Marine").kind, "rifle");
 });

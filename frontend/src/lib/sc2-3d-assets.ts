@@ -16,6 +16,8 @@ export type Sc2ModelAsset = {
   detail?: "blades" | "cannon" | "claws" | "engines" | "energy" | "wings";
 };
 
+export type Sc2AttackVisual = "bio" | "beam" | "contact" | "flame" | "missile" | "rifle" | "shell";
+
 const terran: Record<string, Sc2ModelAsset> = {
   scv: { shape: "walker", footprint: "tiny", facing: true, detail: "claws" },
   mule: { shape: "walker", footprint: "small", facing: true, detail: "claws" },
@@ -168,4 +170,15 @@ export function sc2ModelAsset(type: string): Sc2ModelAsset {
 export function hasDedicatedSc2Model(type: string) {
   const key = canonicalSc2Type(type);
   return Boolean(terran[key] || zerg[key] || protoss[key] || shared[key]);
+}
+
+export function sc2AttackVisual(type: string): { kind: Sc2AttackVisual; range: number } {
+  const key = canonicalSc2Type(type);
+  if (/zergling|baneling|broodling|ultralisk|zealot|darktemplar|helliontank/.test(key)) return { kind: "contact", range: 3.5 };
+  if (/hellion/.test(key)) return { kind: "flame", range: 5.5 };
+  if (/siegetank|liberator|colossus|disruptor|lurker/.test(key)) return { kind: "shell", range: 14 };
+  if (/voidray|archon|sentry|hightemplar|oracle|mothership/.test(key)) return { kind: "beam", range: 10 };
+  if (/roach|ravager|hydralisk|mutalisk|corruptor|broodlord|queen|infestor|viper/.test(key)) return { kind: "bio", range: 8 };
+  if (/marauder|stalker|thor|viking|phoenix|cyclone|tempest|carrier|battlecruiser/.test(key)) return { kind: "missile", range: 11 };
+  return { kind: "rifle", range: 7 };
 }

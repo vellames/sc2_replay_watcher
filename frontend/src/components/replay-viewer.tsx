@@ -71,6 +71,7 @@ import { TerrainLayer } from "@/components/terrain-layer";
 import { TerrainLayer3D } from "@/components/terrain-layer-3d";
 import { createIsometricProjection, playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
+import { sc2AttackVisual } from "@/lib/sc2-3d-assets";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayProduction, ReplayUnit } from "@/lib/types";
 
@@ -637,25 +638,22 @@ export function ReplayViewer() {
   const activeEngagements = visibleEngagements.filter((engagement) => currentTime >= engagement.start && currentTime <= engagement.end);
   const combatLinks = activeEngagements.flatMap((engagement) => {
     const nearby = renderedUnits.filter((unit) => unit.isArmy && (unit.x - engagement.x) ** 2 + (unit.y - engagement.y) ** 2 <= 34 ** 2);
-    const links: Array<{ key: string; source: ReplayUnit; target: ReplayUnit; color: string; delay: number; kind: "contact" | "ranged" | "artillery" | "energy" }> = [];
+    const links: Array<{ key: string; source: ReplayUnit; target: ReplayUnit; color: string; delay: number; kind: ReturnType<typeof sc2AttackVisual>["kind"] }> = [];
     for (const source of nearby) {
+      const attack = sc2AttackVisual(source.type);
       const target = nearby
         .filter((candidate) => candidate.ownerId !== source.ownerId)
         .map((candidate) => ({ candidate, distance: (candidate.x - source.x) ** 2 + (candidate.y - source.y) ** 2 }))
-        .filter((item) => item.distance <= 17 ** 2)
+        .filter((item) => item.distance <= attack.range ** 2)
         .sort((left, right) => left.distance - right.distance)[0]?.candidate;
       if (!target || source.id > target.id) continue;
-      const iconKey = sc2IconKey(source.type);
-      const kind = iconKey === "melee" || iconKey === "swarm" ? "contact"
-        : iconKey === "siege" || iconKey === "explosive" || iconKey === "capital" ? "artillery"
-          : iconKey === "caster" || iconKey === "energy" ? "energy" : "ranged";
       links.push({
         key: `${engagement.id}-${source.id}-${target.id}`,
         source,
         target,
         color: playerById.get(source.ownerId)?.color ?? "#ffbd76",
         delay: -((source.id + target.id) % 7) * .09,
-        kind,
+        kind: attack.kind,
       });
       if (links.length >= 12) break;
     }
