@@ -159,10 +159,16 @@ export function TerrainLayer({ geometry }: { geometry: TerrainGeometry }) {
     const mapWidth = geometry.width ?? 0;
     const mapHeight = geometry.height ?? 0;
     if (!canvas || !gridWidth || !gridHeight || !mapWidth || !mapHeight) return;
+    const minX = geometry.playableMinX ?? 0;
+    const maxX = geometry.playableMaxX ?? mapWidth;
+    const minY = geometry.playableMinY ?? 0;
+    const maxY = geometry.playableMaxY ?? mapHeight;
+    const renderWidth = Math.max(1, maxX - minX);
+    const renderHeight = Math.max(1, maxY - minY);
 
     const scale = 4;
-    canvas.width = mapWidth * scale;
-    canvas.height = mapHeight * scale;
+    canvas.width = renderWidth * scale;
+    canvas.height = renderHeight * scale;
     const context = canvas.getContext("2d");
     if (!context) return;
 
@@ -180,8 +186,8 @@ export function TerrainLayer({ geometry }: { geometry: TerrainGeometry }) {
     for (const boundary of traceCliffBoundaries(levels, gridWidth, gridHeight)) {
       if (boundary.length < 2) continue;
       context.beginPath();
-      context.moveTo(boundary[0][0] * cliffScaleX * scale, (mapHeight - boundary[0][1] * cliffScaleY) * scale);
-      for (const [x, y] of boundary.slice(1)) context.lineTo(x * cliffScaleX * scale, (mapHeight - y * cliffScaleY) * scale);
+      context.moveTo((boundary[0][0] * cliffScaleX - minX) * scale, (maxY - boundary[0][1] * cliffScaleY) * scale);
+      for (const [x, y] of boundary.slice(1)) context.lineTo((x * cliffScaleX - minX) * scale, (maxY - y * cliffScaleY) * scale);
       context.stroke();
     }
 
@@ -190,14 +196,14 @@ export function TerrainLayer({ geometry }: { geometry: TerrainGeometry }) {
     for (const boundary of traceWalkableBoundaries(walkable, mapWidth, mapHeight)) {
       if (boundary.length < 2) continue;
       context.beginPath();
-      context.moveTo(boundary[0][0] * scale, (mapHeight - boundary[0][1]) * scale);
-      for (const [x, y] of boundary.slice(1)) context.lineTo(x * scale, (mapHeight - y) * scale);
+      context.moveTo((boundary[0][0] - minX) * scale, (maxY - boundary[0][1]) * scale);
+      for (const [x, y] of boundary.slice(1)) context.lineTo((x - minX) * scale, (maxY - y) * scale);
       context.stroke();
     }
 
     for (const ramp of geometry.ramps) {
-      const x = ramp.x * scale;
-      const y = (mapHeight - ramp.y) * scale;
+      const x = (ramp.x - minX) * scale;
+      const y = (maxY - ramp.y) * scale;
       const angle = ramp.direction * Math.PI / 4;
       const length = 5 * scale;
       context.save();
@@ -213,8 +219,8 @@ export function TerrainLayer({ geometry }: { geometry: TerrainGeometry }) {
     }
 
     for (const item of geometry.staticObjects) {
-      const x = item.x * scale;
-      const y = (mapHeight - item.y) * scale;
+      const x = (item.x - minX) * scale;
+      const y = (maxY - item.y) * scale;
       context.save();
       context.translate(x, y);
       context.rotate(-item.rotation);

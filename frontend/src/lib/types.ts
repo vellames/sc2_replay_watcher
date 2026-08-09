@@ -180,6 +180,10 @@ export type ReplayData = {
     source: "s2ma" | "procedural";
     width: number | null;
     height: number | null;
+    playableMinX: number | null;
+    playableMaxX: number | null;
+    playableMinY: number | null;
+    playableMaxY: number | null;
     gridWidth: number | null;
     gridHeight: number | null;
     cliffRle: number[];

@@ -404,12 +404,22 @@ export function ReplayViewer() {
     );
   }
 
-  const bounds = replay.mapBounds;
   const hasMapGeometry = replay.mapGeometry?.source === "s2ma";
   const mapMode = hasMapGeometry ? "geometric" : "procedural";
-  const mapAspect = (replay.mapGeometry?.width ?? bounds.maxX - bounds.minX) / (replay.mapGeometry?.height ?? bounds.maxY - bounds.minY);
+  const hasPlayableBounds = hasMapGeometry
+    && replay.mapGeometry.playableMinX != null
+    && replay.mapGeometry.playableMaxX != null
+    && replay.mapGeometry.playableMinY != null
+    && replay.mapGeometry.playableMaxY != null;
+  const bounds = hasPlayableBounds ? {
+    minX: replay.mapGeometry.playableMinX as number,
+    maxX: replay.mapGeometry.playableMaxX as number,
+    minY: replay.mapGeometry.playableMinY as number,
+    maxY: replay.mapGeometry.playableMaxY as number,
+  } : replay.mapBounds;
   const width = Math.max(1, bounds.maxX - bounds.minX);
   const height = Math.max(1, bounds.maxY - bounds.minY);
+  const mapAspect = width / height;
   const playerById = new Map(replay.players.map((player) => [player.id, player]));
   const playerOneStats = replay.players[0] ? currentFrame?.stats[String(replay.players[0].id)] : undefined;
   const playerTwoStats = replay.players[1] ? currentFrame?.stats[String(replay.players[1].id)] : undefined;
