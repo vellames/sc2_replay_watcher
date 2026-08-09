@@ -20,6 +20,7 @@ const entities: Record<string, LocalizedName> = {
   mutalisk: { pt: "Mutalisca", en: "Mutalisk" }, corruptor: { pt: "Corruptor", en: "Corruptor" }, broodlord: { pt: "Senhor das Castas", en: "Brood Lord" },
   viper: { pt: "Víbor", en: "Viper" }, overlord: { pt: "Suserano", en: "Overlord" }, overseer: { pt: "Supervisor", en: "Overseer" },
   changeling: { pt: "Transmorfo", en: "Changeling" }, broodling: { pt: "Filhote", en: "Broodling" }, larva: { pt: "Larva", en: "Larva" },
+  overlordtransport: { pt: "Suserano de Transporte", en: "Transport Overlord" }, transportoverlord: { pt: "Suserano de Transporte", en: "Transport Overlord" },
 
   // Protoss units
   probe: { pt: "Sonda", en: "Probe" }, zealot: { pt: "Fanático", en: "Zealot" }, stalker: { pt: "Perseguidor", en: "Stalker" },
@@ -40,6 +41,7 @@ const entities: Record<string, LocalizedName> = {
   barrackstechlab: { pt: "Laboratório do Quartel", en: "Barracks Tech Lab" }, barracksreactor: { pt: "Reator do Quartel", en: "Barracks Reactor" },
   factorytechlab: { pt: "Laboratório da Fábrica", en: "Factory Tech Lab" }, factoryreactor: { pt: "Reator da Fábrica", en: "Factory Reactor" },
   starporttechlab: { pt: "Laboratório do Espaçoporto", en: "Starport Tech Lab" }, starportreactor: { pt: "Reator do Espaçoporto", en: "Starport Reactor" },
+  techlab: { pt: "Laboratório Tecnológico", en: "Tech Lab" }, reactor: { pt: "Reator", en: "Reactor" },
 
   // Zerg structures
   hatchery: { pt: "Incubadora", en: "Hatchery" }, lair: { pt: "Covil", en: "Lair" }, hive: { pt: "Colmeia", en: "Hive" }, extractor: { pt: "Extrator", en: "Extractor" },
@@ -56,6 +58,10 @@ const entities: Record<string, LocalizedName> = {
   roboticsfacility: { pt: "Instalação Robótica", en: "Robotics Facility" }, roboticsbay: { pt: "Baía Robótica", en: "Robotics Bay" }, stargate: { pt: "Portal Estelar", en: "Stargate" },
   fleetbeacon: { pt: "Sinalizador da Frota", en: "Fleet Beacon" }, photoncannon: { pt: "Canhão de Fótons", en: "Photon Cannon" }, shieldbattery: { pt: "Bateria de Escudo", en: "Shield Battery" },
 
+  // Neutral resources
+  mineralfield: { pt: "Campo Mineral", en: "Mineral Field" }, labmineralfield: { pt: "Campo Mineral", en: "Mineral Field" },
+  vespengeyser: { pt: "Gêiser de Vespeno", en: "Vespene Geyser" }, spaceplatformgeyser: { pt: "Gêiser de Vespeno", en: "Vespene Geyser" },
+
   // Common upgrades and abilities
   stimpack: { pt: "Estimulantes", en: "Stimpack" }, combatshield: { pt: "Escudo de Combate", en: "Combat Shield" }, concussiveshells: { pt: "Projéteis Concussivos", en: "Concussive Shells" },
   siegetech: { pt: "Modo de Cerco", en: "Siege Mode" }, warpgateresearch: { pt: "Portal de Dobra", en: "Warp Gate" }, blinktech: { pt: "Translação", en: "Blink" },
@@ -69,6 +75,9 @@ const entities: Record<string, LocalizedName> = {
   overlordspeed: { pt: "Carapaça Pneumatizada", en: "Pneumatized Carapace" }, hisecautotracking: { pt: "Rastreamento de Alta Segurança", en: "Hi-Sec Auto Tracking" },
   terranbuildingarmor: { pt: "Armadura de Construções Terranas", en: "Terran Building Armor" }, liberatoragrangeupgrade: { pt: "Balística Avançada", en: "Advanced Ballistics" },
   personalcloaking: { pt: "Camuflagem Pessoal", en: "Personal Cloaking" }, medivaccaduceusreactor: { pt: "Reator Caduceu", en: "Caduceus Reactor" },
+  adrenalglands: { pt: "Glândulas Adrenais", en: "Adrenal Glands" }, metabolicboost: { pt: "Aprimoramento Metabólico", en: "Metabolic Boost" },
+  pneumatizedcarapace: { pt: "Carapaça Pneumatizada", en: "Pneumatized Carapace" }, cloakingfield: { pt: "Camuflagem de Banshee", en: "Banshee Cloak" },
+  behemothreactor: { pt: "Reator Behemoth", en: "Behemoth Reactor" },
   main: { pt: "Exército principal", en: "Main army" }, detachment: { pt: "Destacamento", en: "Detachment" },
   engagement: { pt: "Confronto", en: "Engagement" }, supplyblock: { pt: "Bloqueio de suprimento", en: "Supply block" },
 };
@@ -84,6 +93,8 @@ const genericFamilies: Array<[RegExp, LocalizedName]> = [
   [/zerggroundarmorslevel(\d)/, { pt: "Carapaça Terrestre Zerg", en: "Zerg Ground Carapace" }],
   [/zergflyerweaponslevel(\d)/, { pt: "Ataques Aéreos Zerg", en: "Zerg Flyer Attacks" }],
   [/zergflyerarmorslevel(\d)/, { pt: "Carapaça Aérea Zerg", en: "Zerg Flyer Carapace" }],
+  [/flyerattacks(\d)/, { pt: "Ataques Aéreos Zerg", en: "Zerg Flyer Attacks" }],
+  [/flyercarapace(\d)/, { pt: "Carapaça Aérea Zerg", en: "Zerg Flyer Carapace" }],
   [/protossgroundweaponslevel(\d)/, { pt: "Armas Terrestres Protoss", en: "Protoss Ground Weapons" }],
   [/protossgroundarmorslevel(\d)/, { pt: "Armadura Terrestre Protoss", en: "Protoss Ground Armor" }],
   [/protossshieldslevel(\d)/, { pt: "Escudos Protoss", en: "Protoss Shields" }],
@@ -104,6 +115,16 @@ export function sc2Name(value: string, locale: Locale) {
   const direct = entities[key];
   if (direct) return direct[locale];
 
+  const variantKey = key
+    .replace(/^battlehellion$/, "helliontank")
+    .replace(/^viking$/, "vikingfighter")
+    .replace(/^thorap$/, "thor")
+    .replace(/^creeptumorqueen$/, "creeptumor")
+    .replace(/(?:burrowed|flying|uprooted|siegemode)$/, "")
+    .replace(/\d+$/, "");
+  const base = entities[variantKey];
+  if (base) return base[locale];
+
   for (const [pattern, name] of genericFamilies) {
     const match = key.match(pattern);
     if (match) return `${name[locale]} ${match[1]}`;
@@ -113,7 +134,8 @@ export function sc2Name(value: string, locale: Locale) {
 
 export function hasLocalizedSc2Name(value: string) {
   const key = normalizeSc2Type(value);
-  return Boolean(entities[key] || genericFamilies.some(([pattern]) => pattern.test(key)));
+  const variantKey = key.replace(/^battlehellion$/, "helliontank").replace(/^viking$/, "vikingfighter").replace(/^thorap$/, "thor").replace(/^creeptumorqueen$/, "creeptumor").replace(/(?:burrowed|flying|uprooted|siegemode)$/, "").replace(/\d+$/, "");
+  return Boolean(entities[key] || entities[variantKey] || genericFamilies.some(([pattern]) => pattern.test(key)));
 }
 
 const categories: Record<string, LocalizedName> = {
