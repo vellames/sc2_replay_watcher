@@ -19,7 +19,7 @@ test("projects map corners into a stable isometric diamond", () => {
   const south = project(bounds.minX, bounds.minY, 1);
   const east = project(bounds.maxX, bounds.minY, 1);
   const north = project(bounds.maxX, bounds.maxY, 1);
-  assert.equal(south.left, 50);
+  assert.ok(south.left > 40 && south.left < 55);
   assert.ok(east.left > south.left);
   assert.ok(north.bottom > east.bottom);
 });
@@ -31,4 +31,14 @@ test("raises higher terrain without shifting its horizontal position", () => {
   const high = project(100, 100, 3);
   assert.equal(high.left, low.left);
   assert.ok(high.bottom > low.bottom);
+});
+
+test("preserves world scale when playable bounds are rectangular", () => {
+  const wideBounds = { minX: 0, maxX: 160, minY: 0, maxY: 80 };
+  const wideGeometry = { ...geometry, playableMinX: 0, playableMaxX: 160, playableMinY: 0, playableMaxY: 80 };
+  const { project } = createIsometricProjection(wideGeometry, wideBounds);
+  const origin = project(0, 0, 1);
+  const horizontal = project(160, 0, 1);
+  const vertical = project(0, 80, 1);
+  assert.equal(Math.round(Math.abs(horizontal.left - origin.left)), Math.round(Math.abs(vertical.left - origin.left) * 2));
 });

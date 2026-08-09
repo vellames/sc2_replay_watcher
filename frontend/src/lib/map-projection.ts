@@ -47,9 +47,12 @@ export function createIsometricProjection(geometry: MapGeometry, bounds: MapBoun
   const levelSpan = Math.max(1, maxLevel - minLevel);
   const width = Math.max(1, bounds.maxX - bounds.minX);
   const height = Math.max(1, bounds.maxY - bounds.minY);
+  const worldSpan = Math.max(width, height);
+  const horizontalPadding = (worldSpan - width) / (2 * worldSpan);
+  const verticalPadding = (worldSpan - height) / (2 * worldSpan);
   const project = (x: number, y: number, level = sampleLevel(x, y)) => {
-    const normalizedX = (x - bounds.minX) / width;
-    const normalizedY = (y - bounds.minY) / height;
+    const normalizedX = horizontalPadding + (x - bounds.minX) / worldSpan;
+    const normalizedY = verticalPadding + (y - bounds.minY) / worldSpan;
     const elevation = (level - minLevel) / levelSpan;
     return {
       left: 50 + (normalizedX - normalizedY) * 46,
