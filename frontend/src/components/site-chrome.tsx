@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Code2, Globe2, Info, Swords } from "lucide-react";
+import { Globe2, Info, Swords } from "lucide-react";
 
 import { useI18n } from "@/components/i18n";
 
@@ -39,7 +39,6 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
         <span className={`status ${engine.status}`} title={engine.version ? `${t("header.engineVersion")} ${engine.version}` : undefined}><i /> {engine.status === "online" ? t("header.parserOnline") : engine.status === "offline" ? t("header.parserOffline") : t("header.parserChecking")}{engine.version ? ` · v${engine.version}` : ""}</span>
         <div className="locale-switch" aria-label="Language"><Globe2 size={14} /><button className={locale === "pt" ? "active" : ""} onClick={() => setLocale("pt")} aria-pressed={locale === "pt"}>PT</button><span>/</span><button className={locale === "en" ? "active" : ""} onClick={() => setLocale("en")} aria-pressed={locale === "en"}>EN</button></div>
         <a href={`${API_URL}/docs`} target="_blank" rel="noreferrer"><Info size={17} /> {t("header.api")}</a>
-        <a href="https://github.com" target="_blank" rel="noreferrer"><Code2 size={18} /> {t("header.github")}</a>
       </nav>
     </header>
   );
