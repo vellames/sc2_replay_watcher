@@ -76,6 +76,8 @@ def test_repeated_upload_reuses_compiled_payload(monkeypatch) -> None:
 
     assert first.status_code == second.status_code == 200
     assert compiled == 1
+    assert first.headers["X-Replay-Cache"] == "MISS"
+    assert second.headers["X-Replay-Cache"] == "HIT"
     assert second.json()["meta"]["filename"] == "renamed.SC2Replay"
 
 

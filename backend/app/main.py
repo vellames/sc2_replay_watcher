@@ -9,7 +9,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Annotated
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -90,7 +90,7 @@ def demo_replay() -> dict:
 
 
 @app.post("/api/replays/parse")
-async def upload_replay(file: Annotated[UploadFile, File()]) -> dict:
+async def upload_replay(response: Response, file: Annotated[UploadFile, File()]) -> dict:
     filename = file.filename or "replay.SC2Replay"
     if not filename.lower().endswith(".sc2replay"):
         raise HTTPException(
@@ -106,6 +106,7 @@ async def upload_replay(file: Annotated[UploadFile, File()]) -> dict:
     digest = sha256(content).hexdigest()
     cached = _cached_upload(digest, filename)
     if cached is not None:
+        response.headers["X-Replay-Cache"] = "HIT"
         return cached
 
     temp_path: Path | None = None
@@ -117,6 +118,7 @@ async def upload_replay(file: Annotated[UploadFile, File()]) -> dict:
             temp_path = Path(temporary.name)
         payload = await run_in_threadpool(parse_replay, temp_path, filename=filename)
         _remember_upload(digest, payload)
+        response.headers["X-Replay-Cache"] = "MISS"
         return payload
     except HTTPException:
         raise
