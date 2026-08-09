@@ -147,7 +147,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .macro-metrics small { color: #546d7e; font: 600 8px var(--font-geist-mono); letter-spacing: .09em; text-transform: uppercase; }
 .macro-metrics .metric-help-title { min-height: 18px; display: flex; align-items: center; justify-content: space-between; }
 .macro-metrics .info-tip-card small { color: #78909f; font: 500 9px/1.45 var(--font-geist-sans); letter-spacing: 0; text-transform: none; }
-.macro-metrics strong { min-width: 0; margin: 4px 0 3px; display: flex; align-items: center; color: #c4d6e1; font: 600 12px var(--font-geist-mono); }
+.macro-metrics strong { min-width: 0; margin: 4px 0 3px; display: flex; align-items: center; gap: 3px; color: #c4d6e1; font: 600 12px var(--font-geist-mono); }
 .macro-metrics strong em { color: #607687; font-size: 7px; font-style: normal; font-weight: 500; }
 .macro-metrics > div > span { min-width: 0; display: flex; align-items: center; gap: 3px; color: #688091; font: 500 8px var(--font-geist-mono); white-space: nowrap; }
 .macro-metrics .metric-detail > span { min-width: 0; display: flex; align-items: center; gap: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
