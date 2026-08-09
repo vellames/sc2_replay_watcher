@@ -256,6 +256,7 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .map-toolbar button.active { color: #9edcf3; border-color: rgba(86, 192, 231, .13); background: rgba(47, 146, 184, .09); }
 .map-toolbar .camera-player-toggle { color: color-mix(in srgb, var(--camera-player-color) 45%, #405866); }
 .map-toolbar .camera-player-toggle.active { color: var(--camera-player-color); border-color: color-mix(in srgb, var(--camera-player-color) 20%, transparent); background: color-mix(in srgb, var(--camera-player-color) 7%, transparent); }
+.map-toolbar > .info-tip { width: 26px; height: 26px; flex-basis: 26px; border-radius: 3px; }
 .map-toolbar > i { width: 1px; height: 18px; margin: 0 2px; background: var(--line); }
 .map-toolbar > b { min-width: 33px; color: #728999; text-align: center; font: 500 7px var(--font-geist-mono); }
 .general-state { position: absolute; left: 50%; bottom: 11px; z-index: 10; min-height: 31px; padding: 0 10px; display: flex; align-items: center; gap: 8px; transform: translateX(-50%); color: #718899; border: 1px solid rgba(110, 177, 208, .14); border-radius: 5px; background: rgba(6, 14, 21, .86); backdrop-filter: blur(12px); box-shadow: 0 9px 26px rgba(0,0,0,.25); white-space: nowrap; }

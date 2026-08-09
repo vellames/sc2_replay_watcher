@@ -992,6 +992,7 @@ export function ReplayViewer() {
                   const active = cameraPlayers[player.id] !== false;
                   return <button key={`camera-player-${player.id}`} className={`camera-player-toggle ${active ? "active" : ""}`} aria-pressed={active} onClick={() => setCameraPlayers((current) => ({ ...current, [player.id]: !active }))} title={`${t("watcher.cameraPlayer")} · ${player.name}`} style={{ "--camera-player-color": player.color } as React.CSSProperties}><Scan size={11} /><span>P{index + 1}</span></button>;
                 })}
+                <InfoTip label={t("watcher.iconLegend")}>{t("watcher.help.iconLegend")}</InfoTip>
                 <i />
                 <button onClick={() => setZoom((value) => Math.max(0.7, value - 0.25))} aria-label={t("watcher.zoomOut")}><Minus size={13} /></button>
                 <b>{Math.round(zoom * 100)}%</b>
