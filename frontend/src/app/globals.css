@@ -169,8 +169,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .tech-state { margin: 9px 0 2px; padding: 8px 0 9px; border-top: 1px solid rgba(116, 167, 195, .08); }
 .tech-state > span { display: flex; align-items: center; gap: 5px; color: #607989; font: 650 8px var(--font-geist-mono); letter-spacing: .07em; }
 .tech-state > span svg { color: #9186d4; }
-.tech-state > div { margin-top: 6px; display: flex; gap: 4px; overflow: hidden; }
-.tech-state b { min-width: 0; padding: 3px 5px; overflow: hidden; display: flex; align-items: center; gap: 3px; color: #9c96c9; border: 1px solid rgba(145, 134, 212, .14); border-radius: 2px; background: rgba(112, 96, 180, .06); font: 550 7px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
+.tech-state > div { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.tech-state b { min-width: 0; max-width: 100%; flex: 1 1 calc(50% - 2px); padding: 3px 5px; overflow: hidden; display: flex; align-items: center; gap: 3px; color: #9c96c9; border: 1px solid rgba(145, 134, 212, .14); border-radius: 2px; background: rgba(112, 96, 180, .06); font: 550 7px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
 .build-path { margin: 8px 0 10px; padding: 8px 0; border-top: 1px solid rgba(116, 167, 195, .08); border-bottom: 1px solid rgba(116, 167, 195, .08); }
 .build-path > span { margin-bottom: 5px; display: flex; align-items: center; gap: 5px; color: #607989; font: 650 8px var(--font-geist-mono); letter-spacing: .07em; }
 .build-path > div { min-height: 22px; display: grid; grid-template-columns: 31px minmax(0, 1fr) auto; align-items: center; gap: 5px; color: #667d8d; font: 550 8px var(--font-geist-mono); }
