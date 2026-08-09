@@ -21,7 +21,7 @@ export function playableBounds(geometry: MapGeometry, fallback: MapBounds): MapB
     : fallback;
 }
 
-export function createIsometricProjection(geometry: MapGeometry, bounds: MapBounds) {
+export function createIsometricProjection(geometry: MapGeometry, bounds: MapBounds, quarterTurns = 0) {
   const gridWidth = geometry.gridWidth ?? 0;
   const gridHeight = geometry.gridHeight ?? 0;
   const mapWidth = geometry.width ?? 0;
@@ -51,8 +51,11 @@ export function createIsometricProjection(geometry: MapGeometry, bounds: MapBoun
   const horizontalPadding = (worldSpan - width) / (2 * worldSpan);
   const verticalPadding = (worldSpan - height) / (2 * worldSpan);
   const project = (x: number, y: number, level = sampleLevel(x, y)) => {
-    const normalizedX = horizontalPadding + (x - bounds.minX) / worldSpan;
-    const normalizedY = verticalPadding + (y - bounds.minY) / worldSpan;
+    const baseX = horizontalPadding + (x - bounds.minX) / worldSpan;
+    const baseY = verticalPadding + (y - bounds.minY) / worldSpan;
+    const rotation = ((quarterTurns % 4) + 4) % 4;
+    const normalizedX = rotation === 1 ? 1 - baseY : rotation === 2 ? 1 - baseX : rotation === 3 ? baseY : baseX;
+    const normalizedY = rotation === 1 ? baseX : rotation === 2 ? 1 - baseY : rotation === 3 ? 1 - baseX : baseY;
     const elevation = (level - minLevel) / levelSpan;
     return {
       left: 50 + (normalizedX - normalizedY) * 46,

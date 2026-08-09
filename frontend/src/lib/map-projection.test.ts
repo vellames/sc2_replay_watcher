@@ -42,3 +42,11 @@ test("preserves world scale when playable bounds are rectangular", () => {
   const vertical = project(0, 80, 1);
   assert.equal(Math.round(Math.abs(horizontal.left - origin.left)), Math.round(Math.abs(vertical.left - origin.left) * 2));
 });
+
+test("rotates every world point through the same isometric projection", () => {
+  const bounds = playableBounds(geometry, { minX: 0, maxX: 200, minY: 0, maxY: 200 });
+  const original = createIsometricProjection(geometry, bounds, 0).project(bounds.maxX, bounds.minY, 1);
+  const rotated = createIsometricProjection(geometry, bounds, 1).project(bounds.maxX, bounds.minY, 1);
+  assert.notDeepEqual(rotated, original);
+  assert.ok(rotated.bottom > original.bottom);
+});

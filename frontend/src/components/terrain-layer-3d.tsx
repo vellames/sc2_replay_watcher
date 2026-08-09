@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { createIsometricProjection, decodeMapRle, type MapBounds, type MapGeometry } from "@/lib/map-projection";
 
-export function TerrainLayer3D({ geometry, bounds }: { geometry: MapGeometry; bounds: MapBounds }) {
+export function TerrainLayer3D({ geometry, bounds, rotation = 0 }: { geometry: MapGeometry; bounds: MapBounds; rotation?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export function TerrainLayer3D({ geometry, bounds }: { geometry: MapGeometry; bo
     canvas.height = 1000;
     const context = canvas.getContext("2d");
     if (!context) return;
-    const projection = createIsometricProjection(geometry, bounds);
+    const projection = createIsometricProjection(geometry, bounds, rotation);
     const walkable = decodeMapRle(geometry.walkableRle, mapWidth * mapHeight);
     const scalePoint = (point: { left: number; bottom: number }) => ({ x: point.left * 10, y: (100 - point.bottom) * 10 });
     const isWalkable = (x: number, y: number) => {
@@ -82,7 +82,7 @@ export function TerrainLayer3D({ geometry, bounds }: { geometry: MapGeometry; bo
     context.strokeStyle = "rgba(103, 190, 220, .34)";
     context.lineWidth = 1.5;
     context.stroke();
-  }, [geometry, bounds]);
+  }, [geometry, bounds, rotation]);
 
   return <canvas ref={canvasRef} className="terrain-layer terrain-layer-3d" aria-hidden="true" />;
 }
