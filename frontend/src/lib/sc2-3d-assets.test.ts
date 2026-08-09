@@ -31,3 +31,13 @@ test("covers the distinct Zerg lifecycle and organic architecture", () => {
   assert.equal(sc2ModelAsset("Spire").shape, "zerg-spire");
   assert.equal(sc2ModelAsset("CreepTumorQueen").shape, "creep");
 });
+
+test("covers Protoss energy, walkers and capital ships", () => {
+  assert.equal(sc2ModelAsset("Zealot").detail, "blades");
+  assert.equal(sc2ModelAsset("Stalker").shape, "quadruped");
+  assert.equal(sc2ModelAsset("Colossus").footprint, "massive");
+  assert.equal(sc2ModelAsset("Carrier").shape, "capital");
+  assert.equal(sc2ModelAsset("Nexus").shape, "protoss-nexus");
+  assert.equal(sc2ModelAsset("Pylon").shape, "protoss-pylon");
+  assert.deepEqual(sc2ModelAsset("WarpPrismPhasing"), sc2ModelAsset("WarpPrism"));
+});

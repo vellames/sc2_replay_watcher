@@ -109,6 +109,48 @@ const zerg: Record<string, Sc2ModelAsset> = {
   creeptumor: { shape: "creep", footprint: "tiny", detail: "energy" },
 };
 
+const protoss: Record<string, Sc2ModelAsset> = {
+  probe: { shape: "orb", footprint: "tiny", elevation: "hover", facing: true, detail: "energy" },
+  zealot: { shape: "humanoid", footprint: "small", facing: true, detail: "blades" },
+  stalker: { shape: "quadruped", footprint: "small", elevation: "hover", facing: true, detail: "energy" },
+  sentry: { shape: "orb", footprint: "small", elevation: "hover", facing: true, detail: "energy" },
+  adept: { shape: "humanoid", footprint: "small", facing: true, detail: "blades" },
+  hightemplar: { shape: "humanoid", footprint: "small", elevation: "hover", facing: true, detail: "energy" },
+  darktemplar: { shape: "humanoid", footprint: "small", facing: true, detail: "blades" },
+  archon: { shape: "orb", footprint: "large", elevation: "hover", detail: "energy" },
+  observer: { shape: "fighter", footprint: "tiny", elevation: "air", facing: true, detail: "energy" },
+  warpprism: { shape: "gunship", footprint: "medium", elevation: "air", facing: true, detail: "energy" },
+  immortal: { shape: "walker", footprint: "medium", elevation: "hover", facing: true, detail: "cannon" },
+  colossus: { shape: "walker", footprint: "massive", facing: true, detail: "blades" },
+  disruptor: { shape: "orb", footprint: "medium", elevation: "hover", facing: true, detail: "energy" },
+  phoenix: { shape: "fighter", footprint: "medium", elevation: "air", facing: true, detail: "wings" },
+  oracle: { shape: "fighter", footprint: "medium", elevation: "air", facing: true, detail: "energy" },
+  voidray: { shape: "gunship", footprint: "large", elevation: "air", facing: true, detail: "energy" },
+  tempest: { shape: "capital", footprint: "large", elevation: "high-air", facing: true, detail: "cannon" },
+  carrier: { shape: "capital", footprint: "massive", elevation: "high-air", facing: true, detail: "wings" },
+  mothership: { shape: "capital", footprint: "massive", elevation: "high-air", facing: true, detail: "energy" },
+  interceptor: { shape: "fighter", footprint: "tiny", elevation: "air", facing: true, detail: "wings" },
+  adeptphaseshift: { shape: "humanoid", footprint: "small", elevation: "hover", detail: "energy" },
+  disruptorphased: { shape: "orb", footprint: "small", elevation: "hover", detail: "energy" },
+
+  nexus: { shape: "protoss-nexus", footprint: "massive", detail: "energy" },
+  pylon: { shape: "protoss-pylon", footprint: "medium", detail: "energy" },
+  assimilator: { shape: "gas", footprint: "medium", detail: "energy" },
+  gateway: { shape: "protoss-gateway", footprint: "large", detail: "energy" },
+  warpgate: { shape: "protoss-gateway", footprint: "large", detail: "wings" },
+  forge: { shape: "protoss-tech", footprint: "medium", detail: "energy" },
+  cyberneticscore: { shape: "protoss-tech", footprint: "large", detail: "energy" },
+  twilightcouncil: { shape: "protoss-tech", footprint: "large", detail: "blades" },
+  templararchive: { shape: "protoss-tech", footprint: "large", detail: "energy" },
+  darkshrine: { shape: "protoss-tech", footprint: "large", detail: "blades" },
+  roboticsfacility: { shape: "protoss-gateway", footprint: "large", detail: "engines" },
+  roboticsbay: { shape: "protoss-tech", footprint: "large", detail: "engines" },
+  stargate: { shape: "protoss-gateway", footprint: "large", detail: "wings" },
+  fleetbeacon: { shape: "protoss-tech", footprint: "massive", detail: "wings" },
+  photoncannon: { shape: "protoss-defense", footprint: "medium", detail: "cannon" },
+  shieldbattery: { shape: "protoss-defense", footprint: "medium", detail: "energy" },
+};
+
 const shared: Record<string, Sc2ModelAsset> = {
   mineralfield: { shape: "mineral", footprint: "tiny" },
   labmineralfield: { shape: "mineral", footprint: "tiny" },
@@ -120,10 +162,10 @@ const fallback: Sc2ModelAsset = { shape: "fallback", footprint: "small", facing:
 
 export function sc2ModelAsset(type: string): Sc2ModelAsset {
   const key = canonicalSc2Type(type);
-  return terran[key] ?? zerg[key] ?? shared[key] ?? fallback;
+  return terran[key] ?? zerg[key] ?? protoss[key] ?? shared[key] ?? fallback;
 }
 
 export function hasDedicatedSc2Model(type: string) {
   const key = canonicalSc2Type(type);
-  return Boolean(terran[key] || zerg[key] || shared[key]);
+  return Boolean(terran[key] || zerg[key] || protoss[key] || shared[key]);
 }
