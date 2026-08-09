@@ -150,6 +150,11 @@ export function ReplayViewer() {
     cameras: true,
   });
   const drag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const currentTimeRef = useRef(0);
+
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+  }, [currentTime]);
 
   const { currentFrame, nextFrame, frameProgress } = useMemo(() => {
     if (!replay?.frames.length) return { currentFrame: null, nextFrame: null, frameProgress: 0 };
@@ -244,6 +249,17 @@ export function ReplayViewer() {
       const seekStep = event.shiftKey ? 1 : 5;
       if (event.code === "ArrowLeft") setCurrentTime((value) => Math.max(0, value - seekStep));
       if (event.code === "ArrowRight") setCurrentTime((value) => Math.min(replay.meta.duration, value + seekStep));
+      if (event.code === "BracketLeft" || event.code === "BracketRight") {
+        const events = replay.timeline.filter((item) => item.type !== "movement" && item.time > 0);
+        const target = event.code === "BracketLeft"
+          ? [...events].reverse().find((item) => item.time < currentTimeRef.current - .5)
+          : events.find((item) => item.time > currentTimeRef.current + .5);
+        if (target) {
+          setCurrentTime(target.time);
+          setPlaying(false);
+          if (target.engagementId) setSelection({ kind: "engagement", engagementId: target.engagementId });
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -857,8 +873,8 @@ export function ReplayViewer() {
             <button className="icon-button" onClick={() => { setCurrentTime(0); setPlaying(false); }} aria-label={t("watcher.restart")}><RotateCcw size={17} /></button>
             <button className="play-button" onClick={() => setPlaying((value) => !value)} aria-label={playing ? t("watcher.pause") : t("watcher.play")}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
             <div className="event-nav">
-              <button onClick={() => seekRelevantEvent(-1)} aria-label={t("watcher.previousEvent")} title={t("watcher.previousEvent")}><SkipBack size={13} /></button>
-              <button onClick={() => seekRelevantEvent(1)} aria-label={t("watcher.nextRelevantEvent")} title={t("watcher.nextRelevantEvent")}><SkipForward size={13} /></button>
+              <button onClick={() => seekRelevantEvent(-1)} aria-label={t("watcher.previousEvent")} title={`${t("watcher.previousEvent")} · [`}><SkipBack size={13} /></button>
+              <button onClick={() => seekRelevantEvent(1)} aria-label={t("watcher.nextRelevantEvent")} title={`${t("watcher.nextRelevantEvent")} · ]`}><SkipForward size={13} /></button>
             </div>
             <span className="control-time">{formatTime(currentTime)}</span>
             <div className="timeline-shell">
