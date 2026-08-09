@@ -277,6 +277,17 @@ export function ReplayViewer() {
           if (target.engagementId) setSelection({ kind: "engagement", engagementId: target.engagementId });
         }
       }
+      if (event.code === "Home") {
+        event.preventDefault();
+        setCurrentTime(0);
+        setPlaying(false);
+      }
+      if (event.code === "End") {
+        event.preventDefault();
+        setCurrentTime(replay.meta.duration);
+        setPlaying(false);
+      }
+      if (event.code === "Escape") setSelection(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -892,7 +903,7 @@ export function ReplayViewer() {
 
           <div className="controls">
             <button className="icon-button" onClick={() => { setCurrentTime(0); setPlaying(false); }} aria-label={t("watcher.restart")}><RotateCcw size={17} /></button>
-            <button className="play-button" onClick={() => setPlaying((value) => !value)} aria-label={playing ? t("watcher.pause") : t("watcher.play")}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
+            <button className="play-button" onClick={() => setPlaying((value) => !value)} aria-keyshortcuts="Space" aria-label={playing ? t("watcher.pause") : t("watcher.play")}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
             <div className="event-nav">
               <button onClick={() => seekRelevantEvent(-1)} aria-label={t("watcher.previousEvent")} title={`${t("watcher.previousEvent")} · [`}><SkipBack size={13} /></button>
               <button onClick={() => seekRelevantEvent(1)} aria-label={t("watcher.nextRelevantEvent")} title={`${t("watcher.nextRelevantEvent")} · ]`}><SkipForward size={13} /></button>
@@ -900,7 +911,7 @@ export function ReplayViewer() {
             <span className="control-time">{formatTime(currentTime)}</span>
             <div className="timeline-shell">
               {armyAdvantageChart && <svg className="advantage-chart" viewBox="0 0 100 20" preserveAspectRatio="none" role="img" aria-label={t("watcher.armyAdvantageHistory")}><line x1="0" y1="10" x2="100" y2="10" /><polyline className="p1" points={armyAdvantageChart.positive} /><polyline className="p2" points={armyAdvantageChart.negative} /></svg>}
-              <input className="timeline" aria-label="Tempo do replay" type="range" min="0" max={replay.meta.duration} step="0.1" value={currentTime} onChange={(event) => setCurrentTime(Number(event.target.value))} style={{ "--progress": `${(currentTime / replay.meta.duration) * 100}%` } as React.CSSProperties} />
+              <input className="timeline" aria-label="Tempo do replay" aria-keyshortcuts="ArrowLeft ArrowRight Home End" type="range" min="0" max={replay.meta.duration} step="0.1" value={currentTime} onChange={(event) => setCurrentTime(Number(event.target.value))} style={{ "--progress": `${(currentTime / replay.meta.duration) * 100}%` } as React.CSSProperties} />
               <div className="timeline-events" aria-label={t("watcher.analyticTimeline")}>
                 {replay.timeline.filter((event) => event.time > 0).map((event, index) => {
                   const intervalEnd = event.end != null ? Math.min(replay.meta.duration, Math.max(event.time, event.end)) : null;
