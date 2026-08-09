@@ -139,7 +139,11 @@ function cameraSamplesBetween(samples: ReplayCamera[], start: number, end: numbe
     if (samples[middle].recordedAt <= end) low = middle + 1;
     else high = middle;
   }
-  return samples.slice(lowerBound(start), low);
+  const startIndex = lowerBound(start);
+  return samples.slice(startIndex, low).map((sample, index) => ({
+    ...sample,
+    trackIndex: startIndex + index,
+  }));
 }
 
 type UnitVisual = {
@@ -590,7 +594,6 @@ export function ReplayViewer() {
     const stride = Math.max(1, Math.ceil(recent.length / 12));
     return recent.filter((_, index) => index % stride === 0).map((camera) => ({
       ...camera,
-      frameTime: camera.recordedAt,
       opacity: Math.max(.15, 1 - (currentTime - camera.recordedAt) / 10),
     }));
   }).filter((camera) => cameraPlayers[camera.playerId] !== false);
@@ -919,7 +922,7 @@ export function ReplayViewer() {
                 {layers.cameras && cameraTrail.map((camera) => {
                   const point = toPercent(camera.x, camera.y);
                   const color = playerById.get(camera.playerId)?.color ?? "#8edcff";
-                  return <i key={`camera-trail-${camera.playerId}-${camera.frameTime}`} className="camera-trail-dot" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, background: color, opacity: camera.opacity * .42, "--camera-color": color } as React.CSSProperties} />;
+                  return <i key={`camera-trail-${camera.playerId}-${camera.trackIndex}`} className="camera-trail-dot" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, background: color, opacity: camera.opacity * .42, "--camera-color": color } as React.CSSProperties} />;
                 })}
                 {layers.cameras && renderedCameras.filter((camera) => cameraPlayers[camera.playerId] !== false).map((camera) => {
                   const point = toPercent(camera.x, camera.y);
