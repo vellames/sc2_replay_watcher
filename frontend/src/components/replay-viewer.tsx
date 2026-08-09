@@ -1007,7 +1007,7 @@ export function ReplayViewer() {
                   ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
                   : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
               >
-                {is3D && <Sc2World3D bounds={bounds} geometry={replay.mapGeometry} rotation={mapRotation} units={worldUnits3D} selectedUnitId={selectedUnitId} showTerrain={layers.terrain} onSelect={selectUnit} />}
+                {is3D && <Sc2World3D bounds={bounds} geometry={replay.mapGeometry} rotation={mapRotation} units={worldUnits3D} selectedUnitId={selectedUnitId} showTerrain={layers.terrain} zoom={zoom} onSelect={selectUnit} />}
                 {layers.terrain && hasMapGeometry && !is3D && <TerrainLayer geometry={replay.mapGeometry} bounds={bounds} />}
                 {layers.terrain && !is3D && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
                 {currentFrame?.deaths.map((death) => {

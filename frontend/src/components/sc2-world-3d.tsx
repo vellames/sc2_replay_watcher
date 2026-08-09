@@ -18,6 +18,7 @@ type Props = {
   selectedUnitId: number | null;
   showTerrain: boolean;
   units: WorldUnit[];
+  zoom: number;
 };
 
 type ModelGeometry = { body: THREE.BufferGeometry; accent: THREE.BufferGeometry };
@@ -565,7 +566,7 @@ function createTerrain(geometry: MapGeometry, bounds: MapBounds, sampling: Terra
   return root;
 }
 
-export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect, rotation, selectedUnitId, showTerrain, units }: Props) {
+export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect, rotation, selectedUnitId, showTerrain, units, zoom }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -715,6 +716,14 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
   }, [bounds, rotation]);
 
   useEffect(() => {
+    const camera = cameraRef.current;
+    if (!camera) return;
+    camera.zoom = zoom;
+    camera.updateProjectionMatrix();
+    renderRef.current();
+  }, [zoom]);
+
+  useEffect(() => {
     const root = unitRootRef.current;
     if (!root) return;
     root.clear();
@@ -783,7 +792,7 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
     };
   }, [selectedUnitId, terrainSampling, unitRevision]);
 
-  return <div ref={hostRef} className="sc2-world-3d" data-terrain-mesh="plateaus-cliffs-2" aria-label="Cena 3D do replay" />;
+  return <div ref={hostRef} className="sc2-world-3d" style={{ transform: `scale(${1 / zoom})` }} data-terrain-mesh="plateaus-cliffs-2" aria-label="Cena 3D do replay" />;
 });
 
 function modelCacheHas(geometry: THREE.BufferGeometry) {
