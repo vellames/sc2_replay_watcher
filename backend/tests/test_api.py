@@ -11,7 +11,7 @@ def test_health() -> None:
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
     assert response.json()["engineVersion"]
-    assert response.json()["schemaVersion"] == "1.9"
+    assert response.json()["schemaVersion"] == "1.10"
 
 
 def test_rejects_wrong_extension() -> None:
@@ -87,7 +87,7 @@ def test_demo_is_compiled_by_world_engine() -> None:
     payload = response.json()
 
     assert payload["meta"]["positionModel"] == "world-engine"
-    assert payload["meta"]["worldSchemaVersion"] == "1.9"
+    assert payload["meta"]["worldSchemaVersion"] == "1.10"
     assert any(frame["bases"] for frame in payload["frames"])
     assert any(frame["armyGroups"] for frame in payload["frames"])
     assert "engagements" in payload

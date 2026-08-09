@@ -89,6 +89,7 @@ def test_world_archive_is_adapted_to_watcher_contract(tmp_path) -> None:
     assert payload["cameraSamples"] == {}
     assert payload["players"][0]["color"] == "#48a9ff"
     assert payload["frames"][0]["units"][0]["positionSource"] == "derived"
+    assert payload["frames"][0]["units"][0]["positionDiscontinuous"] is False
     assert payload["frames"][0]["stats"]["1"]["minerals"] == 50
     assert payload["frames"][0]["production"] == {}
     assert payload["frames"][0]["cameras"] == {}

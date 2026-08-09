@@ -35,6 +35,7 @@ def _unit_payload(entity: Any) -> dict[str, Any]:
         "baseId": entity.base_id,
         "armyGroupId": entity.army_group_id,
         "movementSpeed": entity.movement_speed,
+        "positionDiscontinuous": bool(getattr(entity, "position_discontinuous", False)),
     }
 
 

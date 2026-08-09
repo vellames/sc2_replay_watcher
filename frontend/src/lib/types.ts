@@ -22,6 +22,7 @@ export type ReplayUnit = {
   baseId: string | null;
   armyGroupId: string | null;
   movementSpeed: number;
+  positionDiscontinuous?: boolean;
 };
 
 export type ReplayBase = {

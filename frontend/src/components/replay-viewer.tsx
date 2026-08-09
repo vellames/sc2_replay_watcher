@@ -295,6 +295,7 @@ export function ReplayViewer() {
     return currentFrame.units.map((unit) => {
       const target = nextUnits.get(unit.id);
       if (!target) return unit;
+      if (target.positionDiscontinuous) return unit;
       const deltaX = target.x - unit.x;
       const deltaY = target.y - unit.y;
       if (Math.abs(deltaX) < 0.001 && Math.abs(deltaY) < 0.001) return unit;
