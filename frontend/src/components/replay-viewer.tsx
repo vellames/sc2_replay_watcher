@@ -4,12 +4,18 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
+  Ambulance,
   ArrowLeft,
+  Bird,
+  Bomb,
+  Bot,
+  Boxes,
   Bug,
   ChevronDown,
   CircleDot,
   Clock3,
   Crosshair,
+  Crown,
   Database,
   Eye,
   EyeOff,
@@ -18,6 +24,7 @@ import {
   FileUp,
   Flame,
   FlaskConical,
+  Footprints,
   Hammer,
   Home,
   Landmark,
@@ -28,17 +35,21 @@ import {
   Package,
   Pause,
   Pickaxe,
+  Plane,
   Play,
   Plus,
   Radar,
   RotateCcw,
+  Rocket,
   Shield,
   Scan,
   SkipBack,
   SkipForward,
   Sparkles,
+  Skull,
   Swords,
   Target,
+  TowerControl,
   Wrench,
   X,
   Zap,
@@ -106,6 +117,33 @@ function unitVisual(unit: ReplayUnit): UnitVisual {
   if (type.includes("techlab") || type.includes("reactor")) return { kind: "addon", icon: Wrench };
   if (unit.isTownHall) return { kind: "town-hall", icon: Landmark };
   if (unit.category === "worker") return { kind: "worker", icon: Pickaxe };
+
+  // Unit-specific silhouettes preserve identity even when names are hidden at map scale.
+  if (/marine/.test(type)) return { kind: "army", icon: Target };
+  if (/marauder|roach|immortal/.test(type)) return { kind: "army", icon: Shield };
+  if (/reaper|adept/.test(type)) return { kind: "army", icon: Footprints };
+  if (/ghost|darktemplar/.test(type)) return { kind: "army", icon: EyeOff };
+  if (/hellion|helliontank/.test(type)) return { kind: "army", icon: Flame };
+  if (/widowmine|baneling|disruptor/.test(type)) return { kind: "army", icon: Bomb };
+  if (/siegetank|lurker|colossus/.test(type)) return { kind: "army", icon: Crosshair };
+  if (/cyclone/.test(type)) return { kind: "army", icon: RotateCcw };
+  if (/thor/.test(type)) return { kind: "army", icon: Bot };
+  if (/medivac/.test(type)) return { kind: "air", icon: Ambulance };
+  if (/raven|observer|overseer/.test(type)) return { kind: "air", icon: Eye };
+  if (/banshee|viking|liberator/.test(type)) return { kind: "air", icon: Plane };
+  if (/battlecruiser|tempest|carrier/.test(type)) return { kind: "air", icon: Rocket };
+  if (/zergling|broodling/.test(type)) return { kind: "army", icon: Bug };
+  if (/ravager|hydralisk|stalker/.test(type)) return { kind: "army", icon: Target };
+  if (/queen|mothership/.test(type)) return { kind: "army", icon: Crown };
+  if (/ultralisk|archon/.test(type)) return { kind: "army", icon: Skull };
+  if (/overlord|warpprism/.test(type)) return { kind: "air", icon: Boxes };
+  if (/mutalisk|corruptor|broodlord|phoenix/.test(type)) return { kind: "air", icon: Bird };
+  if (/voidray/.test(type)) return { kind: "air", icon: Zap };
+  if (/zealot/.test(type)) return { kind: "army", icon: Swords };
+  if (/sentry/.test(type)) return { kind: "army", icon: Shield };
+  if (/infestor|hightemplar/.test(type)) return { kind: "army", icon: Sparkles };
+  if (/oracle|viper/.test(type)) return { kind: "air", icon: Sparkles };
+  if (/swarmhost/.test(type)) return { kind: "army", icon: TowerControl };
 
   if (/overlord|overseer|medivac|vikingfighter|liberator|banshee|raven|battlecruiser|mutalisk|corruptor|broodlord|viper|phoenix|oracle|voidray|carrier|tempest|mothership|flying/.test(type)) {
     return { kind: "air", icon: Navigation };
