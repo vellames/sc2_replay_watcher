@@ -14,17 +14,24 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`${API_URL}/api/health`, { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Health check failed");
-        const payload = await response.json() as { engineVersion?: string };
-        setEngine({ status: "online", version: payload.engineVersion });
-      })
-      .catch((error) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setEngine({ status: "offline" });
-      });
-    return () => controller.abort();
+    const checkHealth = () => {
+      fetch(`${API_URL}/api/health`, { signal: controller.signal })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Health check failed");
+          const payload = await response.json() as { engineVersion?: string };
+          setEngine({ status: "online", version: payload.engineVersion });
+        })
+        .catch((error) => {
+          if (error instanceof DOMException && error.name === "AbortError") return;
+          setEngine({ status: "offline" });
+        });
+    };
+    checkHealth();
+    const interval = window.setInterval(checkHealth, 15_000);
+    return () => {
+      window.clearInterval(interval);
+      controller.abort();
+    };
   }, []);
 
   return (
