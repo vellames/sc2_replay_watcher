@@ -633,7 +633,7 @@ export function ReplayViewer() {
             <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{stats?.armySupply ?? 0} <em>{t("watcher.supplyUnit")}</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} {t("watcher.valueShort")} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
             <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <small>{t("watcher.perMinute")}</small> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
           </div>
-          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map((item) => { const EntityIcon = hudEntityIcon(item.type); return <b key={item.type} title={`${item.count}× ${entityName(item.type)} · ${compactNumber(item.minerals)} ${t("watcher.minerals")} · ${compactNumber(item.vespene)} ${t("watcher.vespene")} · ${item.supply} ${t("watcher.supplyUnit")}`}><EntityIcon size={9} />{item.count}× {entityName(item.type)}</b>; })}</div></div>}
+          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map((item) => { const EntityIcon = hudEntityIcon(item.type); const detail = `${item.count}× ${entityName(item.type)} · ${compactNumber(item.minerals)} ${t("watcher.minerals")} · ${compactNumber(item.vespene)} ${t("watcher.vespene")} · ${item.supply} ${t("watcher.supplyUnit")}`; return <b key={item.type} tabIndex={0} title={detail} aria-label={detail}><EntityIcon size={9} />{item.count}× {entityName(item.type)}</b>; })}</div></div>}
           <div className="combat-ledger-block">
             <div className="hud-section-label"><span><Flame size={9} />{t("watcher.recentCombat")}</span><InfoTip label={t("watcher.recentCombat")} side={side}>{t("watcher.help.combatLedger")}</InfoTip></div>
             <div className="combat-ledger">
@@ -645,7 +645,7 @@ export function ReplayViewer() {
           {completedUpgrades.length > 0 && (
             <div className="tech-state">
               <span><FlaskConical size={10} />{t("watcher.completedUpgrades")}<InfoTip label={t("watcher.completedUpgrades")} side={side}>{t("watcher.help.upgrades")}</InfoTip></span>
-              <div>{completedUpgrades.map((upgrade, index) => <b key={`${upgrade.time}-${upgrade.label}-${index}`} title={`${formatTime(upgrade.time)} · ${entityName(upgrade.label)}`}><FlaskConical size={8} />{entityName(upgrade.label)}</b>)}</div>
+              <div>{completedUpgrades.map((upgrade, index) => <b key={`${upgrade.time}-${upgrade.label}-${index}`} tabIndex={0} aria-label={`${formatTime(upgrade.time)} · ${entityName(upgrade.label)}`} title={`${formatTime(upgrade.time)} · ${entityName(upgrade.label)}`}><FlaskConical size={8} />{entityName(upgrade.label)}</b>)}</div>
             </div>
           )}
           {(recentMilestones.length > 0 || upcomingMilestone) && (
@@ -659,7 +659,7 @@ export function ReplayViewer() {
           <div className="production-list side-production-list">
             <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}<InfoTip label={t("watcher.production")} side={side}>{t("watcher.help.production")}</InfoTip></span><b>{production.length}</b></div>
             {production.length === 0 ? <small className="queue-empty">{t("watcher.queueEmpty")}</small> : production.slice(0, 8).map((order) => (
-              <div className={`production-order ${order.confidence}`} key={order.id} title={`${entityName(order.product)} · ${entityName(order.ability)} · ${confidenceName(order.confidence)}`}>
+              <div className={`production-order ${order.confidence}`} key={order.id} tabIndex={0} aria-label={`${entityName(order.product)} · ${entityName(order.ability)} · ${confidenceName(order.confidence)}`} title={`${entityName(order.product)} · ${entityName(order.ability)} · ${confidenceName(order.confidence)}`}>
                 <span>{(() => { const EntityIcon = hudEntityIcon(order.product); return <><EntityIcon size={9} />{entityName(order.product)}</>; })()}</span>
                 <b>{order.queued ? t("watcher.queued") : `${order.confidence === "estimated" ? "~" : ""}${Math.round(order.progress * 100)}%`}</b>
                 <i><em style={{ width: `${order.progress * 100}%` }} /></i>
