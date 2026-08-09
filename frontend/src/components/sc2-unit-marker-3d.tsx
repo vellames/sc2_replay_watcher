@@ -44,7 +44,7 @@ export const Sc2UnitMarker3D = memo(function Sc2UnitMarker3D({ addon, addonName,
       onMouseLeave={() => onTooltip(null)}
       onFocus={(event) => showTooltip(event.currentTarget)}
       onBlur={() => onTooltip(null)}
-      onClick={() => onSelect(unit.id)}
+      onClick={() => { onTooltip(null); onSelect(unit.id); }}
     >
       <Sc2Model3D type={unit.type} race={race} completed={unit.completed} moving={unit.isMoving} detailed={detailed} overview={overview} />
       {addon && <b className={`tactical-addon-3d ${addonIsReactor ? "reactor" : "tech-lab"}`} title={addonName}>{addonIsReactor ? "R" : "T"}</b>}
