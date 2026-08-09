@@ -37,6 +37,8 @@ const terran: Record<string, Sc2ModelAsset> = {
   raven: { shape: "orb", footprint: "small", elevation: "air", facing: true, detail: "wings" },
   banshee: { shape: "gunship", footprint: "medium", elevation: "air", facing: true, detail: "cannon" },
   battlecruiser: { shape: "capital", footprint: "massive", elevation: "high-air", facing: true, detail: "engines" },
+  autoturret: { shape: "terran-defense", footprint: "small", detail: "cannon" },
+  kd8charge: { shape: "mine", footprint: "tiny", detail: "energy" },
 
   commandcenter: { shape: "terran-command", footprint: "massive" },
   orbitalcommand: { shape: "terran-command", footprint: "massive", detail: "energy" },
@@ -158,6 +160,14 @@ const shared: Record<string, Sc2ModelAsset> = {
   labmineralfield: { shape: "mineral", footprint: "tiny" },
   vespengeyser: { shape: "gas", footprint: "small", detail: "energy" },
   spaceplatformgeyser: { shape: "gas", footprint: "small", detail: "energy" },
+  egg: { shape: "orb", footprint: "tiny" },
+  cocoon: { shape: "orb", footprint: "small" },
+  broodlordcocoon: { shape: "orb", footprint: "medium", elevation: "hover" },
+  ravagercocoon: { shape: "orb", footprint: "small" },
+  banelingcocoon: { shape: "orb", footprint: "tiny" },
+  overlordcocoon: { shape: "orb", footprint: "small", elevation: "hover" },
+  overseercocoon: { shape: "orb", footprint: "small", elevation: "hover" },
+  forcefield: { shape: "orb", footprint: "medium", elevation: "hover", detail: "energy" },
 };
 
 const fallback: Sc2ModelAsset = { shape: "fallback", footprint: "small", facing: true };
@@ -169,12 +179,17 @@ export function sc2ModelAsset(type: string): Sc2ModelAsset {
     : /rock|debris|collapsible/.test(key)
       ? { shape: "neutral-rock", footprint: "large" } satisfies Sc2ModelAsset
       : undefined;
-  return terran[key] ?? zerg[key] ?? protoss[key] ?? shared[key] ?? neutral ?? fallback;
+  const transient = /^changeling/.test(key)
+    ? { shape: "humanoid", footprint: "tiny", facing: true } satisfies Sc2ModelAsset
+    : /cocoon|egg/.test(key)
+      ? { shape: "orb", footprint: "small" } satisfies Sc2ModelAsset
+      : undefined;
+  return terran[key] ?? zerg[key] ?? protoss[key] ?? shared[key] ?? neutral ?? transient ?? fallback;
 }
 
 export function hasDedicatedSc2Model(type: string) {
   const key = canonicalSc2Type(type);
-  return Boolean(terran[key] || zerg[key] || protoss[key] || shared[key] || /xelnaga.*tower|rock|debris|collapsible/.test(key));
+  return Boolean(terran[key] || zerg[key] || protoss[key] || shared[key] || /xelnaga.*tower|rock|debris|collapsible|^changeling|cocoon|egg/.test(key));
 }
 
 export function sc2AttackVisual(type: string): { kind: Sc2AttackVisual; range: number } {

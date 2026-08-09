@@ -56,3 +56,20 @@ test("recognizes neutral map fixtures instead of inventing faction structures", 
   assert.equal(sc2ModelAsset("CollapsibleRockTower").shape, "neutral-rock");
   assert.equal(hasDedicatedSc2Model("DestructibleDebris6x6"), true);
 });
+
+test("covers the complete core LotV unit and structure inventory", () => {
+  const terran = [
+    "SCV", "MULE", "Marine", "Marauder", "Reaper", "Ghost", "Hellion", "HellionTank", "WidowMine", "SiegeTank", "Cyclone", "Thor", "VikingFighter", "Medivac", "Liberator", "Raven", "Banshee", "Battlecruiser", "AutoTurret", "KD8Charge",
+    "CommandCenter", "OrbitalCommand", "PlanetaryFortress", "SupplyDepot", "Refinery", "Barracks", "Factory", "Starport", "EngineeringBay", "Armory", "FusionCore", "GhostAcademy", "Bunker", "MissileTurret", "SensorTower", "TechLab", "Reactor",
+  ];
+  const zerg = [
+    "Drone", "Zergling", "Baneling", "Queen", "Roach", "Ravager", "Hydralisk", "LurkerMP", "Infestor", "SwarmHostMP", "Ultralisk", "Mutalisk", "Corruptor", "BroodLord", "Viper", "Overlord", "Overseer", "ChangelingZealot", "Broodling", "Larva", "LocustMP", "Egg", "RavagerCocoon", "BroodLordCocoon",
+    "Hatchery", "Lair", "Hive", "Extractor", "SpawningPool", "RoachWarren", "BanelingNest", "EvolutionChamber", "HydraliskDen", "LurkerDenMP", "InfestationPit", "Spire", "GreaterSpire", "UltraliskCavern", "NydusNetwork", "NydusCanal", "SpineCrawler", "SporeCrawler", "CreepTumor",
+  ];
+  const protoss = [
+    "Probe", "Zealot", "Stalker", "Sentry", "Adept", "HighTemplar", "DarkTemplar", "Archon", "Observer", "WarpPrism", "Immortal", "Colossus", "Disruptor", "Phoenix", "Oracle", "VoidRay", "Tempest", "Carrier", "Mothership", "Interceptor", "AdeptPhaseShift", "DisruptorPhased", "ForceField",
+    "Nexus", "Pylon", "Assimilator", "Gateway", "WarpGate", "Forge", "CyberneticsCore", "TwilightCouncil", "TemplarArchive", "DarkShrine", "RoboticsFacility", "RoboticsBay", "Stargate", "FleetBeacon", "PhotonCannon", "ShieldBattery",
+  ];
+  const missing = [...terran, ...zerg, ...protoss].filter((type) => !hasDedicatedSc2Model(type));
+  assert.deepEqual(missing, []);
+});
