@@ -45,6 +45,9 @@ test("keeps tactical icon classification stable across contexts", () => {
 test("separates canonical identity from transient unit state", () => {
   assert.equal(canonicalSc2Type("RoachBurrowed"), "roach");
   assert.equal(canonicalSc2Type("CommandCenterFlying"), "commandcenter");
+  assert.equal(canonicalSc2Type("SiegeTankSieged"), "siegetank");
+  assert.equal(canonicalSc2Type("VikingAssault"), "vikingfighter");
+  assert.equal(canonicalSc2Type("LiberatorAG"), "liberator");
   assert.equal(sc2StateName("RoachBurrowed", "pt"), "Enterrado");
   assert.equal(sc2StateName("SiegeTankSieged", "en"), "Siege mode");
   assert.equal(sc2StateName("Marine", "pt"), null);

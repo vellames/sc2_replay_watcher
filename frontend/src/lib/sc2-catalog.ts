@@ -121,6 +121,9 @@ export function canonicalSc2Type(value: string) {
   return key
     .replace(/^battlehellion$/, "helliontank")
     .replace(/^viking$/, "vikingfighter")
+    .replace(/^vikingassault$/, "vikingfighter")
+    .replace(/^siegetanksieged$/, "siegetank")
+    .replace(/^liberatorag$/, "liberator")
     .replace(/^thorap$/, "thor")
     .replace(/^creeptumorqueen$/, "creeptumor")
     .replace(/^warpprismphasing$/, "warpprism")
