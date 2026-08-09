@@ -48,13 +48,14 @@ const details: Record<NonNullable<ReturnType<typeof sc2ModelAsset>["detail"]>, s
   wings: "M4 13l10 4-8 5zm24 0l-10 4 8 5z",
 };
 
-export const Sc2Model3D = memo(function Sc2Model3D({ type, race, completed, moving, detailed }: { type: string; race?: string; completed: boolean; moving: boolean; detailed: boolean }) {
+export const Sc2Model3D = memo(function Sc2Model3D({ type, race, completed, moving, detailed, overview }: { type: string; race?: string; completed: boolean; moving: boolean; detailed: boolean; overview: boolean }) {
   const asset = sc2ModelAsset(type);
   const shape = geometry[asset.shape];
   const detailId = asset.detail ? `sc2-detail-${asset.detail}` : shape.hardpoint ? `sc2-hardpoint-${asset.shape}` : null;
   return (
-    <svg className={`sc2-model-3d footprint-${asset.footprint} elevation-${asset.elevation ?? "ground"} race-${race?.toLowerCase() ?? "neutral"} ${asset.facing ? "faces-heading" : ""} ${completed ? "" : "constructing"} ${moving ? "moving" : ""}`} viewBox="0 0 32 36" aria-hidden="true">
+    <svg className={`sc2-model-3d footprint-${asset.footprint} elevation-${asset.elevation ?? "ground"} race-${race?.toLowerCase() ?? "neutral"} ${asset.facing ? "faces-heading" : ""} ${completed ? "" : "constructing"} ${moving ? "moving" : ""} ${overview ? "lod-overview" : ""}`} viewBox="0 0 32 36" aria-hidden="true">
       <ellipse className="model-shadow" cx="16" cy="31" rx="12" ry="3" />
+      {(asset.elevation === "air" || asset.elevation === "high-air") && <line className="model-altitude-line" x1="16" y1="25" x2="16" y2="35" />}
       <use href={`#sc2-shape-${asset.shape}`} />
       {detailed && shape.inset && <use href={`#sc2-inset-${asset.shape}`} />}
       {detailed && detailId && <use href={`#${detailId}`} />}

@@ -251,10 +251,14 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .sc2-model-3d.footprint-medium { --asset-w: 16px; }
 .sc2-model-3d.footprint-large { --asset-w: 22px; }
 .sc2-model-3d.footprint-massive { --asset-w: 30px; }
+.sc2-model-3d.lod-overview.footprint-medium { --asset-w: 14px; }
+.sc2-model-3d.lod-overview.footprint-large { --asset-w: 18px; }
+.sc2-model-3d.lod-overview.footprint-massive { --asset-w: 25px; }
 .sc2-model-3d.elevation-hover { bottom: -1px; }
 .sc2-model-3d.elevation-air { bottom: 5px; }
 .sc2-model-3d.elevation-high-air { bottom: 9px; }
 .sc2-model-3d .model-shadow { fill: rgba(0, 0, 0, .48); }
+.sc2-model-3d .model-altitude-line { stroke: currentColor; stroke-width: .75; stroke-dasharray: 1 2; vector-effect: non-scaling-stroke; opacity: .38; }
 .sc2-model-3d.elevation-air .model-shadow { transform: translateY(7px); opacity: .7; }
 .sc2-model-3d.elevation-high-air .model-shadow { transform: translateY(11px); opacity: .62; }
 .sc2-model-3d .model-extrusion { fill: color-mix(in srgb, var(--unit-color) 24%, #02070b); stroke: rgba(0, 0, 0, .72); stroke-width: 1.25; stroke-linejoin: round; }
