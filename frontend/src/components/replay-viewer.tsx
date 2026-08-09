@@ -27,6 +27,7 @@ import {
   Footprints,
   Hammer,
   Home,
+  CircleHelp,
   Landmark,
   ListTree,
   Map as MapIcon,
@@ -81,6 +82,15 @@ function compactNumber(value: number) {
 function signedCompactNumber(value: number) {
   if (value === 0) return "±0";
   return `${value > 0 ? "+" : "−"}${compactNumber(Math.abs(value))}`;
+}
+
+function InfoTip({ label, side = "left", children }: { label: string; side?: "left" | "right"; children: React.ReactNode }) {
+  return (
+    <span className={`info-tip info-tip-${side}`} tabIndex={0} aria-label={label}>
+      <CircleHelp size={11} aria-hidden="true" />
+      <span className="info-tip-card" role="tooltip"><b>{label}</b><small>{children}</small></span>
+    </span>
+  );
 }
 
 function cameraSamplesBetween(samples: ReplayCamera[], start: number, end: number) {
@@ -592,6 +602,7 @@ export function ReplayViewer() {
           <div className="side-player-identity">
             <span><i />{player.name}</span>
             <small>{player.race}</small>
+            <InfoTip label={t("watcher.help.playerHud")} side={side}>{t("watcher.help.playerHudText")}</InfoTip>
           </div>
           <div className="macro-player-title"><span>{t("watcher.supply")}{isSupplyBlocked && <em>{t("watcher.blocked")}{activeSupplyBlock ? ` ${formatTime(currentTime - activeSupplyBlock.time)}` : ""}</em>}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
           <div className={`supply-track ${isSupplyBlocked ? "blocked" : ""}`}><i style={{ width: `${Math.min(100, (supplyUsed / supplyCap) * 100)}%` }} /></div>
