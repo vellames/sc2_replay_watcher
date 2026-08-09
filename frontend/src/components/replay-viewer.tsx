@@ -822,7 +822,7 @@ export function ReplayViewer() {
                 const RaceIcon = raceIcon(player.race);
                 return (
                   <section key={player.id} style={{ "--player-color": player.color } as React.CSSProperties}>
-                    <header><span>P{index + 1}</span><strong>{player.name}</strong><small><RaceIcon size={8} />{player.race}</small><InfoTip label={t("watcher.compactScoreboard")} side={index === 0 ? "left" : "right"}>{t("watcher.help.compactScoreboard")}</InfoTip><button className="compact-player-expand" aria-expanded={compactPlayerId === player.id} aria-label={t("watcher.openPlayerSummary").replace("{player}", player.name)} onClick={() => setCompactPlayerId((current) => current === player.id ? null : player.id)}><ChevronDown size={11} /></button></header>
+                    <header><span>P{index + 1}</span><strong>{player.name}</strong><small><RaceIcon size={8} />{player.race}</small><InfoTip label={t("watcher.compactScoreboard")} side={index === 0 ? "left" : "right"}>{t("watcher.help.compactScoreboard")}</InfoTip><button className="compact-player-expand" aria-expanded={compactPlayerId === player.id} aria-label={t("watcher.openPlayerSummary", { player: player.name })} onClick={() => setCompactPlayerId((current) => current === player.id ? null : player.id)}><ChevronDown size={11} /></button></header>
                     <div>
                       <span title={t("watcher.supply")}><Package size={10} />{stats?.supplyUsed ?? 0}/{stats?.supplyCap ?? 0}</span>
                       <span title={t("watcher.workers")}><Pickaxe size={10} />{stats?.workers ?? 0}</span>

@@ -387,7 +387,7 @@ export type TranslationKey = keyof typeof translations.pt;
 type I18nContextValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 };
 
 const I18nContext = createContext<I18nContextValue | null>(null);
@@ -414,7 +414,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       window.localStorage.setItem("sc2rw-locale", nextLocale);
       setLocaleState(nextLocale);
     },
-    t: (key) => translations[locale][key],
+    t: (key, params) => Object.entries(params ?? {}).reduce(
+      (text, [name, replacement]) => text.replaceAll(`{${name}}`, String(replacement)),
+      translations[locale][key] as string,
+    ),
   }), [locale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
