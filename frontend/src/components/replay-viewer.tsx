@@ -1036,6 +1036,7 @@ export function ReplayViewer() {
             </div>
             <span className="control-time muted">{formatTime(replay.meta.duration)}</span>
             <label className="speed"><FastForward size={15} /><select value={speed} onChange={(event) => setSpeed(Number(event.target.value))} aria-label={t("watcher.speed")}><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select><ChevronDown size={14} /></label>
+            <InfoTip label={t("watcher.timelineLegend")} side="right">{t("watcher.help.timelineLegend")}</InfoTip>
           </div>
         </section>
       </main>
