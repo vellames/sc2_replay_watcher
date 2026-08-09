@@ -1,0 +1,34 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { createIsometricProjection, playableBounds, type MapGeometry } from "./map-projection.ts";
+
+const geometry: MapGeometry = {
+  source: "s2ma", width: 200, height: 200,
+  playableMinX: 20, playableMaxX: 180, playableMinY: 30, playableMaxY: 170,
+  gridWidth: 2, gridHeight: 2, cliffRle: [1, 2, 3, 2], walkableRle: [], buildableRle: [], clearanceRle: [], ramps: [], staticObjects: [],
+};
+
+test("uses official playable bounds for reconstructed maps", () => {
+  assert.deepEqual(playableBounds(geometry, { minX: 0, maxX: 1, minY: 0, maxY: 1 }), { minX: 20, maxX: 180, minY: 30, maxY: 170 });
+});
+
+test("projects map corners into a stable isometric diamond", () => {
+  const bounds = playableBounds(geometry, { minX: 0, maxX: 200, minY: 0, maxY: 200 });
+  const { project } = createIsometricProjection(geometry, bounds);
+  const south = project(bounds.minX, bounds.minY, 1);
+  const east = project(bounds.maxX, bounds.minY, 1);
+  const north = project(bounds.maxX, bounds.maxY, 1);
+  assert.equal(south.left, 50);
+  assert.ok(east.left > south.left);
+  assert.ok(north.bottom > east.bottom);
+});
+
+test("raises higher terrain without shifting its horizontal position", () => {
+  const bounds = playableBounds(geometry, { minX: 0, maxX: 200, minY: 0, maxY: 200 });
+  const { project } = createIsometricProjection(geometry, bounds);
+  const low = project(100, 100, 1);
+  const high = project(100, 100, 3);
+  assert.equal(high.left, low.left);
+  assert.ok(high.bottom > low.bottom);
+});

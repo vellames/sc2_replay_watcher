@@ -176,6 +176,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .map-canvas { position: absolute; inset: 0; transform-origin: 50% 50%; transition: transform .12s ease-out; }
 .map-canvas.geometric { inset: auto; left: 50%; top: 50%; width: min(100cqw, calc(100cqh * var(--map-aspect))); height: min(100cqh, calc(100cqw / var(--map-aspect))); }
 .terrain-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.terrain-layer-3d { filter: drop-shadow(0 24px 22px rgba(0, 0, 0, .28)); }
+.map-canvas.view-3d .unit, .map-canvas.view-3d .army-cluster, .map-canvas.view-3d .worker-cluster, .map-canvas.view-3d .structure-cluster, .map-canvas.view-3d .resource-cluster, .map-canvas.view-3d .base-marker, .map-canvas.view-3d .engagement-marker { filter: drop-shadow(0 5px 4px rgba(0, 0, 0, .45)); }
 .map-stage.is-panning, .map-stage.is-panning .map-canvas { cursor: grabbing; }
 .map-grid { position: absolute; inset: 0; opacity: .28; background-image: linear-gradient(rgba(95, 142, 165, .12) 1px, transparent 1px), linear-gradient(90deg, rgba(95, 142, 165, .12) 1px, transparent 1px), linear-gradient(rgba(95, 142, 165, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(95, 142, 165, .05) 1px, transparent 1px); background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px; }
 .map-grid.over-terrain { display: none; }
@@ -236,6 +238,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .map-toolbar { position: absolute; top: 13px; left: 13px; z-index: 10; display: flex; align-items: center; gap: 3px; padding: 4px; border: 1px solid rgba(110, 177, 208, .15); border-radius: 5px; background: rgba(6, 14, 21, .86); backdrop-filter: blur(12px); box-shadow: 0 9px 26px rgba(0,0,0,.25); }
 .map-toolbar button { height: 26px; padding: 0 7px; display: flex; align-items: center; gap: 5px; color: #536b7b; border: 1px solid transparent; border-radius: 3px; background: transparent; font: 550 7px var(--font-geist-mono); cursor: pointer; }
 .map-toolbar button.active { color: #9edcf3; border-color: rgba(86, 192, 231, .13); background: rgba(47, 146, 184, .09); }
+.map-toolbar button:disabled { opacity: .28; cursor: not-allowed; }
 .map-toolbar .camera-player-toggle { color: color-mix(in srgb, var(--camera-player-color) 45%, #405866); }
 .map-toolbar .camera-player-toggle.active { color: var(--camera-player-color); border-color: color-mix(in srgb, var(--camera-player-color) 20%, transparent); background: color-mix(in srgb, var(--camera-player-color) 7%, transparent); }
 .map-toolbar > .info-tip { width: 26px; height: 26px; flex-basis: 26px; border-radius: 3px; }

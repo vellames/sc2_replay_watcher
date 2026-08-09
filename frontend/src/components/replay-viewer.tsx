@@ -10,6 +10,7 @@ import {
   Bird,
   Bomb,
   Bot,
+  Box,
   Boxes,
   Bug,
   ChevronDown,
@@ -64,12 +65,15 @@ import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
+import { TerrainLayer3D } from "@/components/terrain-layer-3d";
+import { createIsometricProjection, playableBounds } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayCamera, ReplayProduction, ReplayUnit } from "@/lib/types";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type ComparisonView = "composition" | "upgrades";
+type MapView = "2d" | "3d";
 type MapSelection =
   | { kind: "unit"; unitId: number }
   | { kind: "engagement"; engagementId: string }
@@ -223,6 +227,7 @@ export function ReplayViewer() {
   const [cameraPlayers, setCameraPlayers] = useState<Record<number, boolean>>({});
   const [timelineHint, setTimelineHint] = useState<{ label: string; position: number } | null>(null);
   const [comparisonView, setComparisonView] = useState<ComparisonView | null>(null);
+  const [mapView, setMapView] = useState<MapView>("2d");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     terrain: true,
@@ -354,6 +359,17 @@ export function ReplayViewer() {
     return { positive: points("positive"), negative: points("negative") };
   }, [replay]);
 
+  const mapPresentation = useMemo(() => {
+    if (!replay) return null;
+    const bounds = playableBounds(replay.mapGeometry, replay.mapBounds);
+    const is3D = mapView === "3d" && replay.mapGeometry.source === "s2ma";
+    return {
+      bounds,
+      is3D,
+      projection: is3D ? createIsometricProjection(replay.mapGeometry, bounds) : null,
+    };
+  }, [replay, mapView]);
+
   useEffect(() => {
     if (!playing || !replay) return;
     let previousTick = performance.now();
@@ -433,20 +449,11 @@ export function ReplayViewer() {
 
   const hasMapGeometry = replay.mapGeometry?.source === "s2ma";
   const mapMode = hasMapGeometry ? "geometric" : "procedural";
-  const hasPlayableBounds = hasMapGeometry
-    && replay.mapGeometry.playableMinX != null
-    && replay.mapGeometry.playableMaxX != null
-    && replay.mapGeometry.playableMinY != null
-    && replay.mapGeometry.playableMaxY != null;
-  const bounds = hasPlayableBounds ? {
-    minX: replay.mapGeometry.playableMinX as number,
-    maxX: replay.mapGeometry.playableMaxX as number,
-    minY: replay.mapGeometry.playableMinY as number,
-    maxY: replay.mapGeometry.playableMaxY as number,
-  } : replay.mapBounds;
+  const bounds = mapPresentation?.bounds ?? replay.mapBounds;
+  const is3D = mapPresentation?.is3D ?? false;
   const width = Math.max(1, bounds.maxX - bounds.minX);
   const height = Math.max(1, bounds.maxY - bounds.minY);
-  const mapAspect = width / height;
+  const mapAspect = is3D ? 1 : width / height;
   const playerById = new Map(replay.players.map((player) => [player.id, player]));
   const playerOneStats = replay.players[0] ? currentFrame?.stats[String(replay.players[0].id)] : undefined;
   const playerTwoStats = replay.players[1] ? currentFrame?.stats[String(replay.players[1].id)] : undefined;
@@ -621,7 +628,7 @@ export function ReplayViewer() {
       return priority(left) - priority(right) || left.id - right.id;
     })
     .slice(0, markerBudget);
-  const toPercent = (x: number, y: number) => ({
+  const toPercent = (x: number, y: number) => mapPresentation?.projection?.project(x, y) ?? ({
     left: ((x - bounds.minX) / width) * 100,
     bottom: ((y - bounds.minY) / height) * 100,
   });
@@ -944,13 +951,15 @@ export function ReplayViewer() {
               onPointerCancel={() => { drag.current = null; setIsPanning(false); }}
             >
               <div
-                className={`map-canvas ${mapMode}`}
+                className={`map-canvas ${mapMode} ${is3D ? "view-3d" : "view-2d"}`}
                 style={{ "--map-aspect": mapAspect, transform: mapMode !== "procedural"
                   ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
                   : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
               >
-                {layers.terrain && hasMapGeometry && <TerrainLayer geometry={replay.mapGeometry} />}
-                {layers.terrain && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
+                {layers.terrain && hasMapGeometry && (is3D
+                  ? <TerrainLayer3D geometry={replay.mapGeometry} bounds={bounds} />
+                  : <TerrainLayer geometry={replay.mapGeometry} />)}
+                {layers.terrain && !is3D && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
                 {currentFrame?.deaths.map((death) => {
                   const point = toPercent(death.x, death.y);
                   const color = playerById.get(death.ownerId)?.color ?? "#ff7180";
@@ -1064,6 +1073,9 @@ export function ReplayViewer() {
                   const active = cameraPlayers[player.id] !== false;
                   return <button key={`camera-player-${player.id}`} className={`camera-player-toggle ${active ? "active" : ""}`} aria-pressed={active} onClick={() => setCameraPlayers((current) => ({ ...current, [player.id]: !active }))} title={`${t("watcher.cameraPlayer")} · ${player.name}`} style={{ "--camera-player-color": player.color } as React.CSSProperties}><Scan size={11} /><span>P{index + 1}</span></button>;
                 })}
+                <i />
+                <button className={mapView === "2d" ? "active" : ""} aria-pressed={mapView === "2d"} onClick={() => { setMapView("2d"); resetMap(); }} title={t("watcher.view2d")}><MapIcon size={12} /><span>2D</span></button>
+                <button className={is3D ? "active" : ""} aria-pressed={is3D} disabled={!hasMapGeometry} onClick={() => { setMapView("3d"); resetMap(); }} title={hasMapGeometry ? t("watcher.view3d") : t("watcher.view3dUnavailable")}><Box size={12} /><span>3D</span></button>
                 <InfoTip label={t("watcher.iconLegend")}><span className="icon-legend-list"><span><Crosshair size={10} />{t("watcher.icon.siege")}</span><span><Eye size={10} />{t("watcher.icon.detector")}</span><span><Bomb size={10} />{t("watcher.icon.explosive")}</span><span><Boxes size={10} />{t("watcher.icon.transport")}</span><span><Sparkles size={10} />{t("watcher.icon.caster")}</span><em>{t("watcher.iconLegendAction")}</em></span></InfoTip>
                 <i />
                 <button onClick={() => setZoom((value) => Math.max(0.7, value - 0.25))} aria-label={t("watcher.zoomOut")}><Minus size={13} /></button>
