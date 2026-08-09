@@ -96,7 +96,7 @@ function InfoTip({ label, side = "left", children }: { label: string; side?: "le
     const left = side === "left"
       ? Math.min(window.innerWidth - width - 10, rect.right + 8)
       : Math.max(10, rect.left - width - 8);
-    setPosition({ left, top: Math.min(window.innerHeight - 110, Math.max(10, rect.top - 4)) });
+    setPosition({ left, top: Math.max(10, Math.min(window.innerHeight - 170, rect.top - 4)) });
   };
   return (
     <span ref={triggerRef} className={`info-tip info-tip-${side}`} tabIndex={0} aria-label={label} aria-describedby={position ? tooltipId : undefined} onMouseEnter={show} onMouseLeave={() => setPosition(null)} onFocus={show} onBlur={() => setPosition(null)}>
