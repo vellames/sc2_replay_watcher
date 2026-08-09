@@ -664,16 +664,16 @@ export function ReplayViewer() {
             <span><Zap size={10} /><b>{compactNumber(stats?.vespene ?? 0)}</b><small>{t("watcher.vespene")}</small></span>
           </div>
           <div className="macro-metrics side-macro-metrics">
-            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{stats?.armySupply ?? 0} <em>{t("watcher.supplyUnit")}</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
-            <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
+            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{stats?.armySupply ?? 0} <em>{t("watcher.supplyUnit")}</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} {t("watcher.valueShort")} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
+            <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <small>{t("watcher.perMinute")}</small> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
           </div>
           {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map(([type, count]) => { const EntityIcon = hudEntityIcon(type); return <b key={type} title={entityName(type)}><EntityIcon size={9} />{count}× {entityName(type)}</b>; })}</div></div>}
           <div className="combat-ledger-block">
             <div className="hud-section-label"><span><Flame size={9} />{t("watcher.recentCombat")}</span><InfoTip label={t("watcher.recentCombat")} side={side}>{t("watcher.help.combatLedger")}</InfoTip></div>
             <div className="combat-ledger">
-              <span>{t("watcher.inProgress")} <b>{compactNumber(stats?.armyInProgress ?? 0)}</b></span>
-              <span>{t("watcher.lost")} <b>{compactNumber(stats?.armyLost ?? 0)}</b></span>
-              <span>{t("watcher.killed")} <b>{compactNumber(stats?.resourcesKilled ?? 0)}</b></span>
+              <span>{t("watcher.armyQueuedValue")} <b>{compactNumber(stats?.armyInProgress ?? 0)}</b></span>
+              <span>{t("watcher.armyLostValue")} <b>{compactNumber(stats?.armyLost ?? 0)}</b></span>
+              <span>{t("watcher.destroyedValue")} <b>{compactNumber(stats?.resourcesKilled ?? 0)}</b></span>
             </div>
           </div>
           {completedUpgrades.length > 0 && (

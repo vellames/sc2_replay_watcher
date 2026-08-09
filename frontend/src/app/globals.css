@@ -144,6 +144,7 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .macro-metrics strong { margin: 4px 0 3px; color: #c4d6e1; font: 600 12px var(--font-geist-mono); }
 .macro-metrics strong em { color: #607687; font-size: 7px; font-style: normal; font-weight: 500; }
 .macro-metrics span { display: flex; align-items: center; gap: 3px; color: #688091; font: 500 8px var(--font-geist-mono); white-space: nowrap; }
+.macro-metrics span > small { display: inline; color: #4f6878; font-size: 6px; letter-spacing: 0; text-transform: none; }
 .macro-metrics .metric-delta { margin-left: auto; padding: 2px 4px; border-radius: 2px; font-size: 6px; font-style: normal; font-weight: 700; }
 .metric-delta.leading { color: #75d6a0; background: rgba(70, 190, 120, .09); }
 .metric-delta.trailing { color: #dc8190; background: rgba(210, 80, 100, .08); }
@@ -155,7 +156,7 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .army-composition-mini b svg, .tech-state b svg, .build-path b svg, .production-order > span svg { flex: 0 0 auto; opacity: .8; }
 .combat-ledger-block { margin: 7px 0 10px; }
 .combat-ledger { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 3px; }
-.combat-ledger span { color: #536b7b; font: 500 8px var(--font-geist-mono); text-align: center; border-right: 1px solid var(--line); }
+.combat-ledger span { padding: 0 3px; color: #536b7b; font: 500 7px/1.25 var(--font-geist-mono); text-align: center; border-right: 1px solid var(--line); }
 .combat-ledger span:last-child { border: 0; }
 .combat-ledger b { display: block; margin-top: 3px; color: #92a9b8; font-size: 9px; }
 .tech-state { margin: 9px 0 2px; padding: 8px 0 9px; border-top: 1px solid rgba(116, 167, 195, .08); }
