@@ -188,6 +188,36 @@ function unitVisual(unit: ReplayUnit): UnitVisual {
   return { kind: "army", icon: Swords };
 }
 
+function hudEntityIcon(value: string): LucideIcon {
+  const type = value.toLowerCase().replaceAll(/[^a-z0-9]/g, "");
+  if (/marine|ravager|hydralisk|stalker/.test(type)) return Target;
+  if (/marauder|roach|immortal|sentry/.test(type)) return Shield;
+  if (/reaper|adept/.test(type)) return Footprints;
+  if (/ghost|darktemplar/.test(type)) return EyeOff;
+  if (/hellion/.test(type)) return Flame;
+  if (/widowmine|baneling|disruptor/.test(type)) return Bomb;
+  if (/siegetank|lurker|colossus/.test(type)) return Crosshair;
+  if (/thor/.test(type)) return Bot;
+  if (/medivac/.test(type)) return Ambulance;
+  if (/raven|observer|overseer/.test(type)) return Eye;
+  if (/banshee|viking|liberator/.test(type)) return Plane;
+  if (/battlecruiser|tempest|carrier/.test(type)) return Rocket;
+  if (/zergling|broodling/.test(type)) return Bug;
+  if (/queen|mothership/.test(type)) return Crown;
+  if (/ultralisk|archon/.test(type)) return Skull;
+  if (/overlord|warpprism/.test(type)) return Boxes;
+  if (/mutalisk|corruptor|broodlord|phoenix/.test(type)) return Bird;
+  if (/voidray/.test(type)) return Zap;
+  if (/zealot/.test(type)) return Swords;
+  if (/infestor|hightemplar|oracle|viper/.test(type)) return Sparkles;
+  if (/scv|drone|probe/.test(type)) return Pickaxe;
+  if (/commandcenter|orbitalcommand|planetaryfortress|hatchery|lair|hive|nexus/.test(type)) return Landmark;
+  if (/supplydepot|pylon/.test(type)) return Package;
+  if (/barracks|factory|starport|gateway|warpgate|roboticsfacility|stargate|spawningpool|roachwarren|hydraliskden/.test(type)) return Factory;
+  if (/refinery|extractor|assimilator/.test(type)) return Database;
+  return FlaskConical;
+}
+
 export function ReplayViewer() {
   const { replay } = useReplay();
   const { locale, t } = useI18n();
@@ -628,7 +658,7 @@ export function ReplayViewer() {
             <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{stats?.armySupply ?? 0} <em>supply</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
             <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
           </div>
-          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map(([type, count]) => <b key={type} title={entityName(type)}>{count}× {entityName(type)}</b>)}</div></div>}
+          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map(([type, count]) => { const EntityIcon = hudEntityIcon(type); return <b key={type} title={entityName(type)}><EntityIcon size={9} />{count}× {entityName(type)}</b>; })}</div></div>}
           <div className="combat-ledger-block">
             <div className="hud-section-label"><span><Flame size={9} />{t("watcher.recentCombat")}</span><InfoTip label={t("watcher.recentCombat")} side={side}>{t("watcher.help.combatLedger")}</InfoTip></div>
             <div className="combat-ledger">
@@ -640,14 +670,14 @@ export function ReplayViewer() {
           {completedUpgrades.length > 0 && (
             <div className="tech-state">
               <span><FlaskConical size={10} />{t("watcher.completedUpgrades")}<InfoTip label={t("watcher.completedUpgrades")} side={side}>{t("watcher.help.upgrades")}</InfoTip></span>
-              <div>{completedUpgrades.map((upgrade, index) => <b key={`${upgrade.time}-${upgrade.label}-${index}`} title={`${formatTime(upgrade.time)} · ${entityName(upgrade.label)}`}>{entityName(upgrade.label)}</b>)}</div>
+              <div>{completedUpgrades.map((upgrade, index) => <b key={`${upgrade.time}-${upgrade.label}-${index}`} title={`${formatTime(upgrade.time)} · ${entityName(upgrade.label)}`}><FlaskConical size={8} />{entityName(upgrade.label)}</b>)}</div>
             </div>
           )}
           {(recentMilestones.length > 0 || upcomingMilestone) && (
             <div className="build-path">
               <span><ListTree size={10} />{t("watcher.buildPath")}<InfoTip label={t("watcher.buildPath")} side={side}>{t("watcher.help.buildPath")}</InfoTip></span>
-              {recentMilestones.map((milestone) => <div key={`${milestone.completedAt}-${milestone.product}`}><time>{formatTime(milestone.completedAt)}</time><b>{entityName(milestone.product)}</b><small>{t("watcher.done")}</small></div>)}
-              {upcomingMilestone && <div className="upcoming"><time>{formatTime(upcomingMilestone.completedAt)}</time><b>{entityName(upcomingMilestone.product)}</b><small>{t("watcher.next")}</small></div>}
+              {recentMilestones.map((milestone) => { const EntityIcon = hudEntityIcon(milestone.product); return <div key={`${milestone.completedAt}-${milestone.product}`}><time>{formatTime(milestone.completedAt)}</time><b><EntityIcon size={9} />{entityName(milestone.product)}</b><small>{t("watcher.done")}</small></div>; })}
+              {upcomingMilestone && (() => { const EntityIcon = hudEntityIcon(upcomingMilestone.product); return <div className="upcoming"><time>{formatTime(upcomingMilestone.completedAt)}</time><b><EntityIcon size={9} />{entityName(upcomingMilestone.product)}</b><small>{t("watcher.next")}</small></div>; })()}
             </div>
           )}
           {layers.cameras && cameraAnalytics && <div className="camera-rhythm-block"><div className="hud-section-label"><span><Scan size={9} />{t("watcher.layer.cameras")}</span><InfoTip label={t("watcher.layer.cameras")} side={side}>{t("watcher.help.camera")}</InfoTip></div><div className="camera-rhythm" title={`${t("watcher.cameraThreshold")} ${cameraAnalytics.jumpDistance}`}><span><Scan size={10} /><small>{t("watcher.cameraJumps")}</small><b>{cameraAnalytics.jumpsPerMinute}</b></span><span><Clock3 size={10} /><small>{t("watcher.averageDwell")}</small><b>{cameraAnalytics.averageDwellSeconds}s</b></span></div></div>}
@@ -655,7 +685,7 @@ export function ReplayViewer() {
             <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}<InfoTip label={t("watcher.production")} side={side}>{t("watcher.help.production")}</InfoTip></span><b>{production.length}</b></div>
             {production.length === 0 ? <small className="queue-empty">{t("watcher.queueEmpty")}</small> : production.slice(0, 8).map((order) => (
               <div className={`production-order ${order.confidence}`} key={order.id} title={`${order.ability} · ${order.confidence}`}>
-                <span>{entityName(order.product)}</span>
+                <span>{(() => { const EntityIcon = hudEntityIcon(order.product); return <><EntityIcon size={9} />{entityName(order.product)}</>; })()}</span>
                 <b>{order.queued ? t("watcher.queued") : `${order.confidence === "estimated" ? "~" : ""}${Math.round(order.progress * 100)}%`}</b>
                 <i><em style={{ width: `${order.progress * 100}%` }} /></i>
               </div>

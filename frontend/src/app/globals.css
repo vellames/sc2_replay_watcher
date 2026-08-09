@@ -150,7 +150,8 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .army-composition-mini { margin: 8px 0 2px; padding: 8px 0; border-top: 1px solid rgba(116, 167, 195, .08); }
 .army-composition-mini > span { display: flex; align-items: center; gap: 5px; color: #607989; font: 650 8px var(--font-geist-mono); letter-spacing: .06em; }
 .army-composition-mini > div { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
-.army-composition-mini b { max-width: calc(50% - 2px); padding: 3px 5px; overflow: hidden; color: color-mix(in srgb, var(--player-color) 70%, #b8cad4); border: 1px solid color-mix(in srgb, var(--player-color) 15%, transparent); border-radius: 2px; background: color-mix(in srgb, var(--player-color) 5%, transparent); font: 600 7px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
+.army-composition-mini b { max-width: calc(50% - 2px); padding: 3px 5px; overflow: hidden; display: flex; align-items: center; gap: 4px; color: color-mix(in srgb, var(--player-color) 70%, #b8cad4); border: 1px solid color-mix(in srgb, var(--player-color) 15%, transparent); border-radius: 2px; background: color-mix(in srgb, var(--player-color) 5%, transparent); font: 600 7px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
+.army-composition-mini b svg, .tech-state b svg, .build-path b svg, .production-order > span svg { flex: 0 0 auto; opacity: .8; }
 .combat-ledger-block { margin: 7px 0 10px; }
 .combat-ledger { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 3px; }
 .combat-ledger span { color: #536b7b; font: 500 8px var(--font-geist-mono); text-align: center; border-right: 1px solid var(--line); }
@@ -160,12 +161,12 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .tech-state > span { display: flex; align-items: center; gap: 5px; color: #607989; font: 650 8px var(--font-geist-mono); letter-spacing: .07em; }
 .tech-state > span svg { color: #9186d4; }
 .tech-state > div { margin-top: 6px; display: flex; gap: 4px; overflow: hidden; }
-.tech-state b { min-width: 0; padding: 3px 5px; overflow: hidden; color: #9c96c9; border: 1px solid rgba(145, 134, 212, .14); border-radius: 2px; background: rgba(112, 96, 180, .06); font: 550 7px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
+.tech-state b { min-width: 0; padding: 3px 5px; overflow: hidden; display: flex; align-items: center; gap: 3px; color: #9c96c9; border: 1px solid rgba(145, 134, 212, .14); border-radius: 2px; background: rgba(112, 96, 180, .06); font: 550 7px var(--font-geist-mono); white-space: nowrap; text-overflow: ellipsis; }
 .build-path { margin: 8px 0 10px; padding: 8px 0; border-top: 1px solid rgba(116, 167, 195, .08); border-bottom: 1px solid rgba(116, 167, 195, .08); }
 .build-path > span { margin-bottom: 5px; display: flex; align-items: center; gap: 5px; color: #607989; font: 650 8px var(--font-geist-mono); letter-spacing: .07em; }
 .build-path > div { min-height: 22px; display: grid; grid-template-columns: 31px minmax(0, 1fr) auto; align-items: center; gap: 5px; color: #667d8d; font: 550 8px var(--font-geist-mono); }
 .build-path time { color: #4d6675; }
-.build-path b { overflow: hidden; color: #9eb2bd; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.build-path b { overflow: hidden; display: flex; align-items: center; gap: 4px; color: #9eb2bd; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
 .build-path small { color: #4f7665; font-size: 6px; letter-spacing: .06em; }
 .build-path .upcoming b { color: var(--player-color); }
 .build-path .upcoming small { color: #7f8bc0; }
@@ -180,7 +181,7 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .production-title span { display: flex; align-items: center; gap: 5px; }
 .production-title b { min-width: 17px; padding: 2px 4px; text-align: center; color: var(--player-color); border: 1px solid color-mix(in srgb, var(--player-color) 25%, transparent); border-radius: 8px; }
 .production-order { position: relative; height: 25px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px; color: #8fa6b5; font: 500 9px var(--font-geist-mono); }
-.production-order > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.production-order > span { overflow: hidden; display: flex; align-items: center; gap: 5px; white-space: nowrap; text-overflow: ellipsis; }
 .production-order > b { color: #647c8d; font-size: 8px; }
 .production-order > i { position: absolute; left: 0; right: 0; bottom: 1px; height: 2px; background: #1b2b36; overflow: hidden; }
 .production-order > i em { display: block; height: 100%; background: var(--player-color); box-shadow: 0 0 5px var(--player-color); transition: width .2s linear; }
