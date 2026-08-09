@@ -1012,13 +1012,16 @@ export function ReplayViewer() {
             >
               <div
                 className={`map-canvas ${mapMode} ${is3D ? `view-3d ${individualUnits.length >= 360 ? "dense-3d" : ""} ${playing ? "is-playing" : "is-paused"}` : "view-2d"}`}
-                style={{ "--map-aspect": mapAspect, transform: mapMode !== "procedural"
-                  ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
-                  : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
+                style={{ "--map-aspect": mapAspect, transform: is3D
+                  ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px))`
+                  : mapMode !== "procedural"
+                    ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
+                    : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
               >
                 {is3D && <Sc2World3D bounds={bounds} geometry={replay.mapGeometry} rotation={mapRotation} units={worldUnits3D} selectedUnitId={selectedUnitId} showTerrain={layers.terrain} zoom={zoom} onSelect={selectUnit} />}
                 {layers.terrain && hasMapGeometry && !is3D && <TerrainLayer geometry={replay.mapGeometry} bounds={bounds} />}
                 {layers.terrain && !is3D && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
+                <div className="map-overlay-layer" style={{ transform: is3D ? `scale(${zoom})` : undefined }}>
                 {currentFrame?.deaths.map((death) => {
                   const point = toPercent(death.x, death.y);
                   const color = playerById.get(death.ownerId)?.color ?? "#ff7180";
@@ -1066,6 +1069,7 @@ export function ReplayViewer() {
                   const totalLoss = engagementLossAt(engagement, replayDeaths, currentTime);
                   return <button key={engagement.id} className={`engagement-marker ${selectedEngagement?.id === engagement.id ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => { setCurrentTime(engagement.start); setPlaying(false); setSelection({ kind: "engagement", engagementId: engagement.id }); }} title={`${t("watcher.engagement")} · ${compactNumber(totalLoss)}`}><Flame size={10} /><b>{compactNumber(totalLoss)}</b></button>;
                 })}
+                </div>
                 {!is3D && showBaseMarkers && (currentFrame?.bases ?? []).map((base) => {
                   const point = toPercent(base.x, base.y);
                   const color = playerById.get(base.ownerId)?.color ?? "#8295a5";

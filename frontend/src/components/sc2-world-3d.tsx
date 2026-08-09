@@ -852,7 +852,7 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
     motionDirtyRef.current = true;
   }, [selectedUnitId, units]);
 
-  return <div ref={hostRef} className="sc2-world-3d" style={{ transform: `scale(${1 / zoom})` }} data-terrain-mesh="plateaus-cliffs-2" aria-label="Cena 3D do replay" />;
+  return <div ref={hostRef} className="sc2-world-3d" data-terrain-mesh="plateaus-cliffs-2" aria-label="Cena 3D do replay" />;
 });
 
 function modelCacheHas(geometry: THREE.BufferGeometry) {
