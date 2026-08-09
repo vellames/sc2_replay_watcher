@@ -1016,7 +1016,7 @@ export function ReplayViewer() {
               onPointerCancel={() => { drag.current = null; setIsPanning(false); }}
             >
               <div
-                className={`map-canvas ${mapMode} ${is3D ? "view-3d" : "view-2d"}`}
+                className={`map-canvas ${mapMode} ${is3D ? `view-3d ${individualUnits.length >= 360 ? "dense-3d" : ""} ${playing ? "is-playing" : "is-paused"}` : "view-2d"}`}
                 style={{ "--map-aspect": mapAspect, transform: mapMode !== "procedural"
                   ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
                   : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}

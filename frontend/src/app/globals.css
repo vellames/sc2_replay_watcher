@@ -196,6 +196,16 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .combat-links-3d .combat-link-beam line { stroke: color-mix(in srgb, var(--combat-color) 42%, #c9fbff); stroke-width: 1; stroke-dasharray: none; animation: combat-beam .5s ease-in-out infinite alternate; }
 .combat-links-3d .combat-link-bio line { stroke: color-mix(in srgb, var(--combat-color) 62%, #a6e9a1); stroke-width: .72; stroke-dasharray: 2 5; animation-duration: .72s; }
 .combat-links-3d .combat-link-flame line { stroke: color-mix(in srgb, var(--combat-color) 52%, #ffb04f); stroke-width: 1.2; stroke-dasharray: 1 2; animation-duration: .28s; }
+.map-canvas.view-3d.is-paused .combat-zone-3d,
+.map-canvas.view-3d.is-paused .combat-links-3d line,
+.map-canvas.view-3d.is-paused .combat-links-3d circle,
+.map-canvas.view-3d.is-paused .death-burst-3d > i,
+.map-canvas.view-3d.is-paused .death-burst-3d > b,
+.map-canvas.view-3d.is-paused .model-construction-ring,
+.map-canvas.view-3d.is-paused .unit.selected::before { animation-play-state: paused; }
+.map-canvas.view-3d.dense-3d .combat-links-3d line,
+.map-canvas.view-3d.dense-3d .combat-links-3d circle,
+.map-canvas.view-3d.dense-3d .death-burst-3d > i { filter: none; }
 .death-burst-3d { position: absolute; width: 1px; height: 1px; pointer-events: none; z-index: 1100; }
 .death-burst-3d > i { position: absolute; left: 0; bottom: 0; width: 2px; height: 9px; transform-origin: 50% 100%; background: linear-gradient(var(--combat-color), transparent); filter: drop-shadow(0 0 3px var(--combat-color)); animation: death-spark .75s ease-out infinite; }
 .death-burst-3d > i:nth-child(2) { transform: rotate(72deg); animation-delay: -.12s; }
