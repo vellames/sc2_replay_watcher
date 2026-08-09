@@ -242,6 +242,9 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .map-canvas.view-3d .unit { width: 1px; height: 1px; margin: 0; overflow: visible; border: 0; border-radius: 0; background: transparent !important; box-shadow: none !important; transform: none; opacity: 1; }
 .map-canvas.view-3d .unit > svg:not(.sc2-model-3d), .map-canvas.view-3d .unit::before, .map-canvas.view-3d .unit::after { display: none; }
 .sc2-model-3d { --asset-w: 13px; position: absolute; left: 0; bottom: -5px; width: var(--asset-w); height: calc(var(--asset-w) * 1.125); overflow: visible; color: var(--unit-color); transform: translateX(-50%); transform-origin: 50% 72%; pointer-events: none; }
+.map-canvas.view-3d .unit > .sc2-model-3d { width: var(--asset-w); height: calc(var(--asset-w) * 1.125); color: var(--unit-color); stroke-width: initial; filter: none; transform: translateX(-50%); }
+.map-canvas.view-3d .unit > .sc2-model-3d.faces-heading { transform: translateX(-50%) rotate(var(--heading)); }
+.sc2-model-sprite-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
 .sc2-model-3d.faces-heading { transform: translateX(-50%) rotate(var(--heading)); }
 .sc2-model-3d.footprint-tiny { --asset-w: 9px; }
 .sc2-model-3d.footprint-small { --asset-w: 12px; }
@@ -266,6 +269,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .sc2-model-3d.race-neutral .model-detail { fill: #7dabb5; stroke: #bde9ef; }
 .sc2-model-3d.constructing { opacity: .58; }
 .sc2-model-3d.constructing .model-hull { fill: transparent; stroke-dasharray: 2 1.4; }
+.sc2-model-3d.constructing use { opacity: .5; }
 .sc2-model-3d.moving .model-extrusion { opacity: .84; }
 .map-canvas.view-3d .unit.selected .sc2-model-3d { filter: drop-shadow(0 0 3px #d8f5ff); }
 .world-model-tooltip { position: fixed; max-width: 220px; padding: 5px 7px; translate: -50% -100%; color: #dff6fd; border: 1px solid color-mix(in srgb, var(--unit-color) 54%, #8ca9b5); border-radius: 3px; background: rgba(4, 11, 16, .96); box-shadow: 0 7px 18px rgba(0, 0, 0, .48); font: 650 8px/1.35 var(--font-geist-mono); pointer-events: none; z-index: 5000; }

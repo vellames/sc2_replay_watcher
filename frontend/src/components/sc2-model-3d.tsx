@@ -51,14 +51,37 @@ const details: Record<NonNullable<ReturnType<typeof sc2ModelAsset>["detail"]>, s
 export const Sc2Model3D = memo(function Sc2Model3D({ type, race, completed, moving, detailed }: { type: string; race?: string; completed: boolean; moving: boolean; detailed: boolean }) {
   const asset = sc2ModelAsset(type);
   const shape = geometry[asset.shape];
-  const detail = asset.detail ? details[asset.detail] : shape.hardpoint;
+  const detailId = asset.detail ? `sc2-detail-${asset.detail}` : shape.hardpoint ? `sc2-hardpoint-${asset.shape}` : null;
   return (
     <svg className={`sc2-model-3d footprint-${asset.footprint} elevation-${asset.elevation ?? "ground"} race-${race?.toLowerCase() ?? "neutral"} ${asset.facing ? "faces-heading" : ""} ${completed ? "" : "constructing"} ${moving ? "moving" : ""}`} viewBox="0 0 32 36" aria-hidden="true">
       <ellipse className="model-shadow" cx="16" cy="31" rx="12" ry="3" />
-      <path className="model-extrusion" d={shape.hull} transform="translate(0 3)" />
-      <path className="model-hull" d={shape.hull} />
-      {detailed && shape.inset && <path className="model-inset" d={shape.inset} />}
-      {detailed && detail && <path className="model-detail" d={detail} />}
+      <use href={`#sc2-shape-${asset.shape}`} />
+      {detailed && shape.inset && <use href={`#sc2-inset-${asset.shape}`} />}
+      {detailed && detailId && <use href={`#${detailId}`} />}
+    </svg>
+  );
+});
+
+export const Sc2ModelSpriteDefs = memo(function Sc2ModelSpriteDefs() {
+  return (
+    <svg className="sc2-model-sprite-defs" aria-hidden="true">
+      <defs>
+        {Object.entries(geometry).map(([name, shape]) => (
+          <symbol key={`shape-${name}`} id={`sc2-shape-${name}`} viewBox="0 0 32 36">
+            <path d={shape.hull} transform="translate(0 3)" fill="#03080c" stroke="currentColor" strokeOpacity=".34" strokeWidth="1.25" strokeLinejoin="round" />
+            <path d={shape.hull} fill="currentColor" fillOpacity=".78" stroke="#dff8ff" strokeOpacity=".72" strokeWidth=".85" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          </symbol>
+        ))}
+        {Object.entries(geometry).filter(([, shape]) => shape.inset).map(([name, shape]) => (
+          <symbol key={`inset-${name}`} id={`sc2-inset-${name}`} viewBox="0 0 32 36"><path d={shape.inset} fill="#061018" fillOpacity=".92" /></symbol>
+        ))}
+        {Object.entries(geometry).filter(([, shape]) => shape.hardpoint).map(([name, shape]) => (
+          <symbol key={`hardpoint-${name}`} id={`sc2-hardpoint-${name}`} viewBox="0 0 32 36"><path d={shape.hardpoint} fill="#dff8ff" stroke="currentColor" strokeWidth=".45" strokeLinejoin="round" vectorEffect="non-scaling-stroke" /></symbol>
+        ))}
+        {Object.entries(details).map(([name, path]) => (
+          <symbol key={`detail-${name}`} id={`sc2-detail-${name}`} viewBox="0 0 32 36"><path d={path} fill="#dff8ff" stroke="currentColor" strokeWidth=".45" strokeLinejoin="round" vectorEffect="non-scaling-stroke" /></symbol>
+        ))}
+      </defs>
     </svg>
   );
 });

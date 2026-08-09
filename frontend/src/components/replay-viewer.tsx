@@ -64,6 +64,7 @@ import {
 
 import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
+import { Sc2ModelSpriteDefs } from "@/components/sc2-model-3d";
 import { Sc2ResourceLayer3D } from "@/components/sc2-resource-layer-3d";
 import { Sc2UnitMarker3D } from "@/components/sc2-unit-marker-3d";
 import { SiteHeader } from "@/components/site-chrome";
@@ -974,6 +975,7 @@ export function ReplayViewer() {
                   ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
                   : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
               >
+                {is3D && <Sc2ModelSpriteDefs />}
                 {layers.terrain && hasMapGeometry && (is3D
                   ? <TerrainLayer3D geometry={replay.mapGeometry} bounds={bounds} rotation={mapRotation} />
                   : <TerrainLayer geometry={replay.mapGeometry} />)}
