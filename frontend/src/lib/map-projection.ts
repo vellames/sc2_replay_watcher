@@ -15,10 +15,14 @@ export function decodeMapRle(encoded: number[], expected: number) {
 }
 
 export function playableBounds(geometry: MapGeometry, fallback: MapBounds): MapBounds {
-  return geometry.source === "s2ma" && geometry.playableMinX != null && geometry.playableMaxX != null
-    && geometry.playableMinY != null && geometry.playableMaxY != null
-    ? { minX: geometry.playableMinX, maxX: geometry.playableMaxX, minY: geometry.playableMinY, maxY: geometry.playableMaxY }
-    : fallback;
+  if (geometry.source !== "s2ma" || geometry.playableMinX == null || geometry.playableMaxX == null
+    || geometry.playableMinY == null || geometry.playableMaxY == null) return fallback;
+  return {
+    minX: Math.max(0, Math.min(geometry.playableMinX, fallback.minX)),
+    maxX: Math.min(geometry.width ?? Number.POSITIVE_INFINITY, Math.max(geometry.playableMaxX, fallback.maxX)),
+    minY: Math.max(0, Math.min(geometry.playableMinY, fallback.minY)),
+    maxY: Math.min(geometry.height ?? Number.POSITIVE_INFINITY, Math.max(geometry.playableMaxY, fallback.maxY)),
+  };
 }
 
 export function createIsometricProjection(geometry: MapGeometry, bounds: MapBounds, quarterTurns = 0) {

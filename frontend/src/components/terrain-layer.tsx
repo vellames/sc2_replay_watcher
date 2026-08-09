@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
+import type { MapBounds } from "@/lib/map-projection";
 import type { ReplayData } from "@/lib/types";
 
 type TerrainGeometry = ReplayData["mapGeometry"];
@@ -149,7 +150,7 @@ function traceCliffBoundaries(levels: Uint8Array, width: number, height: number)
   return traceBoundaryEdges(edges, 1.1);
 }
 
-export function TerrainLayer({ geometry }: { geometry: TerrainGeometry }) {
+export function TerrainLayer({ geometry, bounds }: { geometry: TerrainGeometry; bounds: MapBounds }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -159,10 +160,10 @@ export function TerrainLayer({ geometry }: { geometry: TerrainGeometry }) {
     const mapWidth = geometry.width ?? 0;
     const mapHeight = geometry.height ?? 0;
     if (!canvas || !gridWidth || !gridHeight || !mapWidth || !mapHeight) return;
-    const minX = geometry.playableMinX ?? 0;
-    const maxX = geometry.playableMaxX ?? mapWidth;
-    const minY = geometry.playableMinY ?? 0;
-    const maxY = geometry.playableMaxY ?? mapHeight;
+    const minX = bounds.minX;
+    const maxX = bounds.maxX;
+    const minY = bounds.minY;
+    const maxY = bounds.maxY;
     const renderWidth = Math.max(1, maxX - minX);
     const renderHeight = Math.max(1, maxY - minY);
 
@@ -229,7 +230,7 @@ export function TerrainLayer({ geometry }: { geometry: TerrainGeometry }) {
       context.strokeRect(-3 * scale, -2 * scale, 6 * scale, 4 * scale);
       context.restore();
     }
-  }, [geometry]);
+  }, [geometry, bounds]);
 
   return <canvas ref={canvasRef} className="terrain-layer" aria-hidden="true" />;
 }

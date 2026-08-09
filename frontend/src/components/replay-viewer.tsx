@@ -1025,7 +1025,7 @@ export function ReplayViewer() {
                 {is3D && <Sc2ModelSpriteDefs />}
                 {layers.terrain && hasMapGeometry && (is3D
                   ? <TerrainLayer3D geometry={replay.mapGeometry} bounds={bounds} rotation={mapRotation} />
-                  : <TerrainLayer geometry={replay.mapGeometry} />)}
+                  : <TerrainLayer geometry={replay.mapGeometry} bounds={bounds} />)}
                 {layers.terrain && !is3D && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
                 {currentFrame?.deaths.map((death) => {
                   const point = toPercent(death.x, death.y);

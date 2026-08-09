@@ -9,8 +9,12 @@ const geometry: MapGeometry = {
   gridWidth: 2, gridHeight: 2, cliffRle: [1, 2, 3, 2], walkableRle: [], buildableRle: [], clearanceRle: [], ramps: [], staticObjects: [],
 };
 
-test("uses official playable bounds for reconstructed maps", () => {
-  assert.deepEqual(playableBounds(geometry, { minX: 0, maxX: 1, minY: 0, maxY: 1 }), { minX: 20, maxX: 180, minY: 30, maxY: 170 });
+test("keeps camera bounds when every observed entity is inside them", () => {
+  assert.deepEqual(playableBounds(geometry, { minX: 40, maxX: 160, minY: 50, maxY: 150 }), { minX: 20, maxX: 180, minY: 30, maxY: 170 });
+});
+
+test("expands camera bounds to include recorded edge entities", () => {
+  assert.deepEqual(playableBounds(geometry, { minX: 10, maxX: 190, minY: 25, maxY: 175 }), { minX: 10, maxX: 190, minY: 25, maxY: 175 });
 });
 
 test("projects map corners into a stable isometric diamond", () => {
