@@ -1061,7 +1061,9 @@ export function ReplayViewer() {
                       aria-label={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`}
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
                     >
-                      {is3D ? <TacticalModel3D unit={unit} visualKind={visual.kind} icon={UnitIcon} race={player?.race} /> : unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
+                      {is3D
+                        ? <><TacticalModel3D unit={unit} visualKind={visual.kind} icon={UnitIcon} race={player?.race} /><span className="model-label-3d" aria-hidden="true">{entityName(unit.type)}</span></>
+                        : unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
                       {addon && (is3D
                         ? <b className={`tactical-addon-3d ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>
                         : <b className={`addon-badge ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>)}
