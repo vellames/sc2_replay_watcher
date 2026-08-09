@@ -66,7 +66,7 @@ import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
 import { Sc2ModelSpriteDefs } from "@/components/sc2-model-3d";
 import { Sc2ResourceLayer3D } from "@/components/sc2-resource-layer-3d";
-import { Sc2UnitMarker3D } from "@/components/sc2-unit-marker-3d";
+import { Sc2UnitMarker3D, type ModelTooltip } from "@/components/sc2-unit-marker-3d";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
 import { TerrainLayer3D } from "@/components/terrain-layer-3d";
@@ -207,6 +207,7 @@ export function ReplayViewer() {
   const [isPanning, setIsPanning] = useState(false);
   const [cameraPlayers, setCameraPlayers] = useState<Record<number, boolean>>({});
   const [timelineHint, setTimelineHint] = useState<{ label: string; position: number } | null>(null);
+  const [modelTooltip, setModelTooltip] = useState<ModelTooltip | null>(null);
   const [comparisonView, setComparisonView] = useState<ComparisonView | null>(null);
   const [mapView, setMapView] = useState<MapView>("2d");
   const [mapRotation, setMapRotation] = useState(0);
@@ -957,6 +958,7 @@ export function ReplayViewer() {
 
   return (
     <div className="app-shell watcher-shell">
+      {modelTooltip && createPortal(<span className="world-model-tooltip" role="tooltip" style={{ left: modelTooltip.left, top: modelTooltip.top, "--unit-color": modelTooltip.color } as React.CSSProperties}>{modelTooltip.text}</span>, document.body)}
       <main className="watcher-main">
         <section className="workspace" aria-label="Visualizador do replay">
           <div className="matchbar">
@@ -1125,7 +1127,7 @@ export function ReplayViewer() {
                   const priorityDetail = unit.isBuilding || unit.isTownHall || assetRole === "massive" || assetRole === "capital" || assetRole === "siege";
                   const detailed3D = selectedUnitId === unit.id || priorityDetail || (zoom >= 1.25 && individualUnits.length < 360);
                   const overlapOffset = overlapOffsets.get(unit.id) ?? { x: 0, y: 0 };
-                  if (is3D) return <Sc2UnitMarker3D key={unit.id} unit={unit} visualKind={visual.kind} race={player?.race} color={color} left={point.left} bottom={point.bottom} heading={screenHeading} productionCount={productionCount} productionRatio={productionRatio} addon={addon} addonName={addon ? entityName(addon.type) : undefined} selected={selectedUnitId === unit.id} detailed={detailed3D} overview={zoom < 1.25} offsetX={overlapOffset.x} offsetY={overlapOffset.y} title={title} ariaLabel={ariaLabel} onSelect={selectUnit} />;
+                  if (is3D) return <Sc2UnitMarker3D key={unit.id} unit={unit} visualKind={visual.kind} race={player?.race} color={color} left={point.left} bottom={point.bottom} heading={screenHeading} productionCount={productionCount} productionRatio={productionRatio} addon={addon} addonName={addon ? entityName(addon.type) : undefined} selected={selectedUnitId === unit.id} detailed={detailed3D} overview={zoom < 1.25} offsetX={overlapOffset.x} offsetY={overlapOffset.y} title={title} ariaLabel={ariaLabel} onSelect={selectUnit} onTooltip={setModelTooltip} />;
                   return (
                     <button
                       key={unit.id}
