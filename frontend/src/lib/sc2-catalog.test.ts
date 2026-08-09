@@ -6,11 +6,17 @@ import { canonicalSc2Type, hasLocalizedSc2Name, sc2CategoryName, sc2IconKey, sc2
 test("localizes canonical LotV entities", () => {
   assert.equal(sc2Name("SiegeTank", "pt"), "Tanque de Cerco");
   assert.equal(sc2Name("SiegeTank", "en"), "Siege Tank");
-  assert.equal(sc2Name("SpawningPool", "pt"), "Piscina de Desova");
+  assert.equal(sc2Name("Marine", "pt"), "Soldado");
+  assert.equal(sc2Name("Marauder", "pt"), "Demolidor");
+  assert.equal(sc2Name("Reaper", "pt"), "Exterminador");
+  assert.equal(sc2Name("Stalker", "pt"), "Tormento");
+  assert.equal(sc2Name("Ultralisk", "pt"), "Mammuthus");
+  assert.equal(sc2Name("VoidRay", "pt"), "Destruidora");
+  assert.equal(sc2Name("SpawningPool", "pt"), "Fosso de Desova");
 });
 
 test("collapses replay state variants into their base entity", () => {
-  assert.equal(sc2Name("CommandCenterFlying", "pt"), "Centro de Comando");
+  assert.equal(sc2Name("CommandCenterFlying", "pt"), "Central de Comando");
   assert.equal(sc2Name("RoachBurrowed", "pt"), "Barata");
   assert.equal(sc2Name("SporeCrawlerUprooted", "en"), "Spore Crawler");
   assert.equal(sc2Name("ThorAP", "en"), "Thor");

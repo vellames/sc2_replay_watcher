@@ -66,6 +66,7 @@ import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, t
 import type { ReplayCamera, ReplayProduction, ReplayUnit } from "@/lib/types";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
+type ComparisonView = "composition" | "upgrades";
 type MapSelection =
   | { kind: "unit"; unitId: number }
   | { kind: "engagement"; engagementId: string }
@@ -214,6 +215,7 @@ export function ReplayViewer() {
   const [isPanning, setIsPanning] = useState(false);
   const [cameraPlayers, setCameraPlayers] = useState<Record<number, boolean>>({});
   const [timelineHint, setTimelineHint] = useState<{ label: string; position: number } | null>(null);
+  const [comparisonView, setComparisonView] = useState<ComparisonView | null>(null);
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     terrain: true,
     army: true,
@@ -224,6 +226,18 @@ export function ReplayViewer() {
   });
   const drag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const currentTimeRef = useRef(0);
+  const resumePlaybackRef = useRef(false);
+
+  const openComparison = (view: ComparisonView) => {
+    if (comparisonView == null) resumePlaybackRef.current = playing;
+    setComparisonView(view);
+    setSelection(null);
+    setPlaying(false);
+  };
+  const closeComparison = () => {
+    setComparisonView(null);
+    setPlaying(resumePlaybackRef.current);
+  };
 
   useEffect(() => {
     currentTimeRef.current = currentTime;
@@ -332,6 +346,11 @@ export function ReplayViewer() {
     if (!replay) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      if (event.code === "Escape" && comparisonView) {
+        closeComparison();
+        return;
+      }
+      if (comparisonView) return;
       if (event.code === "Space") {
         event.preventDefault();
         setPlaying((value) => !value);
@@ -364,7 +383,7 @@ export function ReplayViewer() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [replay]);
+  }, [replay, comparisonView]);
 
   if (!replay) {
     return (
@@ -598,6 +617,60 @@ export function ReplayViewer() {
     setPlaying(false);
     if (target.engagementId) setSelection({ kind: "engagement", engagementId: target.engagementId });
   };
+  const playerComposition = (playerId: number) => [...(currentFrame?.units ?? [])
+    .filter((unit) => unit.ownerId === playerId && unit.isArmy)
+    .reduce((types, unit) => {
+      const identity = canonicalSc2Type(unit.type);
+      const summary = types.get(identity) ?? { type: unit.type, count: 0, minerals: 0, vespene: 0, supply: 0 };
+      summary.count += 1;
+      summary.minerals += unit.mineralCost;
+      summary.vespene += unit.vespeneCost;
+      summary.supply += unit.supplyCost;
+      types.set(identity, summary);
+      return types;
+    }, new Map<string, { type: string; count: number; minerals: number; vespene: number; supply: number }>())
+    .values()]
+    .sort((left, right) => right.supply - left.supply || right.count - left.count || left.type.localeCompare(right.type));
+
+  const renderComparisonOverlay = () => {
+    if (!comparisonView) return null;
+    const title = comparisonView === "composition" ? t("watcher.armyComposition") : t("watcher.completedUpgrades");
+    return (
+      <div className="comparison-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeComparison(); }}>
+        <section className="comparison-overlay" role="dialog" aria-modal="true" aria-label={title}>
+          <header>
+            <span>{comparisonView === "composition" ? <Swords size={15} /> : <FlaskConical size={15} />}</span>
+            <div><small>{t("watcher.comparisonAt")} {formatTime(currentTime)}</small><strong>{title}</strong></div>
+            <button onClick={closeComparison} aria-label={t("watcher.closeComparison")} title={t("watcher.closeComparison")}><X size={15} /></button>
+          </header>
+          <div className="comparison-players">
+            {replay.players.slice(0, 2).map((player, playerIndex) => {
+              const RaceIcon = raceIcon(player.race);
+              const composition = playerComposition(player.id);
+              const upgrades = replay.timeline.filter((event) => event.type === "upgrade" && event.playerId === player.id && event.time <= currentTime);
+              return <article className="comparison-player" key={player.id} style={{ "--player-color": player.color } as React.CSSProperties}>
+                <div className="comparison-player-title"><span><i />P{playerIndex + 1} · {player.name}</span><small><RaceIcon size={9} />{player.race}</small></div>
+                <div className={`comparison-card-grid ${comparisonView}`}>
+                  {comparisonView === "composition" && (composition.length === 0
+                    ? <p>{t("watcher.noArmyDetected")}</p>
+                    : composition.map((item) => {
+                      const EntityIcon = hudEntityIcon(item.type);
+                      const detail = `${item.count}× ${entityName(item.type)} · ${compactNumber(item.minerals)} ${t("watcher.minerals")} · ${compactNumber(item.vespene)} ${t("watcher.vespene")} · ${number(item.supply)} ${t("watcher.supplyUnit")}`;
+                      return <div className="comparison-entity-card" key={canonicalSc2Type(item.type)} tabIndex={0} title={detail} aria-label={detail}><span><EntityIcon size={14} /></span><div><strong>{entityName(item.type)}</strong><small>{compactNumber(item.minerals)} <Pickaxe size={8} /> · {compactNumber(item.vespene)} <Zap size={8} /> · {number(item.supply)} {t("watcher.supplyUnit")}</small></div><b>{item.count}×</b></div>;
+                    }))}
+                  {comparisonView === "upgrades" && (upgrades.length === 0
+                    ? <p>{t("watcher.noUpgradesCompleted")}</p>
+                    : upgrades.map((upgrade, index) => <div className="comparison-upgrade-card" key={`${upgrade.time}-${upgrade.label}-${index}`}><span><FlaskConical size={13} /></span><div><strong>{entityName(upgrade.label)}</strong><small>{t("watcher.completedAt")} {formatTime(upgrade.time)}</small></div></div>))}
+                </div>
+              </article>;
+            })}
+          </div>
+          <footer><span>{t("watcher.replayPausedForComparison")}</span><button onClick={closeComparison}>{t("watcher.closeAndReturn")}</button></footer>
+        </section>
+      </div>
+    );
+  };
+
   const renderPlayerPanel = (player: (typeof replay.players)[number], side: "left" | "right") => {
     const stats = currentFrame?.stats[String(player.id)];
     const opponent = replay.players.find((candidate) => candidate.id !== player.id);
@@ -607,28 +680,6 @@ export function ReplayViewer() {
     const isSupplyBlocked = supplyCap < 200 && supplyUsed >= supplyCap;
     const activeSupplyBlock = [...replay.timeline].reverse().find((event) => event.type === "supply" && event.playerId === player.id && event.time <= currentTime && (event.end != null ? currentTime <= event.end : isSupplyBlocked));
     const production = currentFrame?.production[String(player.id)] ?? [];
-    const completedUpgrades = replay.timeline
-      .filter((event) => event.type === "upgrade" && event.playerId === player.id && event.time <= currentTime)
-      .slice(-3);
-    const playerBuildOrder = (replay.buildOrder ?? []).filter((milestone) => milestone.playerId === player.id);
-    const recentMilestones = playerBuildOrder.filter((milestone) => milestone.completedAt <= currentTime).slice(-2);
-    const upcomingMilestone = playerBuildOrder.find((milestone) => milestone.completedAt > currentTime);
-    const armyComposition = [...(currentFrame?.units ?? [])
-      .filter((unit) => unit.ownerId === player.id && unit.isArmy)
-      .reduce((types, unit) => {
-        const identity = canonicalSc2Type(unit.type);
-        const summary = types.get(identity) ?? { type: unit.type, count: 0, minerals: 0, vespene: 0, supply: 0 };
-        summary.count += 1;
-        summary.minerals += unit.mineralCost;
-        summary.vespene += unit.vespeneCost;
-        summary.supply += unit.supplyCost;
-        types.set(identity, summary);
-        return types;
-      }, new Map<string, { type: string; count: number; minerals: number; vespene: number; supply: number }>())
-      .values()]
-      .sort((left, right) => right.count - left.count || left.type.localeCompare(right.type))
-      .slice(0, 4);
-    const cameraAnalytics = replay.cameraAnalytics?.[String(player.id)];
     const armySupplyDelta = (stats?.armySupply ?? 0) - (opponentStats?.armySupply ?? 0);
     const workerDelta = (stats?.workers ?? 0) - (opponentStats?.workers ?? 0);
     const deltaClass = (value: number) => value > 0 ? "leading" : value < 0 ? "trailing" : "tied";
@@ -653,21 +704,6 @@ export function ReplayViewer() {
             <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{number(stats?.armySupply ?? 0)} <em>{t("watcher.supplyUnit")}</em><em className={`metric-delta ${deltaClass(armySupplyDelta)}`} title={t("watcher.armySupplyVersusOpponent")}>{signedCompactNumber(armySupplyDelta)}</em></strong><span className="metric-detail"><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} {t("watcher.valueShort")}</span></span></div>
             <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}<em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></strong><span className="metric-detail"><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <small>{t("watcher.perMinute")}</small></span></span></div>
           </div>
-          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map((item) => { const EntityIcon = hudEntityIcon(item.type); const detail = `${item.count}× ${entityName(item.type)} · ${compactNumber(item.minerals)} ${t("watcher.minerals")} · ${compactNumber(item.vespene)} ${t("watcher.vespene")} · ${item.supply} ${t("watcher.supplyUnit")}`; return <article className="entity-summary-card" key={item.type} tabIndex={0} title={detail} aria-label={detail}><span><EntityIcon size={12} /></span><div><strong>{entityName(item.type)}</strong><small>{item.supply} {t("watcher.supplyUnit")}</small></div><b>{item.count}×</b></article>; })}</div></div>}
-          {completedUpgrades.length > 0 && (
-            <div className="tech-state">
-              <span><FlaskConical size={10} />{t("watcher.completedUpgrades")}<InfoTip label={t("watcher.completedUpgrades")} side={side}>{t("watcher.help.upgrades")}</InfoTip></span>
-              <div>{completedUpgrades.map((upgrade, index) => <article className="upgrade-summary-card" key={`${upgrade.time}-${upgrade.label}-${index}`} tabIndex={0} aria-label={`${formatTime(upgrade.time)} · ${entityName(upgrade.label)}`} title={`${formatTime(upgrade.time)} · ${entityName(upgrade.label)}`}><span><FlaskConical size={11} /></span><div><strong>{entityName(upgrade.label)}</strong><small>{t("watcher.completedAt")} {formatTime(upgrade.time)}</small></div></article>)}</div>
-            </div>
-          )}
-          {(recentMilestones.length > 0 || upcomingMilestone) && (
-            <div className="build-path">
-              <span><ListTree size={10} />{t("watcher.buildPath")}<InfoTip label={t("watcher.buildPath")} side={side}>{t("watcher.help.buildPath")}</InfoTip></span>
-              {recentMilestones.map((milestone) => { const EntityIcon = hudEntityIcon(milestone.product); return <div key={`${milestone.completedAt}-${milestone.product}`}><time>{formatTime(milestone.completedAt)}</time><b><EntityIcon size={9} />{entityName(milestone.product)}</b><small>{t("watcher.done")}</small></div>; })}
-              {upcomingMilestone && (() => { const EntityIcon = hudEntityIcon(upcomingMilestone.product); return <div className="upcoming"><time>{formatTime(upcomingMilestone.completedAt)}</time><b><EntityIcon size={9} />{entityName(upcomingMilestone.product)}</b><small>{t("watcher.next")}</small></div>; })()}
-            </div>
-          )}
-          {layers.cameras && cameraAnalytics && <div className="camera-rhythm-block"><div className="hud-section-label"><span><Scan size={9} />{t("watcher.layer.cameras")}</span><InfoTip label={t("watcher.layer.cameras")} side={side}>{t("watcher.help.camera")}</InfoTip></div><div className="camera-rhythm" title={`${t("watcher.cameraThreshold")} ${cameraAnalytics.jumpDistance}`}><span><Scan size={10} /><small>{t("watcher.cameraJumps")}</small><b>{cameraAnalytics.jumpsPerMinute}</b></span><span><Clock3 size={10} /><small>{t("watcher.averageDwell")}</small><b>{cameraAnalytics.averageDwellSeconds}s</b></span></div></div>}
           <div className="production-list side-production-list">
             <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}<InfoTip label={t("watcher.production")} side={side}>{t("watcher.help.production")}</InfoTip></span><b>{production.length}</b></div>
             {production.length === 0 ? <small className="queue-empty">{t("watcher.queueEmpty")}</small> : production.slice(0, 8).map((order) => {
@@ -796,18 +832,6 @@ export function ReplayViewer() {
     const stats = currentFrame?.stats[String(player.id)];
     const index = replay.players.findIndex((candidate) => candidate.id === player.id);
     const RaceIcon = raceIcon(player.race);
-    const composition = [...(currentFrame?.units ?? [])
-      .filter((unit) => unit.ownerId === player.id && unit.isArmy)
-      .reduce((types, unit) => {
-        const identity = canonicalSc2Type(unit.type);
-        const summary = types.get(identity) ?? { type: unit.type, count: 0 };
-        summary.count += 1;
-        types.set(identity, summary);
-        return types;
-      }, new Map<string, { type: string; count: number }>())
-      .values()]
-      .sort((left, right) => right.count - left.count)
-      .slice(0, 4);
     return (
       <aside className={`compact-player-drawer compact-player-drawer-${index === 0 ? "left" : "right"}`} style={{ "--player-color": player.color } as React.CSSProperties}>
         <header><span><i /><RaceIcon size={12} /></span><div><strong>{player.name}</strong><small>{player.race}</small></div><button onClick={() => setCompactPlayerId(null)} aria-label={t("watcher.closePlayerSummary")}><X size={13} /></button></header>
@@ -817,7 +841,6 @@ export function ReplayViewer() {
           <span><Swords size={11} /><small>{t("watcher.army")}</small><b>{number(stats?.armySupply ?? 0)} {t("watcher.supplyUnit")}</b></span>
           <span><Zap size={11} /><small>{t("watcher.income")}</small><b>{compactNumber((stats?.mineralRate ?? 0) + (stats?.vespeneRate ?? 0))}{t("watcher.perMinute")}</b></span>
         </div>
-        {composition.length > 0 && <div className="compact-player-composition"><small>{t("watcher.armyComposition")}</small><div>{composition.map((item) => { const EntityIcon = hudEntityIcon(item.type); return <span key={canonicalSc2Type(item.type)} title={entityName(item.type)}><EntityIcon size={9} /><b>{item.count}×</b>{entityName(item.type)}</span>; })}</div></div>}
       </aside>
     );
   };
@@ -1008,6 +1031,11 @@ export function ReplayViewer() {
                 <button onClick={() => setZoom((value) => Math.min(3, value + 0.25))} aria-label={t("watcher.zoomIn")}><Plus size={13} /></button>
                 <button onClick={resetMap} aria-label={t("watcher.resetMap")}><Target size={13} /></button>
               </div>
+              <div className="map-analysis-toolbar" role="toolbar" aria-label={t("watcher.analysisViews")}>
+                <button className={comparisonView === "composition" ? "active" : ""} aria-pressed={comparisonView === "composition"} onClick={() => openComparison("composition")}><Swords size={12} /><span>{t("watcher.composition")}</span></button>
+                <button className={comparisonView === "upgrades" ? "active" : ""} aria-pressed={comparisonView === "upgrades"} onClick={() => openComparison("upgrades")}><FlaskConical size={12} /><span>{t("watcher.upgrades")}</span></button>
+              </div>
+              {renderComparisonOverlay()}
               {nextEvent && <div className={`next-event next-event-${nextEvent.type}`} style={{ "--event-color": nextEventPlayer?.color ?? "#6eb5d2" } as React.CSSProperties}><small><i />{t("watcher.nextEvent")} · {t("watcher.inTime")} {formatTime(nextEvent.time - currentTime)}{nextEventPlayer ? ` · ${nextEventPlayer.name}` : ""}</small><strong><NextEventIcon size={11} /><span>{nextEventDisplay}</span></strong></div>}
               <div className="coordinates">X {Math.round(bounds.minX)}–{Math.round(bounds.maxX)} · Y {Math.round(bounds.minY)}–{Math.round(bounds.maxY)}</div>
             </div>
