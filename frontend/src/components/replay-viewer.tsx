@@ -462,9 +462,13 @@ export function ReplayViewer() {
   const nextEventDisplay = nextEventKind.toLocaleLowerCase() === nextEventName.toLocaleLowerCase() ? nextEventKind : `${nextEventKind} · ${nextEventName}`;
   const NextEventIcon = nextEvent?.type === "upgrade" ? FlaskConical : nextEvent?.type === "base" ? Landmark : nextEvent?.type === "engagement" ? Flame : Package;
   const productionByProducer = new Map<number, number>();
+  const productionProgressByProducer = new Map<number, number>();
   for (const orders of Object.values(currentFrame?.production ?? {})) {
     for (const order of orders) {
-      if (order.producerId) productionByProducer.set(order.producerId, (productionByProducer.get(order.producerId) ?? 0) + 1);
+      if (order.producerId) {
+        productionByProducer.set(order.producerId, (productionByProducer.get(order.producerId) ?? 0) + 1);
+        productionProgressByProducer.set(order.producerId, Math.max(productionProgressByProducer.get(order.producerId) ?? 0, productionProgress(order)));
+      }
     }
   }
 
@@ -1053,11 +1057,12 @@ export function ReplayViewer() {
                   const point = toPercent(unit.x, unit.y);
                   const screenHeading = projectedHeading(toPercent, unit.x, unit.y, unit.heading);
                   const productionCount = (productionByProducer.get(unit.id) ?? 0) + (addon ? productionByProducer.get(addon.id) ?? 0 : 0);
+                  const productionRatio = Math.max(productionProgressByProducer.get(unit.id) ?? 0, addon ? productionProgressByProducer.get(addon.id) ?? 0 : 0);
                   return (
                     <button
                       key={unit.id}
-                      className={`unit ${unit.category} role-${visual.kind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selectedUnitId === unit.id ? "selected" : ""}`}
-                      style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, zIndex: is3D ? 1000 - Math.round(point.bottom * 5) : undefined, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${screenHeading}deg` } as React.CSSProperties}
+                      className={`unit ${unit.category} role-${visual.kind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${productionCount > 0 ? "producing" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selectedUnitId === unit.id ? "selected" : ""}`}
+                      style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, zIndex: is3D ? 1000 - Math.round(point.bottom * 5) : undefined, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${screenHeading}deg`, "--production-angle": `${productionRatio * 360}deg` } as React.CSSProperties}
                       title={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)}`}
                       aria-label={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`}
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
