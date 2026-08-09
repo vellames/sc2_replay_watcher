@@ -48,4 +48,6 @@ test("separates canonical identity from transient unit state", () => {
   assert.equal(sc2StateName("RoachBurrowed", "pt"), "Enterrado");
   assert.equal(sc2StateName("SiegeTankSieged", "en"), "Siege mode");
   assert.equal(sc2StateName("Marine", "pt"), null);
+  assert.equal(sc2Name("WarpPrismPhasing", "pt"), "Prisma de Dobra");
+  assert.equal(sc2StateName("WarpPrismPhasing", "en"), "Phasing mode");
 });

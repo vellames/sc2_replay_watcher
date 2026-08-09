@@ -28,8 +28,10 @@ const entities: Record<string, LocalizedName> = {
   darktemplar: { pt: "Templário das Trevas", en: "Dark Templar" }, archon: { pt: "Arconte", en: "Archon" }, observer: { pt: "Observador", en: "Observer" },
   warpprism: { pt: "Prisma de Dobra", en: "Warp Prism" }, immortal: { pt: "Imortal", en: "Immortal" }, colossus: { pt: "Colosso", en: "Colossus" },
   disruptor: { pt: "Disruptor", en: "Disruptor" }, phoenix: { pt: "Fênix", en: "Phoenix" }, oracle: { pt: "Oráculo", en: "Oracle" },
-  voidray: { pt: "Raio Vazio", en: "Void Ray" }, tempest: { pt: "Tormenta", en: "Tempest" }, carrier: { pt: "Nave-mãe", en: "Carrier" },
+  voidray: { pt: "Raio Vazio", en: "Void Ray" }, tempest: { pt: "Tormenta", en: "Tempest" }, carrier: { pt: "Porta-Aviões", en: "Carrier" },
   mothership: { pt: "Nave-Mãe", en: "Mothership" }, interceptor: { pt: "Interceptador", en: "Interceptor" },
+  adeptphaseshift: { pt: "Sombra de Adepta", en: "Adept Shade" }, disruptorphased: { pt: "Nova Purificadora", en: "Purification Nova" },
+  locustmp: { pt: "Gafanhoto", en: "Locust" }, autoturret: { pt: "Torreta Automática", en: "Auto-Turret" }, kd8charge: { pt: "Carga KD8", en: "KD8 Charge" },
 
   // Terran structures
   commandcenter: { pt: "Centro de Comando", en: "Command Center" }, orbitalcommand: { pt: "Comando Orbital", en: "Orbital Command" },
@@ -78,6 +80,14 @@ const entities: Record<string, LocalizedName> = {
   adrenalglands: { pt: "Glândulas Adrenais", en: "Adrenal Glands" }, metabolicboost: { pt: "Aprimoramento Metabólico", en: "Metabolic Boost" },
   pneumatizedcarapace: { pt: "Carapaça Pneumatizada", en: "Pneumatized Carapace" }, cloakingfield: { pt: "Camuflagem de Banshee", en: "Banshee Cloak" },
   behemothreactor: { pt: "Reator Behemoth", en: "Behemoth Reactor" },
+  extendedthermallance: { pt: "Lança Térmica Estendida", en: "Extended Thermal Lance" }, graviticdrive: { pt: "Impulso Gravítico", en: "Gravitic Drive" },
+  observergraviticbooster: { pt: "Acelerador Gravítico", en: "Gravitic Boosters" }, phoenixrangeupgrade: { pt: "Cristais de Ânion", en: "Anion Pulse-Crystals" },
+  tempestgroundattackupgrade: { pt: "Catalisador Tectônico", en: "Tectonic Destabilizers" }, voidrayspeedupgrade: { pt: "Alinhamento Fluxo-Vanes", en: "Flux Vanes" },
+  darktemplarblinkupgrade: { pt: "Passo das Sombras", en: "Shadow Stride" }, psistormtech: { pt: "Tempestade Psiônica", en: "Psionic Storm" },
+  drillingclaws: { pt: "Garras Perfurantes", en: "Drilling Claws" }, infernalpreigniter: { pt: "Pré-Ignitor Infernal", en: "Infernal Pre-Igniter" },
+  smartservos: { pt: "Servos Inteligentes", en: "Smart Servos" }, muscularaugments: { pt: "Aprimoramentos Musculares", en: "Muscular Augments" },
+  groovedspines: { pt: "Espinhos Serrilhados", en: "Grooved Spines" }, neuralparasite: { pt: "Parasita Neural", en: "Neural Parasite" },
+  pathogenglands: { pt: "Glândulas Patogênicas", en: "Pathogen Glands" }, lurkerrange: { pt: "Espinhos Sísmicos", en: "Seismic Spines" },
   main: { pt: "Exército principal", en: "Main army" }, detachment: { pt: "Destacamento", en: "Detachment" },
   engagement: { pt: "Confronto", en: "Engagement" }, supplyblock: { pt: "Bloqueio de suprimento", en: "Supply block" },
 };
@@ -113,6 +123,8 @@ export function canonicalSc2Type(value: string) {
     .replace(/^viking$/, "vikingfighter")
     .replace(/^thorap$/, "thor")
     .replace(/^creeptumorqueen$/, "creeptumor")
+    .replace(/^warpprismphasing$/, "warpprism")
+    .replace(/^observersiegemode$/, "observer")
     .replace(/(?:burrowed|flying|uprooted|siegemode)$/, "")
     .replace(/^((?:lab)?mineralfield)\d+$/, "$1");
 }
@@ -125,6 +137,8 @@ export function sc2StateName(value: string, locale: Locale) {
   if (key.endsWith("flying")) return locale === "pt" ? "Voando" : "Flying";
   if (key.endsWith("uprooted")) return locale === "pt" ? "Desenraizado" : "Uprooted";
   if (key === "supplydepotlowered") return locale === "pt" ? "Abaixado" : "Lowered";
+  if (key === "warpprismphasing") return locale === "pt" ? "Modo fásico" : "Phasing mode";
+  if (key === "observersiegemode") return locale === "pt" ? "Modo vigilante" : "Surveillance mode";
   if (key.endsWith("siegemode")) return locale === "pt" ? "Modo estacionário" : "Stationary mode";
   return null;
 }
