@@ -630,7 +630,7 @@ export function ReplayViewer() {
   const activeEngagements = visibleEngagements.filter((engagement) => currentTime >= engagement.start && currentTime <= engagement.end);
   const combatLinks = activeEngagements.flatMap((engagement) => {
     const nearby = renderedUnits.filter((unit) => unit.isArmy && (unit.x - engagement.x) ** 2 + (unit.y - engagement.y) ** 2 <= 34 ** 2);
-    const links: Array<{ key: string; source: ReplayUnit; target: ReplayUnit; color: string; delay: number }> = [];
+    const links: Array<{ key: string; source: ReplayUnit; target: ReplayUnit; color: string; delay: number; kind: "contact" | "ranged" | "artillery" | "energy" }> = [];
     for (const source of nearby) {
       const target = nearby
         .filter((candidate) => candidate.ownerId !== source.ownerId)
@@ -638,12 +638,17 @@ export function ReplayViewer() {
         .filter((item) => item.distance <= 17 ** 2)
         .sort((left, right) => left.distance - right.distance)[0]?.candidate;
       if (!target || source.id > target.id) continue;
+      const iconKey = sc2IconKey(source.type);
+      const kind = iconKey === "melee" || iconKey === "swarm" ? "contact"
+        : iconKey === "siege" || iconKey === "explosive" || iconKey === "capital" ? "artillery"
+          : iconKey === "caster" || iconKey === "energy" ? "energy" : "ranged";
       links.push({
         key: `${engagement.id}-${source.id}-${target.id}`,
         source,
         target,
         color: playerById.get(source.ownerId)?.color ?? "#ffbd76",
         delay: -((source.id + target.id) % 7) * .09,
+        kind,
       });
       if (links.length >= 12) break;
     }
@@ -986,7 +991,10 @@ export function ReplayViewer() {
                     {combatLinks.map((link) => {
                       const source = toPercent(link.source.x, link.source.y);
                       const target = toPercent(link.target.x, link.target.y);
-                      return <line key={link.key} x1={source.left} y1={100 - source.bottom} x2={target.left} y2={100 - target.bottom} style={{ "--combat-color": link.color, animationDelay: `${link.delay}s` } as React.CSSProperties} />;
+                      return <g key={link.key} className={`combat-link-${link.kind}`} style={{ "--combat-color": link.color, animationDelay: `${link.delay}s` } as React.CSSProperties}>
+                        <line x1={source.left} y1={100 - source.bottom} x2={target.left} y2={100 - target.bottom} />
+                        <circle cx={target.left} cy={100 - target.bottom} r=".38" />
+                      </g>;
                     })}
                   </svg>
                 )}
