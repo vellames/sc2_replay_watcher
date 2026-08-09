@@ -351,6 +351,7 @@ export function ReplayViewer() {
   useEffect(() => {
     if (!playing || !replay) return;
     let previousTick = performance.now();
+    const tickRate = mapView === "3d" ? 160 : 100;
     const interval = window.setInterval(() => {
       const now = performance.now();
       const elapsed = (now - previousTick) / 1000;
@@ -363,9 +364,9 @@ export function ReplayViewer() {
         }
         return next;
       });
-    }, 100);
+    }, tickRate);
     return () => window.clearInterval(interval);
-  }, [playing, replay, speed]);
+  }, [playing, replay, speed, mapView]);
 
   useEffect(() => {
     if (!replay) return;
@@ -1075,7 +1076,7 @@ export function ReplayViewer() {
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
                     >
                       {is3D
-                        ? <><Sc2Model3D type={unit.type} race={player?.race} completed={unit.completed} moving={unit.isMoving} /><span className="model-label-3d" aria-hidden="true">{entityName(unit.type)}</span></>
+                        ? <><Sc2Model3D type={unit.type} race={player?.race} completed={unit.completed} moving={unit.isMoving} detailed={zoom >= 1.25 || unit.isBuilding || selectedUnitId === unit.id} /><span className="model-label-3d" aria-hidden="true">{entityName(unit.type)}</span></>
                         : unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
                       {addon && (is3D
                         ? <b className={`tactical-addon-3d ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>

@@ -46,7 +46,7 @@ const details: Record<NonNullable<ReturnType<typeof sc2ModelAsset>["detail"]>, s
   wings: "M4 13l10 4-8 5zm24 0l-10 4 8 5z",
 };
 
-export const Sc2Model3D = memo(function Sc2Model3D({ type, race, completed, moving }: { type: string; race?: string; completed: boolean; moving: boolean }) {
+export const Sc2Model3D = memo(function Sc2Model3D({ type, race, completed, moving, detailed }: { type: string; race?: string; completed: boolean; moving: boolean; detailed: boolean }) {
   const asset = sc2ModelAsset(type);
   const shape = geometry[asset.shape];
   const detail = asset.detail ? details[asset.detail] : shape.hardpoint;
@@ -55,9 +55,8 @@ export const Sc2Model3D = memo(function Sc2Model3D({ type, race, completed, movi
       <ellipse className="model-shadow" cx="16" cy="31" rx="12" ry="3" />
       <path className="model-extrusion" d={shape.hull} transform="translate(0 3)" />
       <path className="model-hull" d={shape.hull} />
-      {shape.inset && <path className="model-inset" d={shape.inset} />}
-      {detail && <path className="model-detail" d={detail} />}
+      {detailed && shape.inset && <path className="model-inset" d={shape.inset} />}
+      {detailed && detail && <path className="model-detail" d={detail} />}
     </svg>
   );
 });
-

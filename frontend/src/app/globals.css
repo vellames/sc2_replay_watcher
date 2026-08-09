@@ -207,6 +207,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .route-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
 .route-layer line { stroke: #a9e8ff; stroke-width: .22; stroke-dasharray: 1 1; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px #55cfff); }
 .unit { appearance: none; padding: 0; position: absolute; width: 10px; height: 10px; margin: -5px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.3); border-radius: 50%; transition: left 120ms linear, bottom 120ms linear, outline-color .15s, filter .15s; z-index: 3; cursor: pointer; }
+.map-canvas.view-3d .unit { transition-duration: 170ms, 170ms, .15s, .15s; }
 .unit > svg { width: 6px; height: 6px; color: rgba(242, 251, 255, .92); stroke-width: 2.2; filter: drop-shadow(0 1px 1px rgba(0,0,0,.7)); pointer-events: none; }
 .unit.selected { outline: 1px solid #d8f5ff; outline-offset: 4px; z-index: 7; }
 .unit.worker { width: 6px; height: 6px; margin: -3px; border-radius: 1px; opacity: .9; transform: rotate(45deg); }
