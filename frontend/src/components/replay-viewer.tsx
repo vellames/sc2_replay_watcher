@@ -1083,7 +1083,7 @@ export function ReplayViewer() {
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
                     >
                       {is3D
-                        ? <><Sc2Model3D type={unit.type} race={player?.race} completed={unit.completed} moving={unit.isMoving} detailed={zoom >= 1.25 || unit.isBuilding || selectedUnitId === unit.id} /><span className="model-label-3d" aria-hidden="true">{entityName(unit.type)}</span></>
+                        ? <Sc2Model3D type={unit.type} race={player?.race} completed={unit.completed} moving={unit.isMoving} detailed={zoom >= 1.25 || unit.isBuilding || selectedUnitId === unit.id} />
                         : unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
                       {addon && (is3D
                         ? <b className={`tactical-addon-3d ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>
