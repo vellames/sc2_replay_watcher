@@ -70,6 +70,7 @@ import { Sc2UnitMarker3D } from "@/components/sc2-unit-marker-3d";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
 import { TerrainLayer3D } from "@/components/terrain-layer-3d";
+import { TimelineEventLayer, type TimelineEventPresentation } from "@/components/timeline-event-layer";
 import { createIsometricProjection, playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { sc2AttackVisual } from "@/lib/sc2-3d-assets";
@@ -224,6 +225,11 @@ export function ReplayViewer() {
   const audioRef = useRef<ReplayAudioEngine | null>(null);
   const previousAudioTimeRef = useRef(0);
   const selectUnit = useCallback((unitId: number) => setSelection((current) => current?.kind === "unit" && current.unitId === unitId ? null : { kind: "unit", unitId }), []);
+  const seekTimelineEvent = useCallback((time: number, engagementId?: string) => {
+    setCurrentTime(time);
+    setPlaying(false);
+    if (engagementId) setSelection({ kind: "engagement", engagementId });
+  }, [setCurrentTime, setPlaying, setSelection]);
 
   const playSound = useCallback((sound: ReplaySound) => {
     if (!soundEnabled) return;
@@ -340,6 +346,24 @@ export function ReplayViewer() {
     }).join(" ");
     return { positive: points("positive"), negative: points("negative") };
   }, [replay]);
+
+  const timelineEvents = useMemo<TimelineEventPresentation[]>(() => {
+    if (!replay) return [];
+    return replay.timeline.filter((event) => event.time > 0).map((event, index) => {
+      const intervalEnd = event.end != null ? Math.min(replay.meta.duration, Math.max(event.time, event.end)) : null;
+      const eventType = t(`watcher.timelineEvent.${event.type}`);
+      const label = `${eventType} · ${sc2Name(event.label, locale)} · ${formatTime(event.time)}${intervalEnd != null ? `–${formatTime(intervalEnd)}` : ""}`;
+      return {
+        key: `${event.type}-${event.time}-${index}`,
+        type: event.type,
+        time: event.time,
+        engagementId: event.engagementId,
+        label,
+        left: (event.time / replay.meta.duration) * 100,
+        width: intervalEnd != null ? ((intervalEnd - event.time) / replay.meta.duration) * 100 : undefined,
+      };
+    });
+  }, [replay, locale, t]);
 
   const mapPresentation = useMemo(() => {
     if (!replay) return null;
@@ -1153,14 +1177,7 @@ export function ReplayViewer() {
               {armyAdvantageChart && <svg className="advantage-chart" viewBox="0 0 100 20" preserveAspectRatio="none" role="img" aria-label={t("watcher.armyAdvantageHistory")}><line x1="0" y1="10" x2="100" y2="10" /><polyline className="p1" points={armyAdvantageChart.positive} /><polyline className="p2" points={armyAdvantageChart.negative} /></svg>}
               <input className="timeline" aria-label="Tempo do replay" aria-keyshortcuts="ArrowLeft ArrowRight Home End" type="range" min="0" max={replay.meta.duration} step="0.1" value={currentTime} onChange={(event) => setCurrentTime(Number(event.target.value))} style={{ "--progress": `${(currentTime / replay.meta.duration) * 100}%` } as React.CSSProperties} />
               <div className="timeline-events" aria-label={t("watcher.analyticTimeline")}>
-                {replay.timeline.filter((event) => event.time > 0).map((event, index) => {
-                  const intervalEnd = event.end != null ? Math.min(replay.meta.duration, Math.max(event.time, event.end)) : null;
-                  const intervalWidth = intervalEnd != null ? ((intervalEnd - event.time) / replay.meta.duration) * 100 : null;
-                  const eventType = t(`watcher.timelineEvent.${event.type}`);
-                  const label = `${eventType} · ${entityName(event.label)} · ${formatTime(event.time)}${intervalEnd != null ? `–${formatTime(intervalEnd)}` : ""}`;
-                  const position = (event.time / replay.meta.duration) * 100;
-                  return <button key={`${event.type}-${event.time}-${index}`} aria-label={label} className={`timeline-event ${event.type} ${intervalWidth != null ? "interval" : ""}`} style={{ left: `${position}%`, width: intervalWidth != null ? `max(2px, ${intervalWidth}%)` : undefined }} onMouseEnter={() => setTimelineHint({ label, position })} onMouseLeave={() => setTimelineHint(null)} onFocus={() => setTimelineHint({ label, position })} onBlur={() => setTimelineHint(null)} onClick={() => { setCurrentTime(event.time); setPlaying(false); if (event.engagementId) setSelection({ kind: "engagement", engagementId: event.engagementId }); }} title={label} />;
-                })}
+                <TimelineEventLayer events={timelineEvents} onHint={setTimelineHint} onSeek={seekTimelineEvent} />
               </div>
             </div>
             <span className="control-time muted">{formatTime(replay.meta.duration)}</span>
