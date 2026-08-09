@@ -183,7 +183,6 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .map-grid.over-terrain { display: none; }
 .map-vignette { position: absolute; inset: 0; box-shadow: inset 0 0 90px 30px rgba(0,0,0,.55); pointer-events: none; }
 .combat-heat { position: absolute; width: 52px; height: 52px; margin: -26px; border-radius: 50%; opacity: .12; filter: blur(10px); animation: heat-fade 2.2s ease-in-out infinite; pointer-events: none; z-index: 1; }
-.camera-trail-dot { position: absolute; width: 4px; height: 4px; margin: -2px; border-radius: 50%; box-shadow: 0 0 7px var(--camera-color); pointer-events: none; z-index: 2; }
 .camera-focus { position: absolute; width: 62px; height: 40px; transform: translate(-50%, 50%); color: inherit; border: 1px solid color-mix(in srgb, var(--camera-color) 72%, transparent); border-radius: 2px; background: color-mix(in srgb, var(--camera-color) 4%, transparent); box-shadow: inset 0 0 18px color-mix(in srgb, var(--camera-color) 7%, transparent), 0 0 13px color-mix(in srgb, var(--camera-color) 13%, transparent); pointer-events: none; z-index: 7; }
 .camera-focus::before, .camera-focus::after { content: ""; position: absolute; left: 50%; top: 50%; background: var(--camera-color); opacity: .72; transform: translate(-50%, -50%); }
 .camera-focus::before { width: 9px; height: 1px; }

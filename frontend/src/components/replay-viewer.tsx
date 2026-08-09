@@ -69,7 +69,7 @@ import { TerrainLayer3D } from "@/components/terrain-layer-3d";
 import { createIsometricProjection, playableBounds } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
-import type { ReplayCamera, ReplayProduction, ReplayUnit } from "@/lib/types";
+import type { ReplayProduction, ReplayUnit } from "@/lib/types";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type ComparisonView = "composition" | "upgrades";
@@ -126,31 +126,6 @@ function InfoTip({ label, side = "left", children }: { label: string; side?: "le
       {position && typeof document !== "undefined" && createPortal(<span id={tooltipId} className="info-tip-card" role="tooltip" style={position}><b>{label}</b><small>{children}</small></span>, document.body)}
     </span>
   );
-}
-
-function cameraSamplesBetween(samples: ReplayCamera[], start: number, end: number) {
-  const lowerBound = (target: number) => {
-    let low = 0;
-    let high = samples.length;
-    while (low < high) {
-      const middle = Math.floor((low + high) / 2);
-      if (samples[middle].recordedAt < target) low = middle + 1;
-      else high = middle;
-    }
-    return low;
-  };
-  let low = 0;
-  let high = samples.length;
-  while (low < high) {
-    const middle = Math.floor((low + high) / 2);
-    if (samples[middle].recordedAt <= end) low = middle + 1;
-    else high = middle;
-  }
-  const startIndex = lowerBound(start);
-  return samples.slice(startIndex, low).map((sample, index) => ({
-    ...sample,
-    trackIndex: startIndex + index,
-  }));
 }
 
 type UnitVisual = {
@@ -633,14 +608,6 @@ export function ReplayViewer() {
     bottom: ((y - bounds.minY) / height) * 100,
   });
   const visibleEngagements = (replay.engagements ?? []).filter((engagement) => currentTime >= engagement.start - 3 && currentTime <= engagement.end + 8);
-  const cameraTrail = Object.values(replay.cameraSamples ?? {}).flatMap((samples) => {
-    const recent = cameraSamplesBetween(samples, currentTime - 10, currentTime);
-    const stride = Math.max(1, Math.ceil(recent.length / 12));
-    return recent.filter((_, index) => index % stride === 0).map((camera) => ({
-      ...camera,
-      opacity: Math.max(.15, 1 - (currentTime - camera.recordedAt) / 10),
-    }));
-  }).filter((camera) => cameraPlayers[camera.playerId] !== false);
   const toggleLayer = (layer: LayerKey) => {
     if (layer === "buildings" && layers.buildings && selection?.kind === "group" && selection.groupType === "base") setSelection(null);
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
@@ -964,11 +931,6 @@ export function ReplayViewer() {
                   const point = toPercent(death.x, death.y);
                   const color = playerById.get(death.ownerId)?.color ?? "#ff7180";
                   return <div key={`heat-${death.id}-${death.time}`} className="combat-heat" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, background: color }} />;
-                })}
-                {layers.cameras && cameraTrail.map((camera) => {
-                  const point = toPercent(camera.x, camera.y);
-                  const color = playerById.get(camera.playerId)?.color ?? "#8edcff";
-                  return <i key={`camera-trail-${camera.playerId}-${camera.trackIndex}`} className="camera-trail-dot" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, background: color, opacity: camera.opacity * .42, "--camera-color": color } as React.CSSProperties} />;
                 })}
                 {layers.cameras && renderedCameras.filter((camera) => cameraPlayers[camera.playerId] !== false).map((camera) => {
                   const point = toPercent(camera.x, camera.y);
