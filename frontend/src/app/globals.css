@@ -215,6 +215,37 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .unit.role-creep-node::before { content: ""; width: 2px; height: 2px; border-radius: 50%; background: rgba(255,255,255,.72); box-shadow: 0 0 3px var(--unit-color); }
 .unit.town-hall { width: 23px; height: 23px; margin: -11.5px; z-index: 3; }
 .unit.town-hall > svg { width: 9px; height: 9px; }
+.map-canvas.view-3d .unit { width: 1px; height: 1px; margin: 0; overflow: visible; border: 0; border-radius: 0; background: transparent !important; box-shadow: none !important; transform: none; opacity: 1; }
+.map-canvas.view-3d .unit > svg, .map-canvas.view-3d .unit::before, .map-canvas.view-3d .unit::after { display: none; }
+.tactical-model-3d { --model-w: 11px; --model-h: 7px; position: absolute; left: 0; bottom: -2px; width: var(--model-w); height: calc(var(--model-h) + var(--model-w) * .5); transform: translateX(-50%); pointer-events: none; }
+.tactical-model-3d > i { position: absolute; display: block; pointer-events: none; }
+.tactical-model-3d .model-shadow { left: 4%; bottom: -3px; width: 92%; height: 5px; border-radius: 50%; background: rgba(0, 0, 0, .58); filter: blur(2px); }
+.tactical-model-3d .model-top { left: 0; top: 0; width: 100%; height: 50%; display: grid; place-items: center; color: rgba(239, 251, 255, .9); background: color-mix(in srgb, var(--unit-color) 62%, #d8f4ff); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--unit-color) 48%, transparent)); }
+.tactical-model-3d .model-left { left: 0; top: 25%; width: 50%; height: calc(75% - 1px); background: color-mix(in srgb, var(--unit-color) 44%, #061018); clip-path: polygon(0 0, 100% 33.333%, 100% 100%, 0 66.667%); }
+.tactical-model-3d .model-right { right: 0; top: 25%; width: 50%; height: calc(75% - 1px); background: color-mix(in srgb, var(--unit-color) 28%, #02070b); clip-path: polygon(0 33.333%, 100% 0, 100% 66.667%, 0 100%); }
+.tactical-model-3d .model-top svg { width: 45%; height: 45%; stroke-width: 2.3; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .6)); }
+.tactical-model-3d.structure { --model-w: 17px; --model-h: 12px; }
+.tactical-model-3d.structure.production { --model-w: 21px; --model-h: 14px; }
+.tactical-model-3d.structure.town-hall { --model-w: 29px; --model-h: 19px; }
+.tactical-model-3d.structure.tech { --model-w: 16px; --model-h: 15px; }
+.tactical-model-3d.structure.defense { --model-w: 12px; --model-h: 17px; }
+.tactical-model-3d.structure.supply { --model-w: 11px; --model-h: 6px; }
+.tactical-model-3d.structure.gas { --model-w: 15px; --model-h: 10px; }
+.tactical-model-3d.structure.town-hall .model-top::after { content: ""; width: 28%; height: 48%; border: 1px solid rgba(238, 252, 255, .72); border-radius: 50%; background: var(--unit-color); box-shadow: 0 0 5px var(--unit-color); }
+.tactical-model-3d.structure.production .model-top::after { content: ""; position: absolute; right: 22%; top: -4px; width: 3px; height: 7px; border: 1px solid color-mix(in srgb, var(--unit-color) 70%, #d9f5ff); background: #07121a; box-shadow: 0 0 3px var(--unit-color); }
+.tactical-model-3d.structure.defense .model-top::after { content: ""; width: 38%; height: 70%; border-radius: 50%; background: #071119; border: 1px solid color-mix(in srgb, var(--unit-color) 75%, white); box-shadow: 0 0 4px var(--unit-color); }
+.tactical-model-3d.structure.gas .model-top::after { content: ""; width: 42%; height: 74%; border-radius: 50% 50% 35% 35%; background: color-mix(in srgb, var(--unit-color) 72%, #b6ffe7); box-shadow: 0 0 6px color-mix(in srgb, var(--unit-color) 72%, transparent); }
+.tactical-model-3d.structure.supply .model-top::after { content: ""; width: 54%; height: 1px; background: rgba(238, 252, 255, .68); box-shadow: 0 0 3px var(--unit-color); }
+.tactical-model-3d.siege .model-top::after, .tactical-model-3d.heavy .model-top::after { content: ""; position: absolute; left: 48%; top: 39%; width: 9px; height: 1px; transform-origin: left center; transform: rotate(calc(var(--heading) * -1)); background: color-mix(in srgb, var(--unit-color) 55%, white); box-shadow: 0 0 2px var(--unit-color); }
+.tactical-model-3d.worker { --model-w: 7px; --model-h: 4px; }
+.tactical-model-3d.air { --model-w: 14px; --model-h: 4px; bottom: 8px; }
+.tactical-model-3d.air .model-shadow { bottom: -12px; opacity: .72; }
+.tactical-model-3d.air .model-altitude { left: 50%; top: 72%; width: 1px; height: 10px; border-left: 1px dotted color-mix(in srgb, var(--unit-color) 42%, transparent); }
+.tactical-model-3d.resource { --model-w: 5px; --model-h: 6px; opacity: .38; filter: saturate(.72); }
+.tactical-model-3d.resource .model-top { height: 75%; background: color-mix(in srgb, var(--unit-color) 86%, #d8f4ff); clip-path: polygon(50% 0, 100% 72%, 50% 100%, 0 72%); }
+.tactical-model-3d.resource .model-left, .tactical-model-3d.resource .model-right { top: 54%; height: 46%; }
+.tactical-model-3d.moving::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 16px; height: 1px; transform-origin: left center; transform: rotate(calc(var(--heading) + 180deg)); background: linear-gradient(90deg, color-mix(in srgb, var(--unit-color) 52%, transparent), transparent); opacity: .55; }
+.map-canvas.view-3d .unit.selected .tactical-model-3d { filter: drop-shadow(0 0 5px #d8f5ff); }
 .production-badge { position: absolute; right: -9px; top: -9px; min-width: 13px; height: 13px; padding: 0 3px; display: grid; place-items: center; color: #071119; background: #9ce7ff; border-radius: 7px; font: 750 7px var(--font-geist-mono); transform: rotate(-45deg); box-shadow: 0 0 8px rgba(77, 204, 255, .65); }
 .addon-badge { position: absolute; right: -8px; bottom: -8px; width: 12px; height: 10px; display: grid; place-items: center; color: #d8f4ff; border: 1px solid color-mix(in srgb, var(--unit-color) 58%, #d8f4ff); border-radius: 2px; background: #0a1720; font: 750 6px var(--font-geist-mono); transform: rotate(-45deg); box-shadow: 0 0 7px color-mix(in srgb, var(--unit-color) 45%, transparent); }
 .addon-badge.reactor { border-radius: 5px; }

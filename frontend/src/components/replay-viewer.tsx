@@ -174,6 +174,19 @@ function raceIcon(race: string): LucideIcon {
   return Cog;
 }
 
+function TacticalModel3D({ unit, visual, icon: Icon }: { unit: ReplayUnit; visual: UnitVisual; icon: LucideIcon }) {
+  const modelClass = unit.category === "resource" ? "resource" : unit.isBuilding ? `structure ${visual.kind}` : `${visual.kind} ${sc2IconKey(unit.type)} ${unit.isMoving ? "moving" : ""}`;
+  return (
+    <span className={`tactical-model-3d ${modelClass}`} aria-hidden="true">
+      <i className="model-shadow" />
+      <i className="model-left" />
+      <i className="model-right" />
+      <i className="model-top"><Icon /></i>
+      {visual.kind === "air" && <i className="model-altitude" />}
+    </span>
+  );
+}
+
 export function ReplayViewer() {
   const { replay } = useReplay();
   const { locale, t } = useI18n();
@@ -460,7 +473,7 @@ export function ReplayViewer() {
     return layers.army;
   });
 
-  const strategicView = zoom < 1.25;
+  const strategicView = !is3D && zoom < 1.25;
   const showBaseMarkers = strategicView && layers.buildings && (currentFrame?.bases?.length ?? 0) > 0;
   const townHallsByOwner = new Map<number, ReplayUnit[]>();
   for (const townHall of visibleUnits.filter((unit) => unit.isTownHall)) {
@@ -480,7 +493,7 @@ export function ReplayViewer() {
     return nearest && nearest.distance <= baseRadius ** 2 ? `${unit.ownerId}:${kind}:base:${nearest.base.id}` : fallback;
   };
   const clusterData = new Map<string, { id: string; ownerId: number; x: number; y: number; units: ReplayUnit[] }>();
-  if (zoom < 1.55 && layers.army) {
+  if (!is3D && zoom < 1.55 && layers.army) {
     const cell = (strategicView ? 18 : 14) / zoom;
     for (const unit of visibleUnits.filter((candidate) => candidate.isArmy && playerById.has(candidate.ownerId))) {
       const key = `${unit.ownerId}:${Math.floor(unit.x / cell)}:${Math.floor(unit.y / cell)}`;
@@ -510,7 +523,7 @@ export function ReplayViewer() {
     }).filter((group) => group.units.length > 0)
     : clusters;
   const workerClusterData = new Map<string, { id: string; ownerId: number; x: number; y: number; units: ReplayUnit[] }>();
-  if (zoom < 1.7 && layers.workers) {
+  if (!is3D && zoom < 1.7 && layers.workers) {
     const cell = (strategicView ? 14 : 9) / zoom;
     for (const unit of visibleUnits.filter((candidate) => candidate.category === "worker" && (!showBaseMarkers || !candidate.baseId) && playerById.has(candidate.ownerId))) {
       const fallbackKey = `${unit.ownerId}:worker:${Math.floor(unit.x / cell)}:${Math.floor(unit.y / cell)}`;
@@ -528,7 +541,7 @@ export function ReplayViewer() {
     y: cluster.y / cluster.units.length,
   }));
   const structureClusterData = new Map<string, { id: string; ownerId: number; x: number; y: number; units: ReplayUnit[] }>();
-  if (zoom < 1.5 && layers.buildings) {
+  if (!is3D && zoom < 1.5 && layers.buildings) {
     const cell = (strategicView ? 72 : 11) / zoom;
     for (const unit of visibleUnits.filter((candidate) => candidate.category === "building" && (!strategicView || !candidate.baseId) && !candidate.isTownHall && candidate.attachmentId == null && !candidate.type.toLowerCase().includes("creeptumor") && playerById.has(candidate.ownerId))) {
       const fallbackKey = `${unit.ownerId}:structure:${Math.floor(unit.x / cell)}:${Math.floor(unit.y / cell)}`;
@@ -546,7 +559,7 @@ export function ReplayViewer() {
     y: cluster.y / cluster.units.length,
   }));
   const resourceClusterData = new Map<string, { id: string; ownerId: number; x: number; y: number; units: ReplayUnit[] }>();
-  if (zoom < 1.35 && layers.resources && !showBaseMarkers) {
+  if (!is3D && zoom < 1.35 && layers.resources && !showBaseMarkers) {
     const cell = 14 / zoom;
     for (const unit of visibleUnits.filter((candidate) => candidate.category === "resource")) {
       const key = `resource:${Math.floor(unit.x / cell)}:${Math.floor(unit.y / cell)}`;
@@ -594,7 +607,7 @@ export function ReplayViewer() {
   const selectedProduction = selectedUnit
     ? Object.values(currentFrame?.production ?? {}).flat().filter((order) => order.producerId === selectedUnit.id || order.producerId === selectedAddon?.id)
     : [];
-  const markerBudget = strategicView ? 48 : zoom < 1.7 ? 140 : 260;
+  const markerBudget = is3D ? 420 : strategicView ? 48 : zoom < 1.7 ? 140 : 260;
   const individualUnits = visibleUnits
     .filter((unit) => !clusteredIds.has(unit.id) && unit.attachmentId == null)
     .filter((unit) => !strategicView || unit.id === selectedUnitId || unit.isArmy || unit.isTownHall)
@@ -1002,12 +1015,12 @@ export function ReplayViewer() {
                     <button
                       key={unit.id}
                       className={`unit ${unit.category} role-${visual.kind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selectedUnitId === unit.id ? "selected" : ""}`}
-                      style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${unit.heading}deg` } as React.CSSProperties}
+                      style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, zIndex: is3D ? 1000 - Math.round(point.bottom * 5) : undefined, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${unit.heading}deg` } as React.CSSProperties}
                       title={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)}`}
                       aria-label={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`}
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
                     >
-                      {unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
+                      {is3D ? <TacticalModel3D unit={unit} visual={visual} icon={UnitIcon} /> : unit.category !== "resource" && <UnitIcon aria-hidden="true" />}
                       {addon && <b className={`addon-badge ${addon.type.toLowerCase().includes("reactor") ? "reactor" : "tech-lab"}`} title={entityName(addon.type)}>{addon.type.toLowerCase().includes("reactor") ? "R" : "T"}</b>}
                       {productionCount > 0 && <b className="production-badge">{productionCount}</b>}
                     </button>
