@@ -486,6 +486,9 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   .new-replay-link { display: none !important; }
   .watcher-main { width: 100%; }
   .map-stage { min-height: 390px; }
+  .map-toolbar { max-width: calc(100% - 24px); overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; }
+  .map-toolbar::-webkit-scrollbar { display: none; }
+  .map-toolbar button { min-width: 32px; height: 32px; justify-content: center; }
   .controls { grid-template-columns: auto auto 1fr auto; padding: 0 12px; }
   .event-nav { display: none; }
   .control-time, .speed svg:first-child { display: none; }
