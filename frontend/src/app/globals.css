@@ -611,6 +611,10 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   .map-toolbar button { min-width: 32px; height: 32px; justify-content: center; }
   .map-analysis-toolbar { top: 58px; max-width: calc(100% - 24px); }
   .map-analysis-toolbar button { height: 30px; }
+  .next-event { display: none; }
+  .selection-inspector { top: auto; right: 12px; bottom: 56px; left: 12px; width: auto; max-height: 42%; }
+  .general-state > i, .general-state > em, .general-state > .info-tip, .general-state > span { display: none; }
+  .general-state { gap: 4px; }
   .comparison-backdrop { padding: 34px 12px 20px; }
   .comparison-players { overflow-y: auto; grid-template-columns: 1fr; }
   .comparison-player { overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); }
