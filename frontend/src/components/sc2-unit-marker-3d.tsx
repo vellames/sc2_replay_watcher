@@ -14,6 +14,8 @@ type Props = {
   heading: number;
   left: number;
   onSelect: (id: number) => void;
+  offsetX: number;
+  offsetY: number;
   overview: boolean;
   productionCount: number;
   productionRatio: number;
@@ -24,7 +26,7 @@ type Props = {
   visualKind: string;
 };
 
-export const Sc2UnitMarker3D = memo(function Sc2UnitMarker3D({ addon, addonName, ariaLabel, bottom, color, detailed, heading, left, onSelect, overview, productionCount, productionRatio, race, selected, title, unit, visualKind }: Props) {
+export const Sc2UnitMarker3D = memo(function Sc2UnitMarker3D({ addon, addonName, ariaLabel, bottom, color, detailed, heading, left, onSelect, offsetX, offsetY, overview, productionCount, productionRatio, race, selected, title, unit, visualKind }: Props) {
   const addonIsReactor = addon?.type.toLowerCase().includes("reactor") ?? false;
   const semanticDepth = selected ? 1000 : visualKind === "air" ? 180 : unit.isArmy ? 100 : unit.category === "worker" ? 35 : 0;
   const markerRef = useRef<HTMLButtonElement>(null);
@@ -39,7 +41,7 @@ export const Sc2UnitMarker3D = memo(function Sc2UnitMarker3D({ addon, addonName,
       <button
         ref={markerRef}
         className={`unit unit-3d ${unit.category} role-${visualKind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${productionCount > 0 ? "producing" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selected ? "selected" : ""}`}
-        style={{ left: `${left}%`, bottom: `${bottom}%`, zIndex: 1000 - Math.round(bottom * 5) + semanticDepth, "--unit-color": color, "--heading": `${heading}deg`, "--production-angle": `${productionRatio * 360}deg` } as React.CSSProperties}
+        style={{ left: `${left}%`, bottom: `${bottom}%`, translate: `${offsetX}px ${offsetY}px`, zIndex: 1000 - Math.round(bottom * 5) + semanticDepth, "--unit-color": color, "--heading": `${heading}deg`, "--production-angle": `${productionRatio * 360}deg` } as React.CSSProperties}
         aria-label={ariaLabel}
         onMouseEnter={showTooltip}
         onMouseLeave={() => setTooltip(null)}

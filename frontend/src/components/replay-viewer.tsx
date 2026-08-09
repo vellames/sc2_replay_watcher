@@ -650,6 +650,22 @@ export function ReplayViewer() {
   const individualUnits = is3D
     ? threeDimensionalWorldUnits.slice(0, 640)
     : orderedIndividualUnits.slice(0, markerBudget);
+  const overlapOffsets = new Map<number, { x: number; y: number }>();
+  if (is3D) {
+    const overlapBuckets = new Map<string, ReplayUnit[]>();
+    for (const unit of individualUnits.filter((candidate) => !candidate.isBuilding && candidate.positionSource === "estimated")) {
+      const key = `${unit.ownerId}:${Math.round(unit.x * 10)}:${Math.round(unit.y * 10)}`;
+      overlapBuckets.set(key, [...(overlapBuckets.get(key) ?? []), unit]);
+    }
+    for (const bucket of overlapBuckets.values()) {
+      if (bucket.length < 2) continue;
+      bucket.sort((left, right) => left.id - right.id).forEach((unit, index) => {
+        const angle = index * 137.508 * Math.PI / 180;
+        const radius = Math.min(8, 2 + Math.sqrt(index) * 2.1);
+        overlapOffsets.set(unit.id, { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius * .58 });
+      });
+    }
+  }
   const toPercent = (x: number, y: number) => mapPresentation?.projection?.project(x, y) ?? ({
     left: ((x - bounds.minX) / width) * 100,
     bottom: ((y - bounds.minY) / height) * 100,
@@ -1104,7 +1120,8 @@ export function ReplayViewer() {
                   const assetRole = sc2IconKey(unit.type);
                   const priorityDetail = unit.isBuilding || unit.isTownHall || assetRole === "massive" || assetRole === "capital" || assetRole === "siege";
                   const detailed3D = selectedUnitId === unit.id || priorityDetail || (zoom >= 1.25 && individualUnits.length < 360);
-                  if (is3D) return <Sc2UnitMarker3D key={unit.id} unit={unit} visualKind={visual.kind} race={player?.race} color={color} left={point.left} bottom={point.bottom} heading={screenHeading} productionCount={productionCount} productionRatio={productionRatio} addon={addon} addonName={addon ? entityName(addon.type) : undefined} selected={selectedUnitId === unit.id} detailed={detailed3D} overview={zoom < 1.25} title={title} ariaLabel={ariaLabel} onSelect={selectUnit} />;
+                  const overlapOffset = overlapOffsets.get(unit.id) ?? { x: 0, y: 0 };
+                  if (is3D) return <Sc2UnitMarker3D key={unit.id} unit={unit} visualKind={visual.kind} race={player?.race} color={color} left={point.left} bottom={point.bottom} heading={screenHeading} productionCount={productionCount} productionRatio={productionRatio} addon={addon} addonName={addon ? entityName(addon.type) : undefined} selected={selectedUnitId === unit.id} detailed={detailed3D} overview={zoom < 1.25} offsetX={overlapOffset.x} offsetY={overlapOffset.y} title={title} ariaLabel={ariaLabel} onSelect={selectUnit} />;
                   return (
                     <button
                       key={unit.id}
