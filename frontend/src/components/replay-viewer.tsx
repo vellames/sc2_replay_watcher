@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Activity,
   Ambulance,
@@ -85,10 +86,22 @@ function signedCompactNumber(value: number) {
 }
 
 function InfoTip({ label, side = "left", children }: { label: string; side?: "left" | "right"; children: React.ReactNode }) {
+  const triggerRef = useRef<HTMLSpanElement>(null);
+  const tooltipId = useId();
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
+  const show = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = 220;
+    const left = side === "left"
+      ? Math.min(window.innerWidth - width - 10, rect.right + 8)
+      : Math.max(10, rect.left - width - 8);
+    setPosition({ left, top: Math.min(window.innerHeight - 110, Math.max(10, rect.top - 4)) });
+  };
   return (
-    <span className={`info-tip info-tip-${side}`} tabIndex={0} aria-label={label}>
+    <span ref={triggerRef} className={`info-tip info-tip-${side}`} tabIndex={0} aria-label={label} aria-describedby={position ? tooltipId : undefined} onMouseEnter={show} onMouseLeave={() => setPosition(null)} onFocus={show} onBlur={() => setPosition(null)}>
       <CircleHelp size={11} aria-hidden="true" />
-      <span className="info-tip-card" role="tooltip"><b>{label}</b><small>{children}</small></span>
+      {position && typeof document !== "undefined" && createPortal(<span id={tooltipId} className="info-tip-card" role="tooltip" style={position}><b>{label}</b><small>{children}</small></span>, document.body)}
     </span>
   );
 }
@@ -604,38 +617,42 @@ export function ReplayViewer() {
             <small>{player.race}</small>
             <InfoTip label={t("watcher.help.playerHud")} side={side}>{t("watcher.help.playerHudText")}</InfoTip>
           </div>
-          <div className="macro-player-title"><span>{t("watcher.supply")}{isSupplyBlocked && <em>{t("watcher.blocked")}{activeSupplyBlock ? ` ${formatTime(currentTime - activeSupplyBlock.time)}` : ""}</em>}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
+          <div className="macro-player-title"><span>{t("watcher.supply")}<InfoTip label={t("watcher.supply")} side={side}>{t("watcher.help.supply")}</InfoTip>{isSupplyBlocked && <em>{t("watcher.blocked")}{activeSupplyBlock ? ` ${formatTime(currentTime - activeSupplyBlock.time)}` : ""}</em>}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
           <div className={`supply-track ${isSupplyBlocked ? "blocked" : ""}`}><i style={{ width: `${Math.min(100, (supplyUsed / supplyCap) * 100)}%` }} /></div>
+          <div className="hud-section-label"><span><Database size={9} />{t("watcher.bank")}</span><InfoTip label={t("watcher.bank")} side={side}>{t("watcher.help.resources")}</InfoTip></div>
           <div className="resource-bank">
             <span><Pickaxe size={10} /><b>{compactNumber(stats?.minerals ?? 0)}</b><small>{t("watcher.minerals")}</small></span>
             <span><Zap size={10} /><b>{compactNumber(stats?.vespene ?? 0)}</b><small>{t("watcher.vespene")}</small></span>
           </div>
           <div className="macro-metrics side-macro-metrics">
-            <div><small>{t("watcher.army")}</small><strong>{stats?.armySupply ?? 0} <em>supply</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
-            <div><small>{t("watcher.workers")}</small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
+            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{stats?.armySupply ?? 0} <em>supply</em></strong><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} <em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></span></div>
+            <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}</strong><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></span></div>
           </div>
-          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}</span><div>{armyComposition.map(([type, count]) => <b key={type} title={entityName(type)}>{count}× {entityName(type)}</b>)}</div></div>}
-          <div className="combat-ledger">
-            <span>{t("watcher.inProgress")} <b>{compactNumber(stats?.armyInProgress ?? 0)}</b></span>
-            <span>{t("watcher.lost")} <b>{compactNumber(stats?.armyLost ?? 0)}</b></span>
-            <span>{t("watcher.killed")} <b>{compactNumber(stats?.resourcesKilled ?? 0)}</b></span>
+          {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map(([type, count]) => <b key={type} title={entityName(type)}>{count}× {entityName(type)}</b>)}</div></div>}
+          <div className="combat-ledger-block">
+            <div className="hud-section-label"><span><Flame size={9} />{t("watcher.recentCombat")}</span><InfoTip label={t("watcher.recentCombat")} side={side}>{t("watcher.help.combatLedger")}</InfoTip></div>
+            <div className="combat-ledger">
+              <span>{t("watcher.inProgress")} <b>{compactNumber(stats?.armyInProgress ?? 0)}</b></span>
+              <span>{t("watcher.lost")} <b>{compactNumber(stats?.armyLost ?? 0)}</b></span>
+              <span>{t("watcher.killed")} <b>{compactNumber(stats?.resourcesKilled ?? 0)}</b></span>
+            </div>
           </div>
           {completedUpgrades.length > 0 && (
             <div className="tech-state">
-              <span><FlaskConical size={10} />{t("watcher.completedUpgrades")}</span>
+              <span><FlaskConical size={10} />{t("watcher.completedUpgrades")}<InfoTip label={t("watcher.completedUpgrades")} side={side}>{t("watcher.help.upgrades")}</InfoTip></span>
               <div>{completedUpgrades.map((upgrade, index) => <b key={`${upgrade.time}-${upgrade.label}-${index}`} title={`${formatTime(upgrade.time)} · ${entityName(upgrade.label)}`}>{entityName(upgrade.label)}</b>)}</div>
             </div>
           )}
           {(recentMilestones.length > 0 || upcomingMilestone) && (
             <div className="build-path">
-              <span><ListTree size={10} />{t("watcher.buildPath")}</span>
+              <span><ListTree size={10} />{t("watcher.buildPath")}<InfoTip label={t("watcher.buildPath")} side={side}>{t("watcher.help.buildPath")}</InfoTip></span>
               {recentMilestones.map((milestone) => <div key={`${milestone.completedAt}-${milestone.product}`}><time>{formatTime(milestone.completedAt)}</time><b>{entityName(milestone.product)}</b><small>{t("watcher.done")}</small></div>)}
               {upcomingMilestone && <div className="upcoming"><time>{formatTime(upcomingMilestone.completedAt)}</time><b>{entityName(upcomingMilestone.product)}</b><small>{t("watcher.next")}</small></div>}
             </div>
           )}
-          {layers.cameras && cameraAnalytics && <div className="camera-rhythm" title={`${t("watcher.cameraThreshold")} ${cameraAnalytics.jumpDistance}`}><span><Scan size={10} /><small>{t("watcher.cameraJumps")}</small><b>{cameraAnalytics.jumpsPerMinute}</b></span><span><Clock3 size={10} /><small>{t("watcher.averageDwell")}</small><b>{cameraAnalytics.averageDwellSeconds}s</b></span></div>}
+          {layers.cameras && cameraAnalytics && <div className="camera-rhythm-block"><div className="hud-section-label"><span><Scan size={9} />{t("watcher.layer.cameras")}</span><InfoTip label={t("watcher.layer.cameras")} side={side}>{t("watcher.help.camera")}</InfoTip></div><div className="camera-rhythm" title={`${t("watcher.cameraThreshold")} ${cameraAnalytics.jumpDistance}`}><span><Scan size={10} /><small>{t("watcher.cameraJumps")}</small><b>{cameraAnalytics.jumpsPerMinute}</b></span><span><Clock3 size={10} /><small>{t("watcher.averageDwell")}</small><b>{cameraAnalytics.averageDwellSeconds}s</b></span></div></div>}
           <div className="production-list side-production-list">
-            <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}</span><b>{production.length}</b></div>
+            <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}<InfoTip label={t("watcher.production")} side={side}>{t("watcher.help.production")}</InfoTip></span><b>{production.length}</b></div>
             {production.length === 0 ? <small className="queue-empty">{t("watcher.queueEmpty")}</small> : production.slice(0, 8).map((order) => (
               <div className={`production-order ${order.confidence}`} key={order.id} title={`${order.ability} · ${order.confidence}`}>
                 <span>{entityName(order.product)}</span>
