@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Activity,
@@ -384,13 +384,15 @@ export function ReplayViewer() {
       const now = performance.now();
       const elapsed = (now - previousTick) / 1000;
       previousTick = now;
-      setCurrentTime((time) => {
-        const next = time + elapsed * speed;
-        if (next >= replay.meta.duration) {
-          setPlaying(false);
-          return replay.meta.duration;
-        }
-        return next;
+      startTransition(() => {
+        setCurrentTime((time) => {
+          const next = time + elapsed * speed;
+          if (next >= replay.meta.duration) {
+            setPlaying(false);
+            return replay.meta.duration;
+          }
+          return next;
+        });
       });
     }, tickRate);
     return () => window.clearInterval(interval);
