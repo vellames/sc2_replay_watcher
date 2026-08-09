@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from sc2_world_engine.errors import UnsupportedMatchFormatError
 
 from app import main
 from app.main import app
@@ -52,6 +53,24 @@ def test_upload_compilation_runs_outside_the_event_loop(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json() == {"filename": "match.SC2Replay"}
     assert calls and calls[0][0] is fake_parse
+
+
+def test_rejects_non_1v1_with_clear_message(monkeypatch) -> None:
+    def fake_parse(_path, *, filename):
+        raise UnsupportedMatchFormatError(f"Unsupported match: {filename}")
+
+    monkeypatch.setattr(main, "parse_replay", fake_parse)
+    main._upload_cache.clear()
+
+    response = client.post(
+        "/api/replays/parse",
+        files={"file": ("team-game.SC2Replay", b"valid team replay")},
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": "Apenas replays 1v1 são suportados no momento."
+    }
 
 
 def test_repeated_upload_reuses_compiled_payload(monkeypatch) -> None:

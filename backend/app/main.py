@@ -14,6 +14,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from sc2_world_engine import __version__ as engine_version
+from sc2_world_engine.errors import UnsupportedMatchFormatError
 from sc2_world_engine.archive import SCHEMA_VERSION
 
 from .world_adapter import parse_replay
@@ -122,6 +123,11 @@ async def upload_replay(response: Response, file: Annotated[UploadFile, File()])
         return payload
     except HTTPException:
         raise
+    except UnsupportedMatchFormatError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail="Apenas replays 1v1 são suportados no momento.",
+        ) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=422,

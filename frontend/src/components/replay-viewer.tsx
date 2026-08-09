@@ -1168,7 +1168,7 @@ export function ReplayViewer() {
                 })}
                 <i />
                 <button className={mapView === "2d" ? "active" : ""} aria-pressed={mapView === "2d"} onClick={() => { setMapView("2d"); resetMap(); }} title={t("watcher.view2d")}><MapIcon size={12} /><span>2D</span></button>
-                <button className={is3D ? "active" : ""} aria-pressed={is3D} disabled={!hasMapGeometry} onClick={() => { setMapView("3d"); resetMap(); }} title={hasMapGeometry ? t("watcher.view3d") : t("watcher.view3dUnavailable")}><Box size={12} /><span>3D</span></button>
+                {hasMapGeometry && <button className={is3D ? "active" : ""} aria-pressed={is3D} onClick={() => { setMapView("3d"); resetMap(); }} title={t("watcher.view3d")}><Box size={12} /><span>3D</span></button>}
                 {is3D && <button onClick={() => setMapRotation((value) => (value + 1) % 4)} aria-keyshortcuts="R" aria-label={t("watcher.rotate3d")} title={`${t("watcher.rotate3d")} · R`}><RotateCw size={12} /><span>{mapRotation * 90}°</span></button>}
                 <InfoTip label={t("watcher.iconLegend")}><span className="icon-legend-list"><span><Crosshair size={10} />{t("watcher.icon.siege")}</span><span><Eye size={10} />{t("watcher.icon.detector")}</span><span><Bomb size={10} />{t("watcher.icon.explosive")}</span><span><Boxes size={10} />{t("watcher.icon.transport")}</span><span><Sparkles size={10} />{t("watcher.icon.caster")}</span><em>{t("watcher.iconLegendAction")}</em></span></InfoTip>
                 <i />
