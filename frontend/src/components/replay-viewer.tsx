@@ -614,7 +614,7 @@ export function ReplayViewer() {
       .sort((left, right) => right.count - left.count || left.type.localeCompare(right.type))
       .slice(0, 4);
     const cameraAnalytics = replay.cameraAnalytics?.[String(player.id)];
-    const armyValueDelta = (stats?.armyValue ?? 0) - (opponentStats?.armyValue ?? 0);
+    const armySupplyDelta = (stats?.armySupply ?? 0) - (opponentStats?.armySupply ?? 0);
     const workerDelta = (stats?.workers ?? 0) - (opponentStats?.workers ?? 0);
     const deltaClass = (value: number) => value > 0 ? "leading" : value < 0 ? "trailing" : "tied";
     const RaceIcon = raceIcon(player.race);
@@ -635,7 +635,7 @@ export function ReplayViewer() {
             <span><Zap size={10} /><b>{compactNumber(stats?.vespene ?? 0)}</b><small>{t("watcher.vespene")}</small></span>
           </div>
           <div className="macro-metrics side-macro-metrics">
-            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{number(stats?.armySupply ?? 0)} <em>{t("watcher.supplyUnit")}</em><em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></strong><span className="metric-detail"><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} {t("watcher.valueShort")}</span></span></div>
+            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{number(stats?.armySupply ?? 0)} <em>{t("watcher.supplyUnit")}</em><em className={`metric-delta ${deltaClass(armySupplyDelta)}`} title={t("watcher.armySupplyVersusOpponent")}>{signedCompactNumber(armySupplyDelta)}</em></strong><span className="metric-detail"><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} {t("watcher.valueShort")}</span></span></div>
             <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}<em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></strong><span className="metric-detail"><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <small>{t("watcher.perMinute")}</small></span></span></div>
           </div>
           {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map((item) => { const EntityIcon = hudEntityIcon(item.type); const detail = `${item.count}× ${entityName(item.type)} · ${compactNumber(item.minerals)} ${t("watcher.minerals")} · ${compactNumber(item.vespene)} ${t("watcher.vespene")} · ${item.supply} ${t("watcher.supplyUnit")}`; return <b key={item.type} tabIndex={0} title={detail} aria-label={detail}><EntityIcon size={9} />{item.count}× {entityName(item.type)}</b>; })}</div></div>}
