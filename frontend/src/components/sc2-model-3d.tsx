@@ -32,6 +32,8 @@ const geometry: Record<Sc2ModelShape, ShapeGeometry> = {
   "protoss-tech": { hull: "M16 2l8 10 5 7-6 10H9L3 19l5-7z" },
   "protoss-defense": { hull: "M16 3l5 9 8 5-5 11-8 3-8-3-5-11 8-5z" },
   "protoss-pylon": { hull: "M16 1l7 12-3 16-4 3-4-3-3-16z" },
+  "neutral-tower": { hull: "M13 3h6l3 12 6 7-5 8H9l-5-8 6-7z", inset: "M15 7h2l2 12-3 5-3-5z" },
+  "neutral-rock": { hull: "M3 16l6-8 8-3 7 4 5 9-4 9-10 3-10-4-4-8z", inset: "M9 12l7-4 7 3 2 7-6 7-9-3-3-6z" },
   mineral: { hull: "M16 2l8 11-3 16H10L7 13z", inset: "M16 7l4 8-2 10h-5l-2-10z" },
   creep: { hull: "M16 7l6 4 6 6-5 8-7 3-8-3-4-8 6-6z" },
   fallback: { hull: "M16 4l12 9-3 13-9 5-10-5-2-13z", inset: "M16 9l7 6-2 8-5 3-6-3-1-8z" },

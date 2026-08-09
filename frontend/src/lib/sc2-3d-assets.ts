@@ -6,7 +6,7 @@ export type Sc2ModelShape =
   | "terran-command" | "terran-production" | "terran-tech" | "terran-defense" | "terran-supply" | "gas"
   | "zerg-townhall" | "zerg-organic" | "zerg-spire" | "zerg-defense"
   | "protoss-nexus" | "protoss-gateway" | "protoss-tech" | "protoss-defense" | "protoss-pylon"
-  | "mineral" | "creep" | "fallback";
+  | "neutral-tower" | "neutral-rock" | "mineral" | "creep" | "fallback";
 
 export type Sc2ModelAsset = {
   shape: Sc2ModelShape;
@@ -164,12 +164,17 @@ const fallback: Sc2ModelAsset = { shape: "fallback", footprint: "small", facing:
 
 export function sc2ModelAsset(type: string): Sc2ModelAsset {
   const key = canonicalSc2Type(type);
-  return terran[key] ?? zerg[key] ?? protoss[key] ?? shared[key] ?? fallback;
+  const neutral = /xelnaga.*tower/.test(key)
+    ? { shape: "neutral-tower", footprint: "medium", detail: "energy" } satisfies Sc2ModelAsset
+    : /rock|debris|collapsible/.test(key)
+      ? { shape: "neutral-rock", footprint: "large" } satisfies Sc2ModelAsset
+      : undefined;
+  return terran[key] ?? zerg[key] ?? protoss[key] ?? shared[key] ?? neutral ?? fallback;
 }
 
 export function hasDedicatedSc2Model(type: string) {
   const key = canonicalSc2Type(type);
-  return Boolean(terran[key] || zerg[key] || protoss[key] || shared[key]);
+  return Boolean(terran[key] || zerg[key] || protoss[key] || shared[key] || /xelnaga.*tower|rock|debris|collapsible/.test(key));
 }
 
 export function sc2AttackVisual(type: string): { kind: Sc2AttackVisual; range: number } {

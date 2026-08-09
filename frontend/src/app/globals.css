@@ -261,6 +261,9 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .sc2-model-3d.race-zerg .model-hull { fill: color-mix(in srgb, var(--unit-color) 54%, #785869); }
 .sc2-model-3d.race-protoss .model-hull { fill: color-mix(in srgb, var(--unit-color) 48%, #d6eef3); }
 .sc2-model-3d.race-protoss .model-detail { fill: #c7fbff; }
+.sc2-model-3d.race-neutral { opacity: .32; }
+.sc2-model-3d.race-neutral .model-hull { fill: #52636c; stroke: #91a7b1; }
+.sc2-model-3d.race-neutral .model-detail { fill: #7dabb5; stroke: #bde9ef; }
 .sc2-model-3d.constructing { opacity: .58; }
 .sc2-model-3d.constructing .model-hull { fill: transparent; stroke-dasharray: 2 1.4; }
 .sc2-model-3d.moving .model-extrusion { opacity: .84; }

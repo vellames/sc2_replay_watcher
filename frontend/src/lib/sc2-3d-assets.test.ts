@@ -49,3 +49,10 @@ test("assigns restrained combat signatures and engagement ranges", () => {
   assert.equal(sc2AttackVisual("Marauder").kind, "missile");
   assert.equal(sc2AttackVisual("Marine").kind, "rifle");
 });
+
+test("recognizes neutral map fixtures instead of inventing faction structures", () => {
+  assert.equal(sc2ModelAsset("XelNagaTower").shape, "neutral-tower");
+  assert.equal(sc2ModelAsset("XelNagaTowerRangeIndicatorDummy").shape, "neutral-tower");
+  assert.equal(sc2ModelAsset("CollapsibleRockTower").shape, "neutral-rock");
+  assert.equal(hasDedicatedSc2Model("DestructibleDebris6x6"), true);
+});
