@@ -597,6 +597,11 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   .new-replay-link { display: none !important; }
   .watcher-main { width: 100%; }
   .map-stage { min-height: 390px; }
+  .map-canvas.view-3d .sc2-model-3d.footprint-tiny { --asset-w: 7px; }
+  .map-canvas.view-3d .sc2-model-3d.footprint-small { --asset-w: 9px; }
+  .map-canvas.view-3d .sc2-model-3d.footprint-medium { --asset-w: 12px; }
+  .map-canvas.view-3d .sc2-model-3d.footprint-large { --asset-w: 16px; }
+  .map-canvas.view-3d .sc2-model-3d.footprint-massive { --asset-w: 21px; }
   .map-toolbar { max-width: calc(100% - 24px); overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; }
   .map-toolbar::-webkit-scrollbar { display: none; }
   .map-toolbar button { min-width: 32px; height: 32px; justify-content: center; }
