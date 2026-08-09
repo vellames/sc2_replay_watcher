@@ -230,6 +230,8 @@ export function ReplayViewer() {
   const { replay } = useReplay();
   const { locale, t } = useI18n();
   const entityName = (type: string) => sc2Name(type, locale);
+  const activityName = (activity: ReplayUnit["activity"]) => activity === "moving" ? t("watcher.moving") : activity === "harvesting" ? t("watcher.harvesting") : t("watcher.idle");
+  const confidenceName = (source: ReplayUnit["positionSource"]) => source === "recorded" ? t("watcher.confidence.recorded") : source === "derived" ? t("watcher.confidence.derived") : t("watcher.confidence.estimated");
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -693,7 +695,7 @@ export function ReplayViewer() {
           <div className="production-list side-production-list">
             <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}<InfoTip label={t("watcher.production")} side={side}>{t("watcher.help.production")}</InfoTip></span><b>{production.length}</b></div>
             {production.length === 0 ? <small className="queue-empty">{t("watcher.queueEmpty")}</small> : production.slice(0, 8).map((order) => (
-              <div className={`production-order ${order.confidence}`} key={order.id} title={`${order.ability} · ${order.confidence}`}>
+              <div className={`production-order ${order.confidence}`} key={order.id} title={`${entityName(order.product)} · ${entityName(order.ability)} · ${confidenceName(order.confidence)}`}>
                 <span>{(() => { const EntityIcon = hudEntityIcon(order.product); return <><EntityIcon size={9} />{entityName(order.product)}</>; })()}</span>
                 <b>{order.queued ? t("watcher.queued") : `${order.confidence === "estimated" ? "~" : ""}${Math.round(order.progress * 100)}%`}</b>
                 <i><em style={{ width: `${order.progress * 100}%` }} /></i>
@@ -750,9 +752,7 @@ export function ReplayViewer() {
     const title = isGroup
       ? (selection.groupType === "base" ? t("watcher.baseGroup") : selection.groupType === "workers" ? t("watcher.workerGroup") : selection.groupType === "structures" ? t("watcher.structureGroup") : selection.groupType === "resources" ? t("watcher.resourceGroup") : t("watcher.unitGroup"))
       : entityName(primaryUnit.type);
-    const activityLabel = primaryUnit.activity === "moving"
-      ? t("watcher.moving")
-      : primaryUnit.activity === "harvesting" ? t("watcher.harvesting") : t("watcher.idle");
+    const activityLabel = activityName(primaryUnit.activity);
 
     return (
       <aside className="selection-inspector" style={{ "--selection-color": inspectedPlayer?.color ?? "#7b8794" } as React.CSSProperties}>
@@ -807,7 +807,7 @@ export function ReplayViewer() {
             <section className="inspector-section position-section">
               <h3><Target size={11} />{t("watcher.position")}</h3>
               <div><span>X <b>{primaryUnit.x.toFixed(1)}</b></span><span>Y <b>{primaryUnit.y.toFixed(1)}</b></span><span>{activityLabel}</span></div>
-              <small>{t("watcher.positionConfidence")}: {primaryUnit.positionSource}</small>
+              <small>{t("watcher.positionConfidence")}: {confidenceName(primaryUnit.positionSource)}</small>
             </section>
           </>
         )}
@@ -961,7 +961,7 @@ export function ReplayViewer() {
                       key={unit.id}
                       className={`unit ${unit.category} role-${visual.kind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selectedUnitId === unit.id ? "selected" : ""}`}
                       style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${unit.heading}deg` } as React.CSSProperties}
-                      title={`${entityName(unit.type)}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${unit.activity} • ${unit.positionSource}`}
+                      title={`${entityName(unit.type)}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)} • ${confidenceName(unit.positionSource)}`}
                       aria-label={`${entityName(unit.type)} · ${player?.name ?? t("watcher.unknownPlayer")}`}
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
                     >
