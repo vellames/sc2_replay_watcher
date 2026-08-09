@@ -24,6 +24,7 @@ type Props = {
 type ModelGeometry = { body: THREE.BufferGeometry; accent: THREE.BufferGeometry };
 type Primitive = THREE.BufferGeometry;
 type BatchPick = { ids: number[]; meshes: THREE.InstancedMesh[] };
+type DisplayedTransform = { x: number; y: number; heading: number };
 
 const modelCache = new Map<string, ModelGeometry>();
 
@@ -575,11 +576,17 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
   const terrainRef = useRef<THREE.Object3D | null>(null);
   const unitRootRef = useRef<THREE.Group | null>(null);
   const unitsRef = useRef(units);
+  const selectedUnitIdRef = useRef(selectedUnitId);
   const picksRef = useRef<BatchPick[]>([]);
   const renderRef = useRef<() => void>(() => undefined);
+  const matrixUpdateRef = useRef<(blend: number, force?: boolean) => boolean>(() => false);
+  const targetUnitsRef = useRef(new Map<number, WorldUnit>());
+  const displayedTransformsRef = useRef(new Map<number, DisplayedTransform>());
+  const motionDirtyRef = useRef(false);
   const terrainSampling = useMemo(() => terrainSampler(geometry), [geometry]);
   unitsRef.current = units;
-  const unitRevision = units.map((unit) => `${unit.id}:${unit.type}:${unit.x.toFixed(2)}:${unit.y.toFixed(2)}:${unit.heading.toFixed(1)}:${unit.completed}:${unit.color}`).join("|");
+  selectedUnitIdRef.current = selectedUnitId;
+  const unitStructureRevision = units.map((unit) => `${unit.id}:${unit.type}:${unit.completed}:${unit.color}:${unit.race ?? "neutral"}`).join("|");
 
   useEffect(() => {
     const host = hostRef.current;
@@ -628,6 +635,56 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
 
     const render = () => renderer.render(scene, camera);
     renderRef.current = render;
+    const matrixDummy = new THREE.Object3D();
+    matrixUpdateRef.current = (blend, force = false) => {
+      let pending = false;
+      for (const batch of picksRef.current) {
+        let touched = force;
+        batch.ids.forEach((id, index) => {
+          const unit = targetUnitsRef.current.get(id);
+          if (!unit) return;
+          const current = displayedTransformsRef.current.get(id) ?? { x: unit.x, y: unit.y, heading: unit.heading };
+          displayedTransformsRef.current.set(id, current);
+          const headingDelta = ((unit.heading - current.heading + 540) % 360) - 180;
+          const deltaX = unit.x - current.x;
+          const deltaY = unit.y - current.y;
+          const changed = Math.abs(deltaX) > .002 || Math.abs(deltaY) > .002 || Math.abs(headingDelta) > .05;
+          if (changed) {
+            current.x += deltaX * blend;
+            current.y += deltaY * blend;
+            current.heading += headingDelta * blend;
+            pending = true;
+          }
+          if (!force && !changed) return;
+          touched = true;
+          const asset = sc2ModelAsset(unit.type);
+          const elevation = asset.elevation === "high-air" ? 8 : asset.elevation === "air" ? 5 : asset.elevation === "hover" ? 1.3 : 0;
+          matrixDummy.position.set(current.x, terrainSampling.heightAt(current.x, current.y) + elevation + .08, current.y);
+          matrixDummy.rotation.set(0, -current.heading * Math.PI / 180, 0);
+          matrixDummy.scale.setScalar(unit.id === selectedUnitIdRef.current ? 1.18 : 1);
+          matrixDummy.updateMatrix();
+          for (const mesh of batch.meshes) mesh.setMatrixAt(index, matrixDummy.matrix);
+        });
+        if (!touched) continue;
+        for (const mesh of batch.meshes) mesh.instanceMatrix.needsUpdate = true;
+        if (force) batch.meshes[0].computeBoundingSphere();
+      }
+      return pending;
+    };
+
+    let animationFrame = 0;
+    let previousMotionFrame = performance.now();
+    const animateMotion = (now: number) => {
+      if (motionDirtyRef.current && now - previousMotionFrame >= 1000 / 30) {
+        const elapsed = Math.min(.1, (now - previousMotionFrame) / 1000);
+        previousMotionFrame = now;
+        const blend = 1 - Math.exp(-elapsed / .055);
+        motionDirtyRef.current = matrixUpdateRef.current(blend);
+        render();
+      }
+      animationFrame = window.requestAnimationFrame(animateMotion);
+    };
+    animationFrame = window.requestAnimationFrame(animateMotion);
     const resize = () => {
       const width = Math.max(1, host.clientWidth);
       const height = Math.max(1, host.clientHeight);
@@ -684,6 +741,7 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
 
     return () => {
+      window.cancelAnimationFrame(animationFrame);
       resizeObserver.disconnect();
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
       scene.traverse((object) => {
@@ -697,6 +755,7 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
       renderer.domElement.remove();
       rendererRef.current = null;
       sceneRef.current = null;
+      matrixUpdateRef.current = () => false;
     };
   }, [bounds, geometry, onSelect, terrainSampling]);
 
@@ -734,7 +793,6 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
       const batch = batches.get(key);
       if (batch) batch.push(unit); else batches.set(key, [unit]);
     }
-    const dummy = new THREE.Object3D();
     for (const batch of batches.values()) {
       const first = batch[0];
       const model = modelGeometry(first.type);
@@ -762,25 +820,15 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
         batch.length,
       );
       pickMesh.userData.transientGeometry = true;
-      const asset = sc2ModelAsset(first.type);
-      batch.forEach((unit, index) => {
-        const elevation = asset.elevation === "high-air" ? 8 : asset.elevation === "air" ? 5 : asset.elevation === "hover" ? 1.3 : 0;
-        dummy.position.set(unit.x, terrainSampling.heightAt(unit.x, unit.y) + elevation + .08, unit.y);
-        dummy.rotation.set(0, -unit.heading * Math.PI / 180, 0);
-        const selectionScale = unit.id === selectedUnitId ? 1.18 : 1;
-        dummy.scale.setScalar(selectionScale);
-        dummy.updateMatrix();
-        bodyMesh.setMatrixAt(index, dummy.matrix);
-        accentMesh.setMatrixAt(index, dummy.matrix);
-        pickMesh.setMatrixAt(index, dummy.matrix);
-      });
+      bodyMesh.frustumCulled = false;
+      accentMesh.frustumCulled = false;
+      pickMesh.frustumCulled = false;
       bodyMesh.castShadow = true;
       bodyMesh.receiveShadow = true;
       accentMesh.castShadow = true;
       root.add(bodyMesh, accentMesh, pickMesh);
       picksRef.current.push({ ids: batch.map((unit) => unit.id), meshes: [pickMesh, bodyMesh, accentMesh] });
     }
-    renderRef.current();
     return () => {
       for (const child of [...root.children]) {
         if (child instanceof THREE.InstancedMesh) {
@@ -790,7 +838,19 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
         }
       }
     };
-  }, [selectedUnitId, terrainSampling, unitRevision]);
+  }, [selectedUnitId, unitStructureRevision]);
+
+  useEffect(() => {
+    const targets = new Map(unitsRef.current.map((unit) => [unit.id, unit]));
+    targetUnitsRef.current = targets;
+    for (const unit of targets.values()) {
+      if (!displayedTransformsRef.current.has(unit.id)) displayedTransformsRef.current.set(unit.id, { x: unit.x, y: unit.y, heading: unit.heading });
+    }
+    for (const id of displayedTransformsRef.current.keys()) if (!targets.has(id)) displayedTransformsRef.current.delete(id);
+    matrixUpdateRef.current(0, true);
+    renderRef.current();
+    motionDirtyRef.current = true;
+  }, [selectedUnitId, units]);
 
   return <div ref={hostRef} className="sc2-world-3d" style={{ transform: `scale(${1 / zoom})` }} data-terrain-mesh="plateaus-cliffs-2" aria-label="Cena 3D do replay" />;
 });

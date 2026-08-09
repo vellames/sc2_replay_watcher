@@ -388,12 +388,18 @@ export function ReplayViewer() {
   useEffect(() => {
     if (!playing || !replay) return;
     let previousTick = performance.now();
-    const tickRate = mapView === "3d" ? 160 : 100;
-    const interval = window.setInterval(() => {
-      const now = performance.now();
+    let lastCommit = previousTick;
+    let animationFrame = 0;
+    const frameInterval = 100;
+    const tick = (now: number) => {
+      if (now - lastCommit < frameInterval) {
+        animationFrame = window.requestAnimationFrame(tick);
+        return;
+      }
       const elapsed = (now - previousTick) / 1000;
       previousTick = now;
-      startTransition(() => {
+      lastCommit = now;
+      const advancePlayback = () => {
         setCurrentTime((time) => {
           const next = time + elapsed * speed;
           if (next >= replay.meta.duration) {
@@ -402,9 +408,12 @@ export function ReplayViewer() {
           }
           return next;
         });
-      });
-    }, tickRate);
-    return () => window.clearInterval(interval);
+      };
+      startTransition(advancePlayback);
+      animationFrame = window.requestAnimationFrame(tick);
+    };
+    animationFrame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(animationFrame);
   }, [playing, replay, speed, mapView]);
 
   useEffect(() => {
