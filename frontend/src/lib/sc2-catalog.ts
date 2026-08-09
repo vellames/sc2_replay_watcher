@@ -106,6 +106,39 @@ export function normalizeSc2Type(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+export type Sc2IconKey = "aircraft" | "capital" | "caster" | "command" | "detector" | "energy" | "explosive" | "flame" | "flyer" | "heavy" | "massive" | "mechanical" | "medic" | "melee" | "production" | "resource" | "scout" | "siege" | "stealth" | "supply" | "swarm" | "target" | "tech" | "town-hall" | "transport" | "worker";
+
+export function sc2IconKey(value: string): Sc2IconKey {
+  const type = normalizeSc2Type(value);
+  if (/marine|ravager|hydralisk|stalker/.test(type)) return "target";
+  if (/marauder|roach|immortal|sentry/.test(type)) return "heavy";
+  if (/reaper|adept/.test(type)) return "scout";
+  if (/ghost|darktemplar/.test(type)) return "stealth";
+  if (/hellion/.test(type)) return "flame";
+  if (/widowmine|baneling|disruptor/.test(type)) return "explosive";
+  if (/siegetank|lurker|colossus|swarmhost/.test(type)) return "siege";
+  if (/thor|cyclone/.test(type)) return "mechanical";
+  if (/medivac/.test(type)) return "medic";
+  if (/raven|observer|overseer/.test(type)) return "detector";
+  if (/banshee|viking|liberator/.test(type)) return "aircraft";
+  if (/battlecruiser|tempest|carrier/.test(type)) return "capital";
+  if (/zergling|broodling/.test(type)) return "swarm";
+  if (/queen|mothership/.test(type)) return "command";
+  if (/ultralisk|archon/.test(type)) return "massive";
+  if (/overlord|warpprism/.test(type)) return "transport";
+  if (/mutalisk|corruptor|broodlord|phoenix/.test(type)) return "flyer";
+  if (/voidray/.test(type)) return "energy";
+  if (/zealot/.test(type)) return "melee";
+  if (/infestor|hightemplar|oracle|viper/.test(type)) return "caster";
+  if (/scv|drone|probe/.test(type)) return "worker";
+  if (/commandcenter|orbitalcommand|planetaryfortress|hatchery|lair|hive|nexus/.test(type)) return "town-hall";
+  if (/supplydepot|pylon/.test(type)) return "supply";
+  if (/barracks|factory|starport|gateway|warpgate|roboticsfacility|stargate|spawningpool|roachwarren|hydraliskden/.test(type)) return "production";
+  if (/refinery|extractor|assimilator|mineralfield|geyser/.test(type)) return "resource";
+  if (/level\d|research|upgrade|armor|weapon|carapace|plating|speed|cloak|stim|shield|shell|gland|boost/.test(type)) return "tech";
+  return "tech";
+}
+
 export function readableSc2Type(value: string) {
   return value.replaceAll("_", " ").replace(/([a-z0-9])([A-Z])/g, "$1 $2").trim();
 }
