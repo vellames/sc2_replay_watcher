@@ -337,6 +337,11 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .control-time { font: 500 10px var(--font-geist-mono); color: #b6c8d5; }
 .control-time.muted { color: #536676; }
 .timeline-shell { position: relative; width: 100%; height: 30px; display: flex; align-items: center; }
+.advantage-chart { position: absolute; inset: 0 5px; width: calc(100% - 10px); height: 100%; overflow: visible; pointer-events: none; opacity: .46; }
+.advantage-chart line { stroke: rgba(116, 151, 171, .18); stroke-width: .25; vector-effect: non-scaling-stroke; }
+.advantage-chart polyline { fill: none; stroke-width: .7; vector-effect: non-scaling-stroke; }
+.advantage-chart .p1 { stroke: #4ba8d0; }
+.advantage-chart .p2 { stroke: #d15b70; }
 .timeline { --progress: 0%; appearance: none; width: 100%; height: 3px; background: linear-gradient(90deg, #5bd0ff var(--progress), #243541 var(--progress)); border-radius: 5px; cursor: pointer; }
 .timeline::-webkit-slider-thumb { appearance: none; width: 11px; height: 11px; background: #aee9ff; border: 2px solid #3abcf0; border-radius: 50%; box-shadow: 0 0 9px #43bfea; }
 .timeline-events { position: absolute; inset: 0 5px; pointer-events: none; }

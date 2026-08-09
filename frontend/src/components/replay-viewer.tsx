@@ -219,6 +219,23 @@ export function ReplayViewer() {
     });
   }, [replay, currentFrame, currentTime]);
 
+  const armyAdvantageChart = useMemo(() => {
+    if (!replay || replay.players.length < 2 || replay.frames.length < 2) return null;
+    const firstId = String(replay.players[0].id);
+    const secondId = String(replay.players[1].id);
+    const stride = Math.max(1, Math.ceil(replay.frames.length / 220));
+    const samples = replay.frames.filter((_, index) => index % stride === 0 || index === replay.frames.length - 1).map((frame) => ({
+      x: (frame.time / replay.meta.duration) * 100,
+      delta: (frame.stats[firstId]?.armyValue ?? 0) - (frame.stats[secondId]?.armyValue ?? 0),
+    }));
+    const max = Math.max(1, ...samples.map((sample) => Math.abs(sample.delta)));
+    const points = (side: "positive" | "negative") => samples.map((sample) => {
+      const delta = side === "positive" ? Math.max(0, sample.delta) : Math.min(0, sample.delta);
+      return `${sample.x.toFixed(2)},${(10 - (delta / max) * 8).toFixed(2)}`;
+    }).join(" ");
+    return { positive: points("positive"), negative: points("negative") };
+  }, [replay]);
+
   useEffect(() => {
     if (!playing || !replay) return;
     let previousTick = performance.now();
@@ -881,6 +898,7 @@ export function ReplayViewer() {
             </div>
             <span className="control-time">{formatTime(currentTime)}</span>
             <div className="timeline-shell">
+              {armyAdvantageChart && <svg className="advantage-chart" viewBox="0 0 100 20" preserveAspectRatio="none" role="img" aria-label={t("watcher.armyAdvantageHistory")}><line x1="0" y1="10" x2="100" y2="10" /><polyline className="p1" points={armyAdvantageChart.positive} /><polyline className="p2" points={armyAdvantageChart.negative} /></svg>}
               <input className="timeline" aria-label="Tempo do replay" type="range" min="0" max={replay.meta.duration} step="0.1" value={currentTime} onChange={(event) => setCurrentTime(Number(event.target.value))} style={{ "--progress": `${(currentTime / replay.meta.duration) * 100}%` } as React.CSSProperties} />
               <div className="timeline-events" aria-label={t("watcher.analyticTimeline")}>
                 {replay.timeline.filter((event) => event.time > 0).map((event, index) => {
