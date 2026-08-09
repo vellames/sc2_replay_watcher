@@ -49,7 +49,7 @@ import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
-import type { ReplayUnit } from "@/lib/types";
+import type { ReplayCamera, ReplayUnit } from "@/lib/types";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type MapSelection =
@@ -73,6 +73,27 @@ function compactNumber(value: number) {
 function signedCompactNumber(value: number) {
   if (value === 0) return "±0";
   return `${value > 0 ? "+" : "−"}${compactNumber(Math.abs(value))}`;
+}
+
+function cameraSamplesBetween(samples: ReplayCamera[], start: number, end: number) {
+  const lowerBound = (target: number) => {
+    let low = 0;
+    let high = samples.length;
+    while (low < high) {
+      const middle = Math.floor((low + high) / 2);
+      if (samples[middle].recordedAt < target) low = middle + 1;
+      else high = middle;
+    }
+    return low;
+  };
+  let low = 0;
+  let high = samples.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (samples[middle].recordedAt <= end) low = middle + 1;
+    else high = middle;
+  }
+  return samples.slice(lowerBound(start), low);
 }
 
 type UnitVisual = {
@@ -424,14 +445,15 @@ export function ReplayViewer() {
     bottom: ((y - bounds.minY) / height) * 100,
   });
   const visibleEngagements = (replay.engagements ?? []).filter((engagement) => currentTime >= engagement.start - 3 && currentTime <= engagement.end + 8);
-  const cameraTrail = Object.values(replay.cameraSamples ?? {}).flatMap((samples) => samples
-    .filter((camera) => camera.recordedAt <= currentTime && camera.recordedAt >= currentTime - 10)
-    .filter((_, index, recent) => index % Math.max(1, Math.ceil(recent.length / 12)) === 0)
-    .map((camera) => ({
+  const cameraTrail = Object.values(replay.cameraSamples ?? {}).flatMap((samples) => {
+    const recent = cameraSamplesBetween(samples, currentTime - 10, currentTime);
+    const stride = Math.max(1, Math.ceil(recent.length / 12));
+    return recent.filter((_, index) => index % stride === 0).map((camera) => ({
       ...camera,
       frameTime: camera.recordedAt,
       opacity: Math.max(.15, 1 - (currentTime - camera.recordedAt) / 10),
-    }))).filter((camera) => cameraPlayers[camera.playerId] !== false);
+    }));
+  }).filter((camera) => cameraPlayers[camera.playerId] !== false);
   const toggleLayer = (layer: LayerKey) => {
     if (layer === "buildings" && layers.buildings && selection?.kind === "group" && selection.groupType === "base") setSelection(null);
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
