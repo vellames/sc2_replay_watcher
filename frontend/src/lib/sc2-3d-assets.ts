@@ -62,6 +62,53 @@ const terran: Record<string, Sc2ModelAsset> = {
   reactor: { shape: "terran-tech", footprint: "small", detail: "engines" },
 };
 
+const zerg: Record<string, Sc2ModelAsset> = {
+  drone: { shape: "crawler", footprint: "tiny", facing: true, detail: "claws" },
+  zergling: { shape: "quadruped", footprint: "tiny", facing: true, detail: "claws" },
+  baneling: { shape: "orb", footprint: "small", facing: true, detail: "energy" },
+  queen: { shape: "crawler", footprint: "medium", facing: true, detail: "claws" },
+  roach: { shape: "quadruped", footprint: "small", facing: true },
+  ravager: { shape: "quadruped", footprint: "medium", facing: true, detail: "cannon" },
+  hydralisk: { shape: "heavy-humanoid", footprint: "small", facing: true, detail: "claws" },
+  lurker: { shape: "crawler", footprint: "medium", facing: true, detail: "blades" },
+  lurkermp: { shape: "crawler", footprint: "medium", facing: true, detail: "blades" },
+  infestor: { shape: "orb", footprint: "small", facing: true, detail: "claws" },
+  swarmhostmp: { shape: "crawler", footprint: "medium", facing: true },
+  ultralisk: { shape: "quadruped", footprint: "massive", facing: true, detail: "blades" },
+  mutalisk: { shape: "fighter", footprint: "small", elevation: "air", facing: true, detail: "wings" },
+  corruptor: { shape: "gunship", footprint: "medium", elevation: "air", facing: true, detail: "claws" },
+  broodlord: { shape: "capital", footprint: "large", elevation: "high-air", facing: true, detail: "claws" },
+  viper: { shape: "fighter", footprint: "medium", elevation: "air", facing: true, detail: "claws" },
+  overlord: { shape: "orb", footprint: "medium", elevation: "high-air", facing: true },
+  overseer: { shape: "orb", footprint: "medium", elevation: "high-air", facing: true, detail: "energy" },
+  changeling: { shape: "humanoid", footprint: "tiny", facing: true },
+  broodling: { shape: "quadruped", footprint: "tiny", facing: true, detail: "claws" },
+  larva: { shape: "crawler", footprint: "tiny", facing: true },
+  overlordtransport: { shape: "orb", footprint: "large", elevation: "high-air", facing: true, detail: "claws" },
+  transportoverlord: { shape: "orb", footprint: "large", elevation: "high-air", facing: true, detail: "claws" },
+  locustmp: { shape: "fighter", footprint: "tiny", elevation: "air", facing: true, detail: "wings" },
+
+  hatchery: { shape: "zerg-townhall", footprint: "massive" },
+  lair: { shape: "zerg-townhall", footprint: "massive", detail: "claws" },
+  hive: { shape: "zerg-townhall", footprint: "massive", detail: "blades" },
+  extractor: { shape: "gas", footprint: "medium", detail: "claws" },
+  spawningpool: { shape: "zerg-organic", footprint: "large" },
+  roachwarren: { shape: "zerg-organic", footprint: "large", detail: "claws" },
+  banelingnest: { shape: "zerg-organic", footprint: "medium", detail: "energy" },
+  evolutionchamber: { shape: "zerg-organic", footprint: "medium", detail: "blades" },
+  hydraliskden: { shape: "zerg-organic", footprint: "large", detail: "blades" },
+  lurkerdenmp: { shape: "zerg-organic", footprint: "large", detail: "claws" },
+  infestationpit: { shape: "zerg-organic", footprint: "large", detail: "energy" },
+  spire: { shape: "zerg-spire", footprint: "large", detail: "blades" },
+  greaterspire: { shape: "zerg-spire", footprint: "massive", detail: "wings" },
+  ultraliskcavern: { shape: "zerg-organic", footprint: "massive", detail: "blades" },
+  nydusnetwork: { shape: "zerg-townhall", footprint: "large", detail: "claws" },
+  nyduscanal: { shape: "zerg-spire", footprint: "medium", detail: "claws" },
+  spinecrawler: { shape: "zerg-defense", footprint: "medium", detail: "cannon" },
+  sporecrawler: { shape: "zerg-defense", footprint: "medium", detail: "energy" },
+  creeptumor: { shape: "creep", footprint: "tiny", detail: "energy" },
+};
+
 const shared: Record<string, Sc2ModelAsset> = {
   mineralfield: { shape: "mineral", footprint: "tiny" },
   labmineralfield: { shape: "mineral", footprint: "tiny" },
@@ -73,10 +120,10 @@ const fallback: Sc2ModelAsset = { shape: "fallback", footprint: "small", facing:
 
 export function sc2ModelAsset(type: string): Sc2ModelAsset {
   const key = canonicalSc2Type(type);
-  return terran[key] ?? shared[key] ?? fallback;
+  return terran[key] ?? zerg[key] ?? shared[key] ?? fallback;
 }
 
 export function hasDedicatedSc2Model(type: string) {
   const key = canonicalSc2Type(type);
-  return Boolean(terran[key] || shared[key]);
+  return Boolean(terran[key] || zerg[key] || shared[key]);
 }

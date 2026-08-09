@@ -22,3 +22,12 @@ test("marks catalog coverage without disguising fallback models", () => {
   assert.equal(hasDedicatedSc2Model("ImaginaryLotVUnit"), false);
   assert.equal(sc2ModelAsset("ImaginaryLotVUnit").shape, "fallback");
 });
+
+test("covers the distinct Zerg lifecycle and organic architecture", () => {
+  assert.equal(sc2ModelAsset("Zergling").shape, "quadruped");
+  assert.equal(sc2ModelAsset("Mutalisk").elevation, "air");
+  assert.equal(sc2ModelAsset("Ultralisk").footprint, "massive");
+  assert.equal(sc2ModelAsset("Hatchery").shape, "zerg-townhall");
+  assert.equal(sc2ModelAsset("Spire").shape, "zerg-spire");
+  assert.equal(sc2ModelAsset("CreepTumorQueen").shape, "creep");
+});

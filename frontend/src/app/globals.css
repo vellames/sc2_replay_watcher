@@ -234,11 +234,11 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .map-canvas.view-3d .unit > svg:not(.sc2-model-3d), .map-canvas.view-3d .unit::before, .map-canvas.view-3d .unit::after { display: none; }
 .sc2-model-3d { --asset-w: 13px; position: absolute; left: 0; bottom: -5px; width: var(--asset-w); height: calc(var(--asset-w) * 1.125); overflow: visible; color: var(--unit-color); transform: translateX(-50%); transform-origin: 50% 72%; pointer-events: none; }
 .sc2-model-3d.faces-heading { transform: translateX(-50%) rotate(var(--heading)); }
-.sc2-model-3d.footprint-tiny { --asset-w: 8px; }
-.sc2-model-3d.footprint-small { --asset-w: 11px; }
-.sc2-model-3d.footprint-medium { --asset-w: 15px; }
-.sc2-model-3d.footprint-large { --asset-w: 20px; }
-.sc2-model-3d.footprint-massive { --asset-w: 28px; }
+.sc2-model-3d.footprint-tiny { --asset-w: 9px; }
+.sc2-model-3d.footprint-small { --asset-w: 12px; }
+.sc2-model-3d.footprint-medium { --asset-w: 16px; }
+.sc2-model-3d.footprint-large { --asset-w: 22px; }
+.sc2-model-3d.footprint-massive { --asset-w: 30px; }
 .sc2-model-3d.elevation-hover { bottom: -1px; }
 .sc2-model-3d.elevation-air { bottom: 5px; }
 .sc2-model-3d.elevation-high-air { bottom: 9px; }
