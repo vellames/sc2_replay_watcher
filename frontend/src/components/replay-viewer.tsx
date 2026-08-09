@@ -70,9 +70,10 @@ import { TerrainLayer } from "@/components/terrain-layer";
 import { TimelineEventLayer, type TimelineEventPresentation } from "@/components/timeline-event-layer";
 import { createIsometricProjection, playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
+import { engagementLossAt } from "@/lib/engagement-progress";
 import { sc2AttackVisual } from "@/lib/sc2-3d-assets";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
-import type { ReplayProduction, ReplayUnit } from "@/lib/types";
+import type { ReplayDeath, ReplayProduction, ReplayUnit } from "@/lib/types";
 
 const Sc2World3D = dynamic(() => import("@/components/sc2-world-3d").then((module) => module.Sc2World3D), { ssr: false });
 
@@ -329,6 +330,14 @@ export function ReplayViewer() {
       return latest >= 0 ? [samples[latest]] : [];
     });
   }, [replay, currentFrame, currentTime]);
+
+  const replayDeaths = useMemo(() => {
+    const unique = new Map<string, ReplayDeath>();
+    for (const frame of replay?.frames ?? []) {
+      for (const death of frame.deaths) unique.set(`${death.id}-${death.time}`, death);
+    }
+    return [...unique.values()];
+  }, [replay]);
 
   const armyAdvantageChart = useMemo(() => {
     if (!replay || replay.players.length < 2 || replay.frames.length < 2) return null;
@@ -658,7 +667,7 @@ export function ReplayViewer() {
     left: ((x - bounds.minX) / width) * 100,
     bottom: ((y - bounds.minY) / height) * 100,
   });
-  const visibleEngagements = (replay.engagements ?? []).filter((engagement) => currentTime >= engagement.start - 3 && currentTime <= engagement.end + 8);
+  const visibleEngagements = (replay.engagements ?? []).filter((engagement) => currentTime >= engagement.start && currentTime <= engagement.end + 8);
   const activeEngagements = visibleEngagements.filter((engagement) => currentTime >= engagement.start && currentTime <= engagement.end);
   const combatLinks = activeEngagements.flatMap((engagement) => {
     const nearby = renderedUnits.filter((unit) => unit.isArmy && (unit.x - engagement.x) ** 2 + (unit.y - engagement.y) ** 2 <= 34 ** 2);
@@ -1010,7 +1019,7 @@ export function ReplayViewer() {
                 })}
                 {is3D && activeEngagements.map((engagement) => {
                   const point = toPercent(engagement.x, engagement.y);
-                  const totalLoss = Object.values(engagement.losses).reduce((sum, value) => sum + value, 0);
+                  const totalLoss = engagementLossAt(engagement, replayDeaths, currentTime);
                   const diameter = Math.min(78, 34 + Math.sqrt(totalLoss) * .8);
                   return <i key={`combat-zone-${engagement.id}`} className="combat-zone-3d" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, width: diameter, height: diameter * .48 }} />;
                 })}
@@ -1045,7 +1054,7 @@ export function ReplayViewer() {
                 )}
                 {visibleEngagements.map((engagement) => {
                   const point = toPercent(engagement.x, engagement.y);
-                  const totalLoss = Object.values(engagement.losses).reduce((sum, value) => sum + value, 0);
+                  const totalLoss = engagementLossAt(engagement, replayDeaths, currentTime);
                   return <button key={engagement.id} className={`engagement-marker ${selectedEngagement?.id === engagement.id ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => { setCurrentTime(engagement.start); setPlaying(false); setSelection({ kind: "engagement", engagementId: engagement.id }); }} title={`${t("watcher.engagement")} · ${compactNumber(totalLoss)}`}><Flame size={10} /><b>{compactNumber(totalLoss)}</b></button>;
                 })}
                 {!is3D && showBaseMarkers && (currentFrame?.bases ?? []).map((base) => {

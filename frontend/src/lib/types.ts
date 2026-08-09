@@ -110,6 +110,9 @@ export type ReplayDeath = {
   x: number;
   y: number;
   time: number;
+  mineralCost: number;
+  vespeneCost: number;
+  supplyCost: number;
 };
 
 export type ReplayCamera = {
