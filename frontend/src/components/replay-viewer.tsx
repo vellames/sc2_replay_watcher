@@ -520,6 +520,7 @@ export function ReplayViewer() {
     const supplyUsed = stats?.supplyUsed ?? 0;
     const supplyCap = Math.max(1, stats?.supplyCap ?? 0);
     const isSupplyBlocked = supplyCap < 200 && supplyUsed >= supplyCap;
+    const activeSupplyBlock = [...replay.timeline].reverse().find((event) => event.type === "supply" && event.playerId === player.id && event.time <= currentTime && (event.end != null ? currentTime <= event.end : isSupplyBlocked));
     const production = currentFrame?.production[String(player.id)] ?? [];
     const completedUpgrades = replay.timeline
       .filter((event) => event.type === "upgrade" && event.playerId === player.id && event.time <= currentTime)
@@ -545,7 +546,7 @@ export function ReplayViewer() {
             <span><i />{player.name}</span>
             <small>{player.race}</small>
           </div>
-          <div className="macro-player-title"><span>{t("watcher.supply")}{isSupplyBlocked && <em>{t("watcher.blocked")}</em>}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
+          <div className="macro-player-title"><span>{t("watcher.supply")}{isSupplyBlocked && <em>{t("watcher.blocked")}{activeSupplyBlock ? ` ${formatTime(currentTime - activeSupplyBlock.time)}` : ""}</em>}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
           <div className={`supply-track ${isSupplyBlocked ? "blocked" : ""}`}><i style={{ width: `${Math.min(100, (supplyUsed / supplyCap) * 100)}%` }} /></div>
           <div className="resource-bank">
             <span><Pickaxe size={10} /><b>{compactNumber(stats?.minerals ?? 0)}</b><small>{t("watcher.minerals")}</small></span>
@@ -883,7 +884,7 @@ export function ReplayViewer() {
                 <button onClick={resetMap} aria-label={t("watcher.resetMap")}><Target size={13} /></button>
               </div>
               {nextEvent && <div className="next-event" style={{ "--event-color": nextEventPlayer?.color ?? "#6eb5d2" } as React.CSSProperties}><small><i />{t("watcher.nextEvent")} · {t("watcher.inTime")} {formatTime(nextEvent.time - currentTime)}{nextEventPlayer ? ` · ${nextEventPlayer.name}` : ""}</small><strong>{nextEvent.type === "upgrade" ? t("watcher.upgrade") : nextEvent.type === "base" ? t("watcher.newBase") : nextEvent.type === "engagement" ? t("watcher.engagement") : t("watcher.supplyBlock")} · {cleanType(nextEvent.label)}</strong></div>}
-              <div className="reconstruction-status"><i /><span><strong>{t(replay.meta.capabilities.mapNavigation ? "watcher.routedMovement" : "watcher.reconstructedMovement")}</strong><small>{compactNumber(replay.meta.capabilities.mapNavigation ? replay.meta.routedSegments : replay.meta.movementOrders)} {t(replay.meta.capabilities.mapNavigation ? "watcher.routedHint" : "watcher.reconstructedHint")}</small></span></div>
+              <div className="reconstruction-status"><i /><span><strong>{t(replay.meta.capabilities.mapNavigation ? "watcher.routedMovement" : "watcher.reconstructedMovement")}</strong><small>{compactNumber(replay.meta.capabilities.mapNavigation ? replay.meta.routedSegments : replay.meta.movementOrders)} {t(replay.meta.capabilities.mapNavigation ? "watcher.routedHint" : "watcher.reconstructedHint")} · {Math.round(replay.meta.estimatedPositionRatio * 100)}% {t("watcher.estimatedPositions")}</small></span></div>
               <div className="coordinates">X {Math.round(bounds.minX)}–{Math.round(bounds.maxX)} · Y {Math.round(bounds.minY)}–{Math.round(bounds.maxY)}</div>
             </div>
             {replay.players[1] && renderPlayerPanel(replay.players[1], "right")}
