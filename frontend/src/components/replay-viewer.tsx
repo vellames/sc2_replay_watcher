@@ -379,6 +379,7 @@ export function ReplayViewer() {
   const nextEventKind = nextEvent ? (nextEvent.type === "upgrade" ? t("watcher.upgrade") : nextEvent.type === "base" ? t("watcher.newBase") : nextEvent.type === "engagement" ? t("watcher.engagement") : t("watcher.supplyBlock")) : "";
   const nextEventName = nextEvent ? entityName(nextEvent.label) : "";
   const nextEventDisplay = nextEventKind.toLocaleLowerCase() === nextEventName.toLocaleLowerCase() ? nextEventKind : `${nextEventKind} · ${nextEventName}`;
+  const NextEventIcon = nextEvent?.type === "upgrade" ? FlaskConical : nextEvent?.type === "base" ? Landmark : nextEvent?.type === "engagement" ? Flame : Package;
   const productionByProducer = new Map<number, number>();
   for (const orders of Object.values(currentFrame?.production ?? {})) {
     for (const order of orders) {
@@ -996,7 +997,7 @@ export function ReplayViewer() {
                 <button onClick={() => setZoom((value) => Math.min(3, value + 0.25))} aria-label={t("watcher.zoomIn")}><Plus size={13} /></button>
                 <button onClick={resetMap} aria-label={t("watcher.resetMap")}><Target size={13} /></button>
               </div>
-              {nextEvent && <div className="next-event" style={{ "--event-color": nextEventPlayer?.color ?? "#6eb5d2" } as React.CSSProperties}><small><i />{t("watcher.nextEvent")} · {t("watcher.inTime")} {formatTime(nextEvent.time - currentTime)}{nextEventPlayer ? ` · ${nextEventPlayer.name}` : ""}</small><strong>{nextEventDisplay}</strong></div>}
+              {nextEvent && <div className={`next-event next-event-${nextEvent.type}`} style={{ "--event-color": nextEventPlayer?.color ?? "#6eb5d2" } as React.CSSProperties}><small><i />{t("watcher.nextEvent")} · {t("watcher.inTime")} {formatTime(nextEvent.time - currentTime)}{nextEventPlayer ? ` · ${nextEventPlayer.name}` : ""}</small><strong><NextEventIcon size={11} /><span>{nextEventDisplay}</span></strong></div>}
               <div className="reconstruction-status"><i /><span><strong>{t(replay.meta.capabilities.mapNavigation ? "watcher.routedMovement" : "watcher.reconstructedMovement")}</strong><small>{compactNumber(replay.meta.capabilities.mapNavigation ? replay.meta.routedSegments : replay.meta.movementOrders)} {t(replay.meta.capabilities.mapNavigation ? "watcher.routedHint" : "watcher.reconstructedHint")} · {Math.round(replay.meta.estimatedPositionRatio * 100)}% {t("watcher.estimatedPositions")}</small></span></div>
               <div className="coordinates">X {Math.round(bounds.minX)}–{Math.round(bounds.maxX)} · Y {Math.round(bounds.minY)}–{Math.round(bounds.maxY)}</div>
             </div>
