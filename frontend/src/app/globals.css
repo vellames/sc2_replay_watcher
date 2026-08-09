@@ -477,10 +477,12 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   .matchbar { height: 78px; grid-template-columns: 1fr; padding: 8px 12px; }
   .compact-scoreboard { min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .compact-scoreboard section { min-width: 0; padding: 7px 9px; border: 1px solid rgba(108, 164, 193, .12); border-left: 2px solid var(--player-color); border-radius: 3px; background: rgba(10, 20, 29, .75); }
-  .compact-scoreboard header { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 5px; }
+  .compact-scoreboard header { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 5px; }
   .compact-scoreboard header span { color: var(--player-color); font: 700 7px var(--font-geist-mono); }
   .compact-scoreboard header strong { overflow: hidden; color: #c7d9e3; font-size: 9px; white-space: nowrap; text-overflow: ellipsis; }
-  .compact-scoreboard header small { color: #587080; font: 600 6px var(--font-geist-mono); text-transform: uppercase; }
+  .compact-scoreboard header small { display: flex; align-items: center; gap: 3px; color: #587080; font: 600 6px var(--font-geist-mono); text-transform: uppercase; }
+  .compact-scoreboard header small svg { color: var(--player-color); }
+  .compact-scoreboard .info-tip { width: 16px; height: 16px; }
   .compact-scoreboard section > div { margin-top: 7px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .compact-scoreboard section > div span { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 3px; color: #849ba9; font: 600 7px var(--font-geist-mono); }
   .compact-scoreboard section > div svg { flex: 0 0 auto; color: var(--player-color); }

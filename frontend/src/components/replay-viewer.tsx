@@ -834,9 +834,10 @@ export function ReplayViewer() {
             <div className="compact-scoreboard" aria-label={t("watcher.compactScoreboard")}>
               {replay.players.slice(0, 2).map((player, index) => {
                 const stats = currentFrame?.stats[String(player.id)];
+                const RaceIcon = raceIcon(player.race);
                 return (
                   <section key={player.id} style={{ "--player-color": player.color } as React.CSSProperties}>
-                    <header><span>P{index + 1}</span><strong>{player.name}</strong><small>{player.race}</small></header>
+                    <header><span>P{index + 1}</span><strong>{player.name}</strong><small><RaceIcon size={8} />{player.race}</small><InfoTip label={t("watcher.compactScoreboard")} side={index === 0 ? "left" : "right"}>{t("watcher.help.compactScoreboard")}</InfoTip></header>
                     <div>
                       <span title={t("watcher.supply")}><Package size={10} />{stats?.supplyUsed ?? 0}/{stats?.supplyCap ?? 0}</span>
                       <span title={t("watcher.workers")}><Pickaxe size={10} />{stats?.workers ?? 0}</span>
