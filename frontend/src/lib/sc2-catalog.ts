@@ -106,6 +106,29 @@ export function normalizeSc2Type(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+export function canonicalSc2Type(value: string) {
+  const key = normalizeSc2Type(value);
+  return key
+    .replace(/^battlehellion$/, "helliontank")
+    .replace(/^viking$/, "vikingfighter")
+    .replace(/^thorap$/, "thor")
+    .replace(/^creeptumorqueen$/, "creeptumor")
+    .replace(/(?:burrowed|flying|uprooted|siegemode)$/, "")
+    .replace(/^((?:lab)?mineralfield)\d+$/, "$1");
+}
+
+export function sc2StateName(value: string, locale: Locale) {
+  const key = normalizeSc2Type(value);
+  if (key === "siegetanksieged") return locale === "pt" ? "Modo de cerco" : "Siege mode";
+  if (key === "liberatorag") return locale === "pt" ? "Modo defensor" : "Defender mode";
+  if (key.endsWith("burrowed")) return locale === "pt" ? "Enterrado" : "Burrowed";
+  if (key.endsWith("flying")) return locale === "pt" ? "Voando" : "Flying";
+  if (key.endsWith("uprooted")) return locale === "pt" ? "Desenraizado" : "Uprooted";
+  if (key === "supplydepotlowered") return locale === "pt" ? "Abaixado" : "Lowered";
+  if (key.endsWith("siegemode")) return locale === "pt" ? "Modo estacionário" : "Stationary mode";
+  return null;
+}
+
 export type Sc2IconKey = "aircraft" | "capital" | "caster" | "command" | "detector" | "energy" | "explosive" | "flame" | "flyer" | "heavy" | "massive" | "mechanical" | "medic" | "melee" | "production" | "resource" | "scout" | "siege" | "stealth" | "supply" | "swarm" | "target" | "tech" | "town-hall" | "transport" | "worker";
 
 export function sc2IconKey(value: string): Sc2IconKey {
@@ -148,13 +171,7 @@ export function sc2Name(value: string, locale: Locale) {
   const direct = entities[key];
   if (direct) return direct[locale];
 
-  const variantKey = key
-    .replace(/^battlehellion$/, "helliontank")
-    .replace(/^viking$/, "vikingfighter")
-    .replace(/^thorap$/, "thor")
-    .replace(/^creeptumorqueen$/, "creeptumor")
-    .replace(/(?:burrowed|flying|uprooted|siegemode)$/, "")
-    .replace(/\d+$/, "");
+  const variantKey = canonicalSc2Type(value);
   const base = entities[variantKey];
   if (base) return base[locale];
 
@@ -167,7 +184,7 @@ export function sc2Name(value: string, locale: Locale) {
 
 export function hasLocalizedSc2Name(value: string) {
   const key = normalizeSc2Type(value);
-  const variantKey = key.replace(/^battlehellion$/, "helliontank").replace(/^viking$/, "vikingfighter").replace(/^thorap$/, "thor").replace(/^creeptumorqueen$/, "creeptumor").replace(/(?:burrowed|flying|uprooted|siegemode)$/, "").replace(/\d+$/, "");
+  const variantKey = canonicalSc2Type(value);
   return Boolean(entities[key] || entities[variantKey] || genericFamilies.some(([pattern]) => pattern.test(key)));
 }
 

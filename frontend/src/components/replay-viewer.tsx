@@ -62,7 +62,7 @@ import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
-import { sc2CategoryName, sc2IconKey, sc2Name, type Sc2IconKey } from "@/lib/sc2-catalog";
+import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayCamera, ReplayUnit } from "@/lib/types";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
@@ -520,11 +520,12 @@ export function ReplayViewer() {
     return counts;
   }, { recorded: 0, derived: 0, estimated: 0 });
   const composition = [...inspectedUnits.reduce((types, unit) => {
-    const item = types.get(unit.type) ?? { type: unit.type, count: 0, minerals: 0, vespene: 0 };
+    const identity = canonicalSc2Type(unit.type);
+    const item = types.get(identity) ?? { type: unit.type, count: 0, minerals: 0, vespene: 0 };
     item.count += 1;
     item.minerals += unit.mineralCost ?? 0;
     item.vespene += unit.vespeneCost ?? 0;
-    types.set(unit.type, item);
+    types.set(identity, item);
     return types;
   }, new Map<string, { type: string; count: number; minerals: number; vespene: number }>()).values()].sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
   const selectedProduction = selectedUnit
@@ -594,12 +595,13 @@ export function ReplayViewer() {
     const armyComposition = [...(currentFrame?.units ?? [])
       .filter((unit) => unit.ownerId === player.id && unit.isArmy)
       .reduce((types, unit) => {
-        const summary = types.get(unit.type) ?? { type: unit.type, count: 0, minerals: 0, vespene: 0, supply: 0 };
+        const identity = canonicalSc2Type(unit.type);
+        const summary = types.get(identity) ?? { type: unit.type, count: 0, minerals: 0, vespene: 0, supply: 0 };
         summary.count += 1;
         summary.minerals += unit.mineralCost;
         summary.vespene += unit.vespeneCost;
         summary.supply += unit.supplyCost;
-        types.set(unit.type, summary);
+        types.set(identity, summary);
         return types;
       }, new Map<string, { type: string; count: number; minerals: number; vespene: number; supply: number }>())
       .values()]
@@ -714,12 +716,13 @@ export function ReplayViewer() {
       ? (selection.groupType === "base" ? t("watcher.baseGroup") : selection.groupType === "workers" ? t("watcher.workerGroup") : selection.groupType === "structures" ? t("watcher.structureGroup") : selection.groupType === "resources" ? t("watcher.resourceGroup") : t("watcher.unitGroup"))
       : entityName(primaryUnit.type);
     const activityLabel = activityName(primaryUnit.activity);
+    const unitState = sc2StateName(primaryUnit.type, locale);
 
     return (
       <aside className="selection-inspector" style={{ "--selection-color": inspectedPlayer?.color ?? "#7b8794" } as React.CSSProperties}>
         <header>
           <span className="selection-icon"><SelectionIcon size={15} /></span>
-          <div><small>{t("watcher.inspector")}</small><strong>{title}</strong><em>{inspectedPlayer?.name ?? t("watcher.unknownPlayer")} · {isGroup ? `${inspectedUnits.length} ${t("watcher.units")}` : sc2CategoryName(primaryUnit.category, locale)}</em></div>
+          <div><small>{t("watcher.inspector")}</small><strong>{title}</strong><em>{inspectedPlayer?.name ?? t("watcher.unknownPlayer")} · {isGroup ? `${inspectedUnits.length} ${t("watcher.units")}` : sc2CategoryName(primaryUnit.category, locale)}{!isGroup && unitState ? ` · ${unitState}` : ""}</em></div>
           <button onClick={() => setSelection(null)} aria-label={t("watcher.closeInspector")}><X size={14} /></button>
         </header>
 
@@ -784,9 +787,15 @@ export function ReplayViewer() {
     const RaceIcon = raceIcon(player.race);
     const composition = [...(currentFrame?.units ?? [])
       .filter((unit) => unit.ownerId === player.id && unit.isArmy)
-      .reduce((types, unit) => types.set(unit.type, (types.get(unit.type) ?? 0) + 1), new Map<string, number>())
-      .entries()]
-      .sort((left, right) => right[1] - left[1])
+      .reduce((types, unit) => {
+        const identity = canonicalSc2Type(unit.type);
+        const summary = types.get(identity) ?? { type: unit.type, count: 0 };
+        summary.count += 1;
+        types.set(identity, summary);
+        return types;
+      }, new Map<string, { type: string; count: number }>())
+      .values()]
+      .sort((left, right) => right.count - left.count)
       .slice(0, 4);
     return (
       <aside className={`compact-player-drawer compact-player-drawer-${index === 0 ? "left" : "right"}`} style={{ "--player-color": player.color } as React.CSSProperties}>
@@ -797,7 +806,7 @@ export function ReplayViewer() {
           <span><Swords size={11} /><small>{t("watcher.army")}</small><b>{stats?.armySupply ?? 0} {t("watcher.supplyUnit")}</b></span>
           <span><Zap size={11} /><small>{t("watcher.income")}</small><b>{compactNumber((stats?.mineralRate ?? 0) + (stats?.vespeneRate ?? 0))}{t("watcher.perMinute")}</b></span>
         </div>
-        {composition.length > 0 && <div className="compact-player-composition"><small>{t("watcher.armyComposition")}</small><div>{composition.map(([type, count]) => { const EntityIcon = hudEntityIcon(type); return <span key={type} title={entityName(type)}><EntityIcon size={9} /><b>{count}×</b>{entityName(type)}</span>; })}</div></div>}
+        {composition.length > 0 && <div className="compact-player-composition"><small>{t("watcher.armyComposition")}</small><div>{composition.map((item) => { const EntityIcon = hudEntityIcon(item.type); return <span key={canonicalSc2Type(item.type)} title={entityName(item.type)}><EntityIcon size={9} /><b>{item.count}×</b>{entityName(item.type)}</span>; })}</div></div>}
       </aside>
     );
   };
@@ -949,8 +958,8 @@ export function ReplayViewer() {
                       key={unit.id}
                       className={`unit ${unit.category} role-${visual.kind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selectedUnitId === unit.id ? "selected" : ""}`}
                       style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${unit.heading}deg` } as React.CSSProperties}
-                      title={`${entityName(unit.type)}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)} • ${confidenceName(unit.positionSource)}`}
-                      aria-label={`${entityName(unit.type)} · ${player?.name ?? t("watcher.unknownPlayer")}`}
+                      title={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""}${addon ? ` + ${entityName(addon.type)}` : ""} • ${player?.name ?? t("watcher.unknownPlayer")} • ${activityName(unit.activity)} • ${confidenceName(unit.positionSource)}`}
+                      aria-label={`${entityName(unit.type)}${sc2StateName(unit.type, locale) ? ` · ${sc2StateName(unit.type, locale)}` : ""} · ${player?.name ?? t("watcher.unknownPlayer")}`}
                       onClick={() => setSelection((current) => current?.kind === "unit" && current.unitId === unit.id ? null : { kind: "unit", unitId: unit.id })}
                     >
                       {unit.category !== "resource" && <UnitIcon aria-hidden="true" />}

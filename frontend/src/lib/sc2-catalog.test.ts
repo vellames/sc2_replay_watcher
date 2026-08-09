@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { hasLocalizedSc2Name, sc2CategoryName, sc2IconKey, sc2Name } from "./sc2-catalog.ts";
+import { canonicalSc2Type, hasLocalizedSc2Name, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName } from "./sc2-catalog.ts";
 
 test("localizes canonical LotV entities", () => {
   assert.equal(sc2Name("SiegeTank", "pt"), "Tanque de Cerco");
@@ -40,4 +40,12 @@ test("keeps tactical icon classification stable across contexts", () => {
   assert.equal(sc2IconKey("OverseerSiegeMode"), "detector");
   assert.equal(sc2IconKey("BarracksFlying"), "production");
   assert.equal(sc2IconKey("MineralField750"), "resource");
+});
+
+test("separates canonical identity from transient unit state", () => {
+  assert.equal(canonicalSc2Type("RoachBurrowed"), "roach");
+  assert.equal(canonicalSc2Type("CommandCenterFlying"), "commandcenter");
+  assert.equal(sc2StateName("RoachBurrowed", "pt"), "Enterrado");
+  assert.equal(sc2StateName("SiegeTankSieged", "en"), "Siege mode");
+  assert.equal(sc2StateName("Marine", "pt"), null);
 });
