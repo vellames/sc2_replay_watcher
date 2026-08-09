@@ -168,6 +168,7 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .production-order > b { color: #647c8d; font-size: 8px; }
 .production-order > i { position: absolute; left: 0; right: 0; bottom: 1px; height: 2px; background: #1b2b36; overflow: hidden; }
 .production-order > i em { display: block; height: 100%; background: var(--player-color); box-shadow: 0 0 5px var(--player-color); transition: width .2s linear; }
+.production-order.estimated > i em, .inspector-order.estimated > i em { opacity: .58; background: repeating-linear-gradient(90deg, var(--player-color) 0 4px, transparent 4px 6px); box-shadow: none; }
 .queue-empty, .queue-more { display: block; color: #435967; font: 500 8px var(--font-geist-mono); padding: 3px 0; }
 .queue-more { color: #607888; }
 .macro-panel .winner { margin-top: 10px; }

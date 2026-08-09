@@ -578,9 +578,9 @@ export function ReplayViewer() {
           <div className="production-list side-production-list">
             <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}</span><b>{production.length}</b></div>
             {production.length === 0 ? <small className="queue-empty">{t("watcher.queueEmpty")}</small> : production.slice(0, 8).map((order) => (
-              <div className="production-order" key={order.id} title={`${order.ability} · ${order.confidence}`}>
+              <div className={`production-order ${order.confidence}`} key={order.id} title={`${order.ability} · ${order.confidence}`}>
                 <span>{cleanType(order.product)}</span>
-                <b>{order.queued ? t("watcher.queued") : `${Math.round(order.progress * 100)}%`}</b>
+                <b>{order.queued ? t("watcher.queued") : `${order.confidence === "estimated" ? "~" : ""}${Math.round(order.progress * 100)}%`}</b>
                 <i><em style={{ width: `${order.progress * 100}%` }} /></i>
               </div>
             ))}
@@ -685,7 +685,7 @@ export function ReplayViewer() {
               <section className="inspector-section inspector-production">
                 <h3><Factory size={11} />{t("watcher.producingNow")}<em>{primaryUnit.completed ? t("watcher.completed") : t("watcher.underConstruction")}</em></h3>
                 {selectedProduction.length === 0 ? <p>{t("watcher.noProductionHere")}</p> : selectedProduction.map((order) => (
-                  <div className="inspector-order" key={order.id}><span><b>{cleanType(order.product)}</b><small>{order.queued ? t("watcher.queued") : `${Math.round(order.progress * 100)}%`}</small></span><i><em style={{ width: `${order.progress * 100}%` }} /></i></div>
+                  <div className={`inspector-order ${order.confidence}`} key={order.id}><span><b>{cleanType(order.product)}</b><small>{order.queued ? t("watcher.queued") : `${order.confidence === "estimated" ? "~" : ""}${Math.round(order.progress * 100)}%`}</small></span><i><em style={{ width: `${order.progress * 100}%` }} /></i></div>
                 ))}
               </section>
             )}
