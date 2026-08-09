@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { createIsometricProjection, decodeMapRle, type MapBounds, type MapGeometry } from "@/lib/map-projection";
+import { createIsometricProjection, decodeMapRle, projectedHeading, type MapBounds, type MapGeometry } from "@/lib/map-projection";
 
 export function TerrainLayer3D({ geometry, bounds, rotation = 0 }: { geometry: MapGeometry; bounds: MapBounds; rotation?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,47 +28,83 @@ export function TerrainLayer3D({ geometry, bounds, rotation = 0 }: { geometry: M
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.lineJoin = "round";
 
-    for (let sum = bounds.minX + bounds.minY; sum <= bounds.maxX + bounds.maxY; sum += step) {
-      for (let x = bounds.minX; x <= bounds.maxX; x += step) {
-        const y = sum - x;
-        if (y < bounds.minY || y > bounds.maxY) continue;
+    const cells: Array<{ x: number; y: number; nextX: number; nextY: number; level: number; depth: number; accessible: boolean }> = [];
+    for (let y = bounds.minY; y < bounds.maxY; y += step) {
+      for (let x = bounds.minX; x < bounds.maxX; x += step) {
         const nextX = Math.min(bounds.maxX, x + step);
         const nextY = Math.min(bounds.maxY, y + step);
-        const level = projection.sampleLevel(x + step / 2, y + step / 2);
-        const corners = [
-          projection.project(x, y, level), projection.project(nextX, y, level),
-          projection.project(nextX, nextY, level), projection.project(x, nextY, level),
-        ].map(scalePoint);
-        const accessible = isWalkable(x + step / 2, y + step / 2);
-        context.beginPath();
-        context.moveTo(corners[0].x, corners[0].y);
-        for (const point of corners.slice(1)) context.lineTo(point.x, point.y);
-        context.closePath();
-        context.fillStyle = accessible ? "rgba(48, 128, 157, .055)" : "rgba(17, 42, 56, .035)";
-        context.fill();
-        context.strokeStyle = accessible ? "rgba(83, 151, 176, .055)" : "rgba(43, 76, 91, .035)";
-        context.lineWidth = .7;
-        context.stroke();
-
-        const eastLevel = projection.sampleLevel(nextX + .1, y + step / 2);
-        const northLevel = projection.sampleLevel(x + step / 2, nextY + .1);
-        for (const [neighborLevel, startIndex, endIndex] of [[eastLevel, 1, 2], [northLevel, 2, 3]] as const) {
-          if (neighborLevel >= level) continue;
-          const drop = Math.max(3, (level - neighborLevel) * 10);
-          const start = corners[startIndex];
-          const end = corners[endIndex];
-          context.beginPath();
-          context.moveTo(start.x, start.y);
-          context.lineTo(end.x, end.y);
-          context.lineTo(end.x, end.y + drop);
-          context.lineTo(start.x, start.y + drop);
-          context.closePath();
-          context.fillStyle = "rgba(45, 103, 127, .15)";
-          context.fill();
-          context.strokeStyle = "rgba(91, 167, 194, .18)";
-          context.stroke();
-        }
+        const centerX = (x + nextX) / 2;
+        const centerY = (y + nextY) / 2;
+        const level = projection.sampleLevel(centerX, centerY);
+        cells.push({ x, y, nextX, nextY, level, depth: projection.project(centerX, centerY, level).bottom, accessible: isWalkable(centerX, centerY) });
       }
+    }
+    cells.sort((left, right) => right.depth - left.depth);
+
+    for (const cell of cells) {
+      const corners = [
+        projection.project(cell.x, cell.y, cell.level), projection.project(cell.nextX, cell.y, cell.level),
+        projection.project(cell.nextX, cell.nextY, cell.level), projection.project(cell.x, cell.nextY, cell.level),
+      ].map(scalePoint);
+      context.beginPath();
+      context.moveTo(corners[0].x, corners[0].y);
+      for (const point of corners.slice(1)) context.lineTo(point.x, point.y);
+      context.closePath();
+      context.fillStyle = cell.accessible ? "rgba(48, 128, 157, .055)" : "rgba(17, 42, 56, .035)";
+      context.fill();
+      context.strokeStyle = cell.accessible ? "rgba(83, 151, 176, .055)" : "rgba(43, 76, 91, .035)";
+      context.lineWidth = .7;
+      context.stroke();
+
+      const eastLevel = projection.sampleLevel(cell.nextX + .1, (cell.y + cell.nextY) / 2);
+      const northLevel = projection.sampleLevel((cell.x + cell.nextX) / 2, cell.nextY + .1);
+      for (const [neighborLevel, startIndex, endIndex] of [[eastLevel, 1, 2], [northLevel, 2, 3]] as const) {
+        if (neighborLevel >= cell.level) continue;
+        const drop = Math.max(3, (cell.level - neighborLevel) * 10);
+        const start = corners[startIndex];
+        const end = corners[endIndex];
+        context.beginPath();
+        context.moveTo(start.x, start.y);
+        context.lineTo(end.x, end.y);
+        context.lineTo(end.x, end.y + drop);
+        context.lineTo(start.x, start.y + drop);
+        context.closePath();
+        context.fillStyle = "rgba(45, 103, 127, .15)";
+        context.fill();
+        context.strokeStyle = "rgba(91, 167, 194, .18)";
+        context.stroke();
+      }
+    }
+
+    for (const ramp of geometry.ramps) {
+      const point = scalePoint(projection.project(ramp.x, ramp.y));
+      const angle = projectedHeading(projection.project, ramp.x, ramp.y, ramp.direction * 45) * Math.PI / 180;
+      context.save();
+      context.translate(point.x, point.y);
+      context.rotate(angle);
+      context.strokeStyle = "rgba(116, 218, 241, .38)";
+      context.lineWidth = 1.4;
+      for (const offset of [-7, 0, 7]) {
+        context.beginPath();
+        context.moveTo(offset - 4, -3);
+        context.lineTo(offset, 0);
+        context.lineTo(offset - 4, 3);
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    for (const item of geometry.staticObjects) {
+      const point = scalePoint(projection.project(item.x, item.y));
+      context.strokeStyle = "rgba(205, 169, 116, .1)";
+      context.lineWidth = .8;
+      context.beginPath();
+      context.ellipse(point.x, point.y, 3.5, 1.8, 0, 0, Math.PI * 2);
+      context.moveTo(point.x - 2, point.y);
+      context.lineTo(point.x - 2, point.y - 5);
+      context.lineTo(point.x + 2, point.y - 5);
+      context.lineTo(point.x + 2, point.y);
+      context.stroke();
     }
 
     const outline = [
