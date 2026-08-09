@@ -30,4 +30,3 @@ export const TimelineEventLayer = memo(function TimelineEventLayer({ events, onH
     </>
   );
 });
-
