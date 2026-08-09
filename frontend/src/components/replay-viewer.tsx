@@ -85,6 +85,10 @@ function formatSignedCompactNumber(value: number, locale: "pt" | "en") {
   return `${value > 0 ? "+" : "−"}${formatCompactNumber(Math.abs(value), locale)}`;
 }
 
+function formatLocaleNumber(value: number, locale: "pt" | "en") {
+  return new Intl.NumberFormat(locale === "pt" ? "pt-BR" : "en-US", { maximumFractionDigits: 1 }).format(value);
+}
+
 function InfoTip({ label, side = "left", children }: { label: string; side?: "left" | "right"; children: React.ReactNode }) {
   const triggerRef = useRef<HTMLSpanElement>(null);
   const tooltipId = useId();
@@ -179,6 +183,7 @@ export function ReplayViewer() {
   const entityName = (type: string) => sc2Name(type, locale);
   const compactNumber = (value: number) => formatCompactNumber(value, locale);
   const signedCompactNumber = (value: number) => formatSignedCompactNumber(value, locale);
+  const number = (value: number) => formatLocaleNumber(value, locale);
   const activityName = (activity: ReplayUnit["activity"]) => activity === "moving" ? t("watcher.moving") : activity === "harvesting" ? t("watcher.harvesting") : t("watcher.idle");
   const confidenceName = (source: ReplayUnit["positionSource"]) => source === "recorded" ? t("watcher.confidence.recorded") : source === "derived" ? t("watcher.confidence.derived") : t("watcher.confidence.estimated");
   const [currentTime, setCurrentTime] = useState(0);
@@ -622,7 +627,7 @@ export function ReplayViewer() {
             <small><RaceIcon size={9} />{player.race}</small>
             <InfoTip label={t("watcher.help.playerHud")} side={side}>{t("watcher.help.playerHudText")}</InfoTip>
           </div>
-          <div className="macro-player-title"><span>{t("watcher.supply")}<InfoTip label={t("watcher.supply")} side={side}>{t("watcher.help.supply")}</InfoTip>{isSupplyBlocked && <em>{t("watcher.blocked")}{activeSupplyBlock ? ` ${formatTime(currentTime - activeSupplyBlock.time)}` : ""}</em>}</span><b>{supplyUsed}<small>/ {supplyCap}</small></b></div>
+          <div className="macro-player-title"><span>{t("watcher.supply")}<InfoTip label={t("watcher.supply")} side={side}>{t("watcher.help.supply")}</InfoTip>{isSupplyBlocked && <em>{t("watcher.blocked")}{activeSupplyBlock ? ` ${formatTime(currentTime - activeSupplyBlock.time)}` : ""}</em>}</span><b>{number(supplyUsed)}<small>/ {number(supplyCap)}</small></b></div>
           <div className={`supply-track ${isSupplyBlocked ? "blocked" : ""}`}><i style={{ width: `${Math.min(100, (supplyUsed / supplyCap) * 100)}%` }} /></div>
           <div className="hud-section-label"><span><Database size={9} />{t("watcher.bank")}</span><InfoTip label={t("watcher.bank")} side={side}>{t("watcher.help.resources")}</InfoTip></div>
           <div className="resource-bank">
@@ -630,7 +635,7 @@ export function ReplayViewer() {
             <span><Zap size={10} /><b>{compactNumber(stats?.vespene ?? 0)}</b><small>{t("watcher.vespene")}</small></span>
           </div>
           <div className="macro-metrics side-macro-metrics">
-            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{stats?.armySupply ?? 0} <em>{t("watcher.supplyUnit")}</em><em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></strong><span className="metric-detail"><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} {t("watcher.valueShort")}</span></span></div>
+            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{number(stats?.armySupply ?? 0)} <em>{t("watcher.supplyUnit")}</em><em className={`metric-delta ${deltaClass(armyValueDelta)}`} title={t("watcher.armyValueDelta")}>{signedCompactNumber(armyValueDelta)}</em></strong><span className="metric-detail"><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} {t("watcher.valueShort")}</span></span></div>
             <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}<em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></strong><span className="metric-detail"><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <small>{t("watcher.perMinute")}</small></span></span></div>
           </div>
           {armyComposition.length > 0 && <div className="army-composition-mini"><span><Swords size={10} />{t("watcher.armyComposition")}<InfoTip label={t("watcher.armyComposition")} side={side}>{t("watcher.help.composition")}</InfoTip></span><div>{armyComposition.map((item) => { const EntityIcon = hudEntityIcon(item.type); const detail = `${item.count}× ${entityName(item.type)} · ${compactNumber(item.minerals)} ${t("watcher.minerals")} · ${compactNumber(item.vespene)} ${t("watcher.vespene")} · ${item.supply} ${t("watcher.supplyUnit")}`; return <b key={item.type} tabIndex={0} title={detail} aria-label={detail}><EntityIcon size={9} />{item.count}× {entityName(item.type)}</b>; })}</div></div>}
@@ -699,7 +704,7 @@ export function ReplayViewer() {
               const supply = selectedEngagement.supplyLost?.[String(playerId)];
               const efficiency = selectedEngagement.tradeEfficiency?.[String(playerId)];
               const detail = minerals != null && vespene != null
-                ? `${compactNumber(minerals)} M · ${compactNumber(vespene)} G · ${supply ?? 0} ${t("watcher.supply")} · ${unitsLost} ${t("watcher.unitsLost")}`
+                ? `${compactNumber(minerals)} M · ${compactNumber(vespene)} G · ${number(supply ?? 0)} ${t("watcher.supply")} · ${unitsLost} ${t("watcher.unitsLost")}`
                 : `${unitsLost} ${t("watcher.unitsLost")}`;
               return <div key={playerId} style={{ "--combat-color": player?.color ?? "#7b8794" } as React.CSSProperties}><span><i />{player?.name ?? playerId}</span><strong>{compactNumber(loss)}{efficiency != null && <em>×{efficiency.toFixed(2)}</em>}</strong><small>{detail}</small></div>;
             })}
@@ -733,7 +738,7 @@ export function ReplayViewer() {
               <div><small className="inspector-label-help">{t("watcher.economicValue")}<InfoTip label={t("watcher.economicValue")} side="right">{t("watcher.help.economicValue")}</InfoTip></small><strong>{compactNumber(inspectedMinerals + inspectedVespene)}</strong></div>
               <span><b>{compactNumber(inspectedMinerals)}</b> <Pickaxe size={10} /></span>
               <span><b>{compactNumber(inspectedVespene)}</b> <Zap size={10} /></span>
-              <span><b>{inspectedSupply}</b> {t("watcher.supply")}</span>
+              <span><b>{number(inspectedSupply)}</b> {t("watcher.supply")}</span>
             </section>
             <section className="inspector-section confidence-section">
               <h3><Shield size={11} />{t("watcher.positionConfidence")}<InfoTip label={t("watcher.positionConfidence")} side="right">{t("watcher.help.positionConfidence")}</InfoTip></h3>
@@ -758,7 +763,7 @@ export function ReplayViewer() {
               <div><small className="inspector-label-help">{t("watcher.economicValue")}<InfoTip label={t("watcher.economicValue")} side="right">{t("watcher.help.economicValue")}</InfoTip></small><strong>{compactNumber(inspectedMinerals + inspectedVespene)}</strong></div>
               <span><b>{compactNumber(inspectedMinerals)}</b> <Pickaxe size={10} /></span>
               <span><b>{compactNumber(inspectedVespene)}</b> <Zap size={10} /></span>
-              <span><b>{inspectedSupply}</b> {t("watcher.supply")}</span>
+              <span><b>{number(inspectedSupply)}</b> {t("watcher.supply")}</span>
             </section>
             {selectedAddon && <section className="inspector-addon"><span><Wrench size={11} />{t("watcher.addon")}</span><strong>{entityName(selectedAddon.type)}</strong><small>{selectedAddon.completed ? t("watcher.completed") : t("watcher.underConstruction")}</small></section>}
             {primaryUnit.isBuilding && (
@@ -802,9 +807,9 @@ export function ReplayViewer() {
       <aside className={`compact-player-drawer compact-player-drawer-${index === 0 ? "left" : "right"}`} style={{ "--player-color": player.color } as React.CSSProperties}>
         <header><span><i /><RaceIcon size={12} /></span><div><strong>{player.name}</strong><small>{player.race}</small></div><button onClick={() => setCompactPlayerId(null)} aria-label={t("watcher.closePlayerSummary")}><X size={13} /></button></header>
         <div className="compact-player-metrics">
-          <span><Package size={11} /><small>{t("watcher.supply")}</small><b>{stats?.supplyUsed ?? 0}/{stats?.supplyCap ?? 0}</b></span>
+          <span><Package size={11} /><small>{t("watcher.supply")}</small><b>{number(stats?.supplyUsed ?? 0)}/{number(stats?.supplyCap ?? 0)}</b></span>
           <span><Pickaxe size={11} /><small>{t("watcher.workers")}</small><b>{stats?.workers ?? 0}</b></span>
-          <span><Swords size={11} /><small>{t("watcher.army")}</small><b>{stats?.armySupply ?? 0} {t("watcher.supplyUnit")}</b></span>
+          <span><Swords size={11} /><small>{t("watcher.army")}</small><b>{number(stats?.armySupply ?? 0)} {t("watcher.supplyUnit")}</b></span>
           <span><Zap size={11} /><small>{t("watcher.income")}</small><b>{compactNumber((stats?.mineralRate ?? 0) + (stats?.vespeneRate ?? 0))}{t("watcher.perMinute")}</b></span>
         </div>
         {composition.length > 0 && <div className="compact-player-composition"><small>{t("watcher.armyComposition")}</small><div>{composition.map((item) => { const EntityIcon = hudEntityIcon(item.type); return <span key={canonicalSc2Type(item.type)} title={entityName(item.type)}><EntityIcon size={9} /><b>{item.count}×</b>{entityName(item.type)}</span>; })}</div></div>}
@@ -836,7 +841,7 @@ export function ReplayViewer() {
                   <section key={player.id} style={{ "--player-color": player.color } as React.CSSProperties}>
                     <header><span>P{index + 1}</span><strong>{player.name}</strong><small><RaceIcon size={8} />{player.race}</small><InfoTip label={t("watcher.compactScoreboard")} side={index === 0 ? "left" : "right"}>{t("watcher.help.compactScoreboard")}</InfoTip><button className="compact-player-expand" aria-expanded={compactPlayerId === player.id} aria-label={t("watcher.openPlayerSummary", { player: player.name })} onClick={() => setCompactPlayerId((current) => current === player.id ? null : player.id)}><ChevronDown size={11} /></button></header>
                     <div>
-                      <span title={t("watcher.supply")}><Package size={10} />{stats?.supplyUsed ?? 0}/{stats?.supplyCap ?? 0}</span>
+                      <span title={t("watcher.supply")}><Package size={10} />{number(stats?.supplyUsed ?? 0)}/{number(stats?.supplyCap ?? 0)}</span>
                       <span title={t("watcher.workers")}><Pickaxe size={10} />{stats?.workers ?? 0}</span>
                       <span title={t("watcher.armyValue")}><Swords size={10} />{compactNumber(stats?.armyValue ?? 0)}</span>
                       <span title={t("watcher.bank")}><Database size={10} />{compactNumber((stats?.minerals ?? 0) + (stats?.vespene ?? 0))}</span>
