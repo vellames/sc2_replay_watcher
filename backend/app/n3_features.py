@@ -33,7 +33,14 @@ COSMETIC_UPGRADE_PREFIXES = (
     "rewarddance",
     "spray",
 )
-COSMETIC_COMMAND_TOKENS = ("dance", "emote", "spray", "taunt")
+COSMETIC_COMMAND_PREFIXES = (
+    "dance",
+    "emote",
+    "sprayprotoss",
+    "sprayterran",
+    "sprayzerg",
+    "taunt",
+)
 ENTITY_ALIASES = {
     "SupplyDepotLowered": "SupplyDepot",
     "SupplyDepotRaised": "SupplyDepot",
@@ -183,7 +190,7 @@ def _is_cosmetic_command(event: Any) -> bool:
     if not bool(getattr(event, "has_ability", False)):
         return False
     normalized = _normalized_name(getattr(event, "ability_name", ""))
-    return any(token in normalized for token in COSMETIC_COMMAND_TOKENS)
+    return normalized.startswith(COSMETIC_COMMAND_PREFIXES)
 
 
 def _recent(values: list[int], cutoff: int, window: int | None = None) -> int:

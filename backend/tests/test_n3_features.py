@@ -42,6 +42,7 @@ def test_cosmetic_signals_are_excluded_from_inference_features() -> None:
     assert not _is_cosmetic_upgrade("Stimpack", 100)
     assert _is_cosmetic_command(command("SprayTerran"))
     assert _is_cosmetic_command(command("Dance"))
+    assert not _is_cosmetic_command(command("CausticSpray"))
     assert not _is_cosmetic_command(command("Attack"))
 
 
