@@ -220,6 +220,7 @@ export function ReplayViewer() {
     cameras: true,
   });
   const drag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const zoomRef = useRef(1);
   const currentTimeRef = useRef(0);
   const resumePlaybackRef = useRef(false);
   const audioRef = useRef<ReplayAudioEngine | null>(null);
@@ -705,7 +706,17 @@ export function ReplayViewer() {
     if (layer === "buildings" && layers.buildings && selection?.kind === "group" && selection.groupType === "base") setSelection(null);
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
   };
-  const resetMap = () => { setZoom(1); setPan({ x: 0, y: 0 }); setSelection(null); };
+  const changeZoom = (delta: number) => {
+    const current = zoomRef.current;
+    const next = Math.min(3, Math.max(.7, current + delta));
+    if (next === current) return;
+    zoomRef.current = next;
+    setZoom(next);
+    setPan((currentPan) => next <= 1
+      ? { x: 0, y: 0 }
+      : { x: currentPan.x * next / current, y: currentPan.y * next / current });
+  };
+  const resetMap = () => { zoomRef.current = 1; setZoom(1); setPan({ x: 0, y: 0 }); setSelection(null); };
   const layerLabels: Record<LayerKey, string> = {
     terrain: t("watcher.layer.terrain"),
     army: t("watcher.layer.army"),
@@ -995,7 +1006,7 @@ export function ReplayViewer() {
               className={`map-stage ${isPanning ? "is-panning" : ""}`}
               onWheel={(event) => {
                 event.preventDefault();
-                setZoom((value) => Math.min(3, Math.max(0.7, value - event.deltaY * 0.001)));
+                changeZoom(-event.deltaY * .001);
               }}
               onPointerDown={(event) => {
                 if ((event.target as HTMLElement).closest("button")) return;
@@ -1162,9 +1173,9 @@ export function ReplayViewer() {
                 {is3D && <button onClick={() => setMapRotation((value) => (value + 1) % 4)} aria-keyshortcuts="R" aria-label={t("watcher.rotate3d")} title={`${t("watcher.rotate3d")} · R`}><RotateCw size={12} /><span>{mapRotation * 90}°</span></button>}
                 <InfoTip label={t("watcher.iconLegend")}><span className="icon-legend-list"><span><Crosshair size={10} />{t("watcher.icon.siege")}</span><span><Eye size={10} />{t("watcher.icon.detector")}</span><span><Bomb size={10} />{t("watcher.icon.explosive")}</span><span><Boxes size={10} />{t("watcher.icon.transport")}</span><span><Sparkles size={10} />{t("watcher.icon.caster")}</span><em>{t("watcher.iconLegendAction")}</em></span></InfoTip>
                 <i />
-                <button onClick={() => setZoom((value) => Math.max(0.7, value - 0.25))} aria-label={t("watcher.zoomOut")}><Minus size={13} /></button>
+                <button onClick={() => changeZoom(-.25)} aria-label={t("watcher.zoomOut")}><Minus size={13} /></button>
                 <b>{Math.round(zoom * 100)}%</b>
-                <button onClick={() => setZoom((value) => Math.min(3, value + 0.25))} aria-label={t("watcher.zoomIn")}><Plus size={13} /></button>
+                <button onClick={() => changeZoom(.25)} aria-label={t("watcher.zoomIn")}><Plus size={13} /></button>
                 <button onClick={resetMap} aria-label={t("watcher.resetMap")}><Target size={13} /></button>
               </div>
               <div className="map-analysis-toolbar" role="toolbar" aria-label={t("watcher.analysisViews")}>
