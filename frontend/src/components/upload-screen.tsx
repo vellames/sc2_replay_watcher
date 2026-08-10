@@ -90,7 +90,6 @@ export function UploadScreen() {
       <main className="landing-main">
         <section className="landing-hero">
           <div className="landing-copy">
-            <div className="premium-pill"><Sparkles size={13} /><span>COMMUNITY-BUILT SC2 ANALYTICS</span><i /></div>
             <p className="eyebrow"><Zap size={14} /> {t("home.eyebrow")}</p>
             <h1>{t("home.titleLine1")}<br /><span>{t("home.titleLine2")}</span></h1>
             <p>{t("home.description")}</p>

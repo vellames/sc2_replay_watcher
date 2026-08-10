@@ -488,9 +488,6 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
 .orb-two { width: 360px; height: 360px; left: -220px; top: 400px; background: radial-gradient(circle, rgba(88, 89, 229, .07), transparent 70%); }
 .landing-main { flex: 1; width: min(1180px, calc(100% - 40px)); }
 .landing-hero { min-height: 640px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, 490px); align-items: center; gap: clamp(50px, 9vw, 130px); padding: 72px 0 52px; }
-.premium-pill { width: fit-content; display: flex; align-items: center; gap: 8px; color: #8fd9f3; border: 1px solid rgba(91, 198, 239, .16); background: rgba(33, 112, 145, .06); padding: 6px 9px; border-radius: 3px; font: 600 8px var(--font-geist-mono); letter-spacing: .13em; margin-bottom: 24px; }
-.premium-pill svg { color: #b1edff; }
-.premium-pill i { width: 4px; height: 4px; border-radius: 50%; background: #5ce28a; box-shadow: 0 0 7px #5ce28a; }
 .landing-copy h1 { margin: 0; font-size: clamp(48px, 6vw, 78px); line-height: .96; letter-spacing: -.065em; font-weight: 630; max-width: 720px; }
 .landing-copy h1 span { color: #6e8292; }
 .landing-copy > p:not(.eyebrow) { color: #8295a7; max-width: 580px; line-height: 1.75; font-size: 15px; margin: 26px 0 0; }
@@ -588,7 +585,6 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
 @media (max-width: 900px) {
   .landing-hero { grid-template-columns: 1fr; padding: 60px 0 45px; gap: 42px; }
   .landing-copy { text-align: center; }
-  .premium-pill { margin-left: auto; margin-right: auto; }
   .landing-copy .eyebrow { justify-content: center; }
   .landing-copy > p:last-child { margin-left: auto; margin-right: auto; }
   .upload-card { width: min(520px, 100%); margin: 0 auto; }
