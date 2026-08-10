@@ -21,6 +21,26 @@ export function nearestProbabilityPoint(
   return Math.abs(previous.time - time) <= Math.abs(next.time - time) ? previous : next;
 }
 
+export function latestProbabilityPoint(
+  points: WinProbabilityPoint[],
+  time: number,
+): WinProbabilityPoint | null {
+  if (points.length === 0) return null;
+  let low = 0;
+  let high = points.length - 1;
+  let latest = points[0];
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2);
+    if (points[middle].time <= time) {
+      latest = points[middle];
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return latest;
+}
+
 export function probabilityWindow(
   points: WinProbabilityPoint[],
   start: number,

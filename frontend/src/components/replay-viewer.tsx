@@ -69,7 +69,7 @@ import { TimelineEventLayer, type TimelineEventPresentation } from "@/components
 import { playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { engagementLossAt } from "@/lib/engagement-progress";
-import { nearestProbabilityPoint, probabilityWindow, type WinProbabilityPoint } from "@/lib/win-probability";
+import { latestProbabilityPoint, nearestProbabilityPoint, probabilityWindow, type WinProbabilityPoint } from "@/lib/win-probability";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayDeath, ReplayProduction, ReplayUnit, WinProbabilitySeries } from "@/lib/types";
 
@@ -366,7 +366,7 @@ export function ReplayViewer() {
       .then((series) => setWinProbabilityResult({ analysisId, series }))
       .catch((error) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
-        setWinProbabilityResult({ analysisId, series: { status: "unavailable", cadenceSeconds: 0.25, experimental: true, points: [] } });
+        setWinProbabilityResult({ analysisId, series: { status: "unavailable", cadenceSeconds: 0.5, experimental: true, points: [] } });
       });
     return () => controller.abort();
   }, [replay?.meta.analysisId]);
@@ -457,13 +457,12 @@ export function ReplayViewer() {
 
   const winProbability = useMemo<WinProbabilitySeries>(() => {
     if (winProbabilityResult && winProbabilityResult.analysisId === replay?.meta.analysisId) return winProbabilityResult.series;
-    return { status: "loading", model: "SC2-WinProb-N3-v1", provider: "n3", cadenceSeconds: 0.25, experimental: true, points: [] };
+    return { status: "loading", model: "SC2-WinProb-N3-v1", provider: "n3", cadenceSeconds: 0.5, experimental: true, points: [] };
   }, [replay?.meta.analysisId, winProbabilityResult]);
 
   const currentWinProbability = useMemo(() => {
     if (winProbability?.status !== "ready" || winProbability.points.length === 0) return null;
-    const index = Math.min(winProbability.points.length - 1, Math.max(0, Math.floor(currentTime / winProbability.cadenceSeconds)));
-    return winProbability.points[index];
+    return latestProbabilityPoint(winProbability.points, currentTime);
   }, [currentTime, winProbability]);
 
   const timelineEvents = useMemo<TimelineEventPresentation[]>(() => {
@@ -972,7 +971,7 @@ export function ReplayViewer() {
           </header>
           <section className={`engagement-probability ${winProbability.status}`} aria-label={t("watcher.engagementProbability")} aria-busy={winProbability.status === "loading"}>
             <header>
-              <div><Activity size={12} /><span>{t("watcher.engagementProbability")}</span><small>N3 · 4 Hz</small></div>
+              <div><Activity size={12} /><span>{t("watcher.engagementProbability")}</span><small>2 Hz</small></div>
               {fightStartProbability && fightEndProbability && <div className="engagement-probability-legend">
                 <span style={{ "--probability-color": replay.players[0]?.color } as React.CSSProperties}><i />{replay.players[0]?.name}<b>{formatProbability(fightStartProbability.playerOne, locale)}% → {formatProbability(fightEndProbability.playerOne, locale)}%</b></span>
                 <span style={{ "--probability-color": replay.players[1]?.color } as React.CSSProperties}><i />{replay.players[1]?.name}<b>{formatProbability(fightStartProbability.playerTwo, locale)}% → {formatProbability(fightEndProbability.playerTwo, locale)}%</b></span>

@@ -14,7 +14,7 @@ from typing import Any, Iterator
 
 N3_BASE_URL = "https://c-vellames--sc2-winprob-n3-v1.modal.run"
 LIGHTGBM_BASE_URL = "https://c-vellames--sc2-winprob-lightgbm-v1.modal.run"
-CADENCE_SECONDS = 0.25
+CADENCE_SECONDS = 0.5
 
 _STAT_FEATURES = {
     "scoreValueFoodMade": "supplyCap",
@@ -31,6 +31,18 @@ _STAT_FEATURES = {
 
 class WinProbabilityUnavailable(RuntimeError):
     """The optional inference service cannot currently produce a timeline."""
+
+
+def _inference_times(duration: float) -> list[float]:
+    """Return regular inference ticks plus the exact replay endpoint."""
+    duration = max(0.0, float(duration))
+    regular_ticks = math.floor(duration / CADENCE_SECONDS)
+    times = [tick * CADENCE_SECONDS for tick in range(regular_ticks + 1)]
+    if not math.isclose(times[-1], duration, abs_tol=1e-9):
+        times.append(duration)
+    else:
+        times[-1] = duration
+    return times
 
 
 def _base_url() -> str:
@@ -226,9 +238,7 @@ def iter_snapshots(
             return source[index] if index is not None and index < len(source) else default
 
         feature_index = 0
-        final_tick = math.ceil(duration / CADENCE_SECONDS)
-        for tick in range(final_tick + 1):
-            time_seconds = min(duration, tick * CADENCE_SECONDS)
+        for time_seconds in _inference_times(duration):
             while (
                 feature_index + 1 < len(full_frames)
                 and float(
@@ -253,9 +263,7 @@ def iter_snapshots(
     }
     frame_index = 0
     build_index = 0
-    final_tick = math.ceil(duration / CADENCE_SECONDS)
-    for tick in range(final_tick + 1):
-        time_seconds = min(duration, tick * CADENCE_SECONDS)
+    for time_seconds in _inference_times(duration):
         while (
             frame_index + 1 < len(frames)
             and float(frames[frame_index + 1].get("time", 0)) <= time_seconds

@@ -175,7 +175,7 @@ def _probability_pivots(
     if not probability or probability.get("status") != "ready":
         return []
     points = probability.get("points") or []
-    cadence = float(probability.get("cadenceSeconds") or 0.25)
+    cadence = float(probability.get("cadenceSeconds") or 0.5)
     if len(points) < 2:
         return []
     horizon = max(1, round(30 / cadence))
