@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, BrainCircuit, Crosshair, Factory, FileUp, FlaskConical, HeartHandshake, History, LockKeyhole, Map, Play, Sparkles, Upload, Zap } from "lucide-react";
+import { Activity, BrainCircuit, Crosshair, Factory, FileUp, FlaskConical, HeartHandshake, History, Map, Play, Sparkles, Upload, Zap } from "lucide-react";
 
 import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
@@ -11,6 +11,10 @@ import type { ReplayData } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8010";
 const API_TIMEOUT_MS = 120_000;
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+const subscribeToHostname = () => () => undefined;
+const isLocalhost = () => LOCAL_HOSTS.has(window.location.hostname);
+const isServer = () => false;
 
 async function fetchApi(input: string, init?: RequestInit) {
   const controller = new AbortController();
@@ -28,6 +32,7 @@ export function UploadScreen() {
   const { locale, t } = useI18n();
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const showDemo = useSyncExternalStore(subscribeToHostname, isLocalhost, isServer);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -89,7 +94,6 @@ export function UploadScreen() {
             <p className="eyebrow"><Zap size={14} /> {t("home.eyebrow")}</p>
             <h1>{t("home.titleLine1")}<br /><span>{t("home.titleLine2")}</span></h1>
             <p>{t("home.description")}</p>
-            <div className="product-proof"><span><LockKeyhole size={13} /> {t("home.proofPrivate")}</span><i /><span><Zap size={13} /> {t("home.proofModel")}</span></div>
           </div>
 
           <div className="upload-card">
@@ -115,9 +119,9 @@ export function UploadScreen() {
                 <Upload size={16} /> {uploading ? t("upload.processingButton") : t("upload.select")}
               </button>
             </div>
-            <button className="demo-button" onClick={openDemo} disabled={uploading}>
+            {showDemo && <button className="demo-button" onClick={openDemo} disabled={uploading}>
               <Play size={14} fill="currentColor" /> {t("upload.demo")}
-            </button>
+            </button>}
             {error && <div className="landing-error" role="alert">{error}</div>}
           </div>
         </section>
@@ -125,7 +129,7 @@ export function UploadScreen() {
         <div className="section-label"><span>{t("features.label")}</span><i /></div>
         <section className="landing-capabilities" aria-label={t("features.label")}>
           <article className="capability-card capability-model">
-            <header><span><BrainCircuit size={18} /></span><small>N3 DEEPSETS · 4 HZ</small></header>
+            <header><span><BrainCircuit size={18} /></span><small>{t("features.modelTag")}</small></header>
             <strong>{t("features.modelTitle")}</strong>
             <p>{t("features.modelText")}</p>
             <div className="capability-probability" aria-hidden="true"><div><span>PLAYER 1 <b>58%</b></span><span><b>42%</b> PLAYER 2</span></div><i><em /><em /></i></div>
