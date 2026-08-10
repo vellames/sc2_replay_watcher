@@ -69,7 +69,9 @@ import { playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { engagementLossAt } from "@/lib/engagement-progress";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
-import type { ReplayDeath, ReplayProduction, ReplayUnit } from "@/lib/types";
+import type { ReplayDeath, ReplayProduction, ReplayUnit, WinProbabilitySeries } from "@/lib/types";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8010";
 
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type ComparisonView = "composition" | "upgrades";
@@ -202,6 +204,7 @@ export function ReplayViewer() {
   const [timelineHint, setTimelineHint] = useState<{ label: string; position: number } | null>(null);
   const [comparisonView, setComparisonView] = useState<ComparisonView | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [winProbability, setWinProbability] = useState<WinProbabilitySeries | null>(null);
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     terrain: true,
     army: true,
@@ -264,6 +267,24 @@ export function ReplayViewer() {
   }, [currentTime]);
 
   useEffect(() => () => audioRef.current?.dispose(), []);
+
+  useEffect(() => {
+    if (!replay?.meta.analysisId) {
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`${API_URL}/api/replays/${encodeURIComponent(replay.meta.analysisId)}/win-probability`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Win probability request failed");
+        return await response.json() as WinProbabilitySeries;
+      })
+      .then(setWinProbability)
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setWinProbability({ status: "unavailable", cadenceSeconds: 1, experimental: true, points: [] });
+      });
+    return () => controller.abort();
+  }, [replay?.meta.analysisId]);
 
   useEffect(() => {
     const previous = previousAudioTimeRef.current;
@@ -365,6 +386,12 @@ export function ReplayViewer() {
     }).join(" ");
     return { positive: points("positive"), negative: points("negative") };
   }, [replay]);
+
+  const currentWinProbability = useMemo(() => {
+    if (winProbability?.status !== "ready" || winProbability.points.length === 0) return null;
+    const index = Math.min(winProbability.points.length - 1, Math.max(0, Math.floor(currentTime / winProbability.cadenceSeconds)));
+    return winProbability.points[index];
+  }, [currentTime, winProbability]);
 
   const timelineEvents = useMemo<TimelineEventPresentation[]>(() => {
     if (!replay) return [];
@@ -1175,6 +1202,19 @@ export function ReplayViewer() {
             {replay.players[1] && renderPlayerPanel(replay.players[1], "right")}
           </div>
 
+          {winProbability?.status !== "unavailable" && (
+            <div className={`win-probability ${winProbability?.status ?? "loading"}`} aria-live="polite">
+              <div className="win-probability-heading">
+                <span style={{ "--win-color": replay.players[0]?.color } as React.CSSProperties}><i />{replay.players[0]?.name}<b>{currentWinProbability ? `${Math.round(currentWinProbability.playerOne * 100)}%` : "—"}</b></span>
+                <small><Activity size={11} />{t("watcher.winProbability")}<InfoTip label={t("watcher.winProbability")}>{t("watcher.help.winProbability")}</InfoTip></small>
+                <span style={{ "--win-color": replay.players[1]?.color } as React.CSSProperties}><b>{currentWinProbability ? `${Math.round(currentWinProbability.playerTwo * 100)}%` : "—"}</b>{replay.players[1]?.name}<i /></span>
+              </div>
+              <div className="win-probability-track" role="meter" aria-label={t("watcher.winProbability")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentWinProbability ? Math.round(currentWinProbability.playerOne * 100) : undefined}>
+                <span style={{ width: `${currentWinProbability ? currentWinProbability.playerOne * 100 : 50}%`, background: replay.players[0]?.color }} />
+                <span style={{ background: replay.players[1]?.color }} />
+              </div>
+            </div>
+          )}
           <div className="controls">
             <button className="icon-button" onClick={() => { playSound("seek"); setCurrentTime(0); setPlaying(false); }} aria-label={t("watcher.restart")}><RotateCcw size={17} /></button>
             <button className="play-button" onClick={togglePlayback} aria-keyshortcuts="Space" aria-label={playing ? t("watcher.pause") : t("watcher.play")}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>

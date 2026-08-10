@@ -100,6 +100,53 @@ def test_repeated_upload_reuses_compiled_payload(monkeypatch) -> None:
     assert second.json()["meta"]["filename"] == "renamed.SC2Replay"
 
 
+def test_win_probability_is_computed_outside_event_loop(monkeypatch) -> None:
+    replay = {"meta": {"filename": "fixture.SC2Replay"}, "frames": []}
+    main._upload_cache["fixture"] = replay
+    main._win_probability_cache.clear()
+    calls: list[tuple[object, tuple, dict]] = []
+
+    def fake_build(payload, request_id):
+        assert payload is replay
+        assert request_id == "fixture"
+        return {"status": "ready", "cadenceSeconds": 1, "points": []}
+
+    async def fake_threadpool(function, *args, **kwargs):
+        calls.append((function, args, kwargs))
+        return function(*args, **kwargs)
+
+    monkeypatch.setattr(main, "build_win_probability_series", fake_build)
+    monkeypatch.setattr(main, "run_in_threadpool", fake_threadpool)
+
+    response = client.get("/api/replays/fixture/win-probability")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "ready"
+    assert calls and calls[0][0] is fake_build
+
+
+def test_missing_probability_service_does_not_break_replay(monkeypatch) -> None:
+    main._upload_cache["unavailable"] = {
+        "meta": {"filename": "fixture.SC2Replay"},
+        "frames": [],
+    }
+    main._win_probability_cache.clear()
+
+    def unavailable(_payload, _request_id):
+        raise main.WinProbabilityUnavailable("offline")
+
+    monkeypatch.setattr(main, "build_win_probability_series", unavailable)
+    response = client.get("/api/replays/unavailable/win-probability")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "unavailable",
+        "cadenceSeconds": 1,
+        "experimental": True,
+        "points": [],
+    }
+
+
 def test_demo_is_compiled_by_world_engine() -> None:
     response = client.get("/api/replays/demo")
     assert response.status_code == 200

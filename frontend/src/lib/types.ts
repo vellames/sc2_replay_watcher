@@ -174,6 +174,7 @@ export type ReplayData = {
     cameraModel: "recorded-sample-hold";
     worldSchemaVersion: string;
     engineVersion: string;
+    analysisId?: string;
     estimatedPositionRatio: number;
     capabilities: {
       unitEconomy: boolean;
@@ -249,4 +250,13 @@ export type ReplayData = {
   }>;
   engagements: ReplayEngagement[];
   frames: ReplayFrame[];
+};
+
+export type WinProbabilitySeries = {
+  status: "loading" | "ready" | "unavailable";
+  model?: string;
+  perspectivePlayerId?: number;
+  cadenceSeconds: number;
+  experimental: boolean;
+  points: Array<{ time: number; playerOne: number; playerTwo: number }>;
 };

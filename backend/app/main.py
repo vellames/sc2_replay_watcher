@@ -18,6 +18,7 @@ from sc2_world_engine.errors import UnsupportedMatchFormatError
 from sc2_world_engine.archive import SCHEMA_VERSION
 
 from .world_adapter import parse_replay
+from .win_probability import WinProbabilityUnavailable, build_win_probability_series
 
 MAX_REPLAY_SIZE = 50 * 1024 * 1024
 UPLOAD_CACHE_SIZE = 2
@@ -45,6 +46,8 @@ app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
 
 _upload_cache: OrderedDict[str, dict] = OrderedDict()
 _upload_cache_lock = Lock()
+_win_probability_cache: OrderedDict[str, dict] = OrderedDict()
+_win_probability_cache_lock = Lock()
 
 
 def _cached_upload(digest: str, filename: str) -> dict | None:
@@ -64,6 +67,13 @@ def _remember_upload(digest: str, payload: dict) -> None:
             _upload_cache.popitem(last=False)
 
 
+def _replay_for_analysis(analysis_id: str) -> dict | None:
+    if analysis_id == "demo":
+        return _demo_replay()
+    with _upload_cache_lock:
+        return _upload_cache.get(analysis_id)
+
+
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "engineVersion": engine_version, "schemaVersion": SCHEMA_VERSION}
@@ -74,10 +84,12 @@ def _demo_replay() -> dict:
     if not DEMO_REPLAY_PATH.exists():
         raise FileNotFoundError("Demo replay fixture is missing")
 
-    return parse_replay(
+    payload = parse_replay(
         DEMO_REPLAY_PATH,
         filename="HSC XXIX · Serral vs Clem · Grand Final G4",
     )
+    payload["meta"]["analysisId"] = "demo"
+    return payload
 
 
 @app.get("/api/replays/demo")
@@ -118,6 +130,8 @@ async def upload_replay(response: Response, file: Annotated[UploadFile, File()])
             temporary.write(content)
             temp_path = Path(temporary.name)
         payload = await run_in_threadpool(parse_replay, temp_path, filename=filename)
+        if isinstance(payload.get("meta"), dict):
+            payload["meta"]["analysisId"] = digest
         _remember_upload(digest, payload)
         response.headers["X-Replay-Cache"] = "MISS"
         return payload
@@ -136,3 +150,32 @@ async def upload_replay(response: Response, file: Annotated[UploadFile, File()])
     finally:
         if temp_path:
             temp_path.unlink(missing_ok=True)
+
+
+@app.get("/api/replays/{analysis_id}/win-probability")
+async def replay_win_probability(analysis_id: str) -> dict:
+    with _win_probability_cache_lock:
+        cached = _win_probability_cache.get(analysis_id)
+        if cached is not None:
+            _win_probability_cache.move_to_end(analysis_id)
+            return cached
+    replay = _replay_for_analysis(analysis_id)
+    if replay is None:
+        raise HTTPException(status_code=404, detail="O replay não está mais no cache.")
+    try:
+        result = await run_in_threadpool(
+            build_win_probability_series, replay, analysis_id
+        )
+    except WinProbabilityUnavailable:
+        return {
+            "status": "unavailable",
+            "cadenceSeconds": 1,
+            "experimental": True,
+            "points": [],
+        }
+    with _win_probability_cache_lock:
+        _win_probability_cache[analysis_id] = result
+        _win_probability_cache.move_to_end(analysis_id)
+        while len(_win_probability_cache) > UPLOAD_CACHE_SIZE + 1:
+            _win_probability_cache.popitem(last=False)
+    return result
