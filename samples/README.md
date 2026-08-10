@@ -16,4 +16,6 @@
 - Eventos interpretados: 14.551
 - SHA-256: `05682d2909ab211703476c40e8192f78dfedc7e132c3283903658211677fc8a0`
 
-O arquivo vem do replay pack público da competição e está incluído somente como fixture de desenvolvimento e teste.
+O arquivo vem do replay pack público da competição e está incluído somente como fixture de
+desenvolvimento e teste. Ele é material de terceiros, permanece sujeito aos direitos de seus
+respectivos titulares e não é sublicenciado pela licença do código deste repositório.

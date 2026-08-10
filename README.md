@@ -98,3 +98,16 @@ posições registradas pelo tracker nunca são substituídas pelo pathfinder.
 
 As câmeras dos jogadores usam as amostras originais de `CameraEvent`: o watcher mantém a última
 posição registrada até a próxima amostra e nunca interpola coordenadas entre dois eventos.
+
+## License
+
+Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+Noncommercial research, education, personal study and hobby use are permitted. Commercial use is
+not permitted without a separate license from the copyright holder.
+
+The bundled replay fixture is third-party material and is not licensed under PolyForm. See
+[`samples/README.md`](samples/README.md) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+StarCraft II and related assets are trademarks or copyrighted materials of Blizzard
+Entertainment. This project is an independent community tool and is not affiliated with or
+endorsed by Blizzard Entertainment.
