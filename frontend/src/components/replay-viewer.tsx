@@ -373,23 +373,6 @@ export function ReplayViewer() {
     return [...unique.values()];
   }, [replay]);
 
-  const armyAdvantageChart = useMemo(() => {
-    if (!replay || replay.players.length < 2 || replay.frames.length < 2) return null;
-    const firstId = String(replay.players[0].id);
-    const secondId = String(replay.players[1].id);
-    const stride = Math.max(1, Math.ceil(replay.frames.length / 220));
-    const samples = replay.frames.filter((_, index) => index % stride === 0 || index === replay.frames.length - 1).map((frame) => ({
-      x: (frame.time / replay.meta.duration) * 100,
-      delta: (frame.stats[firstId]?.fieldedArmyValue ?? frame.stats[firstId]?.armyValue ?? 0) - (frame.stats[secondId]?.fieldedArmyValue ?? frame.stats[secondId]?.armyValue ?? 0),
-    }));
-    const max = Math.max(1, ...samples.map((sample) => Math.abs(sample.delta)));
-    const points = (side: "positive" | "negative") => samples.map((sample) => {
-      const delta = side === "positive" ? Math.max(0, sample.delta) : Math.min(0, sample.delta);
-      return `${sample.x.toFixed(2)},${(10 - (delta / max) * 8).toFixed(2)}`;
-    }).join(" ");
-    return { positive: points("positive"), negative: points("negative") };
-  }, [replay]);
-
   const winProbability = useMemo<WinProbabilitySeries>(() => {
     if (winProbabilityResult && winProbabilityResult.analysisId === replay?.meta.analysisId) return winProbabilityResult.series;
     return { status: "loading", model: "SC2-WinProb-N3-v1", provider: "n3", cadenceSeconds: 0.25, experimental: true, points: [] };
@@ -400,6 +383,22 @@ export function ReplayViewer() {
     const index = Math.min(winProbability.points.length - 1, Math.max(0, Math.floor(currentTime / winProbability.cadenceSeconds)));
     return winProbability.points[index];
   }, [currentTime, winProbability]);
+
+  const winProbabilityChart = useMemo(() => {
+    if (!replay || winProbability.status !== "ready" || winProbability.points.length < 2) return null;
+    const stride = Math.max(1, Math.ceil(winProbability.points.length / 600));
+    const samples = winProbability.points.filter((_, index) => index % stride === 0 || index === winProbability.points.length - 1);
+    const line = (player: "playerOne" | "playerTwo") => samples.map((point) => {
+      const x = Math.min(100, Math.max(0, (point.time / replay.meta.duration) * 100));
+      const probability = Math.min(1, Math.max(0, point[player]));
+      return `${x.toFixed(2)},${(2 + (1 - probability) * 20).toFixed(2)}`;
+    }).join(" ");
+    return {
+      playerOne: line("playerOne"),
+      playerTwo: line("playerTwo"),
+      currentX: Math.min(100, Math.max(0, (currentTime / replay.meta.duration) * 100)),
+    };
+  }, [currentTime, replay, winProbability]);
 
   const timelineEvents = useMemo<TimelineEventPresentation[]>(() => {
     if (!replay) return [];
@@ -1281,6 +1280,14 @@ export function ReplayViewer() {
                 <span style={{ width: `${currentWinProbability ? currentWinProbability.playerOne * 100 : 50}%`, background: replay.players[0]?.color }} />
                 <span style={{ background: replay.players[1]?.color }} />
               </div>
+              {winProbabilityChart && <div className="win-probability-history">
+                <svg viewBox="0 0 100 24" preserveAspectRatio="none" role="img" aria-label={t("watcher.winProbabilityHistory")}>
+                  <line className="win-history-midline" x1="0" y1="12" x2="100" y2="12" />
+                  <polyline points={winProbabilityChart.playerOne} style={{ stroke: replay.players[0]?.color }} />
+                  <polyline points={winProbabilityChart.playerTwo} style={{ stroke: replay.players[1]?.color }} />
+                  <line className="win-history-current" x1={winProbabilityChart.currentX} y1="1" x2={winProbabilityChart.currentX} y2="23" />
+                </svg>
+              </div>}
             </div>
           )}
           <div className="controls">
@@ -1293,7 +1300,6 @@ export function ReplayViewer() {
             <span className="control-time">{formatTime(currentTime)}</span>
             <div className="timeline-shell">
               {timelineHint && <div className="timeline-event-tooltip" role="status" style={{ left: `clamp(72px, ${timelineHint.position}%, calc(100% - 72px))` }}><CircleDot size={9} />{timelineHint.label}</div>}
-              {armyAdvantageChart && <svg className="advantage-chart" viewBox="0 0 100 20" preserveAspectRatio="none" role="img" aria-label={t("watcher.armyAdvantageHistory")}><line x1="0" y1="10" x2="100" y2="10" /><polyline className="p1" points={armyAdvantageChart.positive} /><polyline className="p2" points={armyAdvantageChart.negative} /></svg>}
               <input className="timeline" aria-label="Tempo do replay" aria-keyshortcuts="ArrowLeft ArrowRight Home End" type="range" min="0" max={replay.meta.duration} step="0.1" value={currentTime} onChange={(event) => setCurrentTime(Number(event.target.value))} style={{ "--progress": `${(currentTime / replay.meta.duration) * 100}%` } as React.CSSProperties} />
               <div className="timeline-events" aria-label={t("watcher.analyticTimeline")}>
                 <TimelineEventLayer events={timelineEvents} onHint={setTimelineHint} onSeek={seekTimelineEvent} />

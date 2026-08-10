@@ -507,6 +507,11 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .win-probability.loading .win-probability-track span { width: 50%; opacity: .25; animation: probability-loading 1.4s ease-in-out infinite alternate; }
 .win-probability.loading .win-probability-heading > small svg:first-child { animation: probability-pulse 1s ease-in-out infinite alternate; }
 .win-probability.loading .win-probability-track::after { content: ""; position: absolute; inset: 0; width: 28%; background: linear-gradient(90deg, transparent, rgba(213, 243, 255, .7), transparent); transform: translateX(-120%); animation: probability-scan 1.5s ease-in-out infinite; }
+.win-probability-history { height: 25px; margin-top: 4px; }
+.win-probability-history svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.win-probability-history polyline { fill: none; stroke-width: .75; opacity: .78; vector-effect: non-scaling-stroke; }
+.win-probability-history .win-history-midline { stroke: rgba(122, 164, 184, .14); stroke-width: .5; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
+.win-probability-history .win-history-current { stroke: rgba(224, 241, 248, .48); stroke-width: .65; vector-effect: non-scaling-stroke; }
 @keyframes probability-loading { to { opacity: .55; } }
 @keyframes probability-pulse { to { color: #74d7ff; filter: drop-shadow(0 0 4px rgba(91, 205, 250, .8)); } }
 @keyframes probability-scan { to { transform: translateX(450%); } }
@@ -523,11 +528,6 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .timeline-shell { position: relative; width: 100%; height: 30px; display: flex; align-items: center; }
 .timeline-event-tooltip { position: absolute; bottom: 29px; z-index: 20; max-width: 240px; padding: 6px 8px; display: flex; align-items: center; gap: 5px; color: #b8ccd7; border: 1px solid rgba(99, 154, 181, .22); border-radius: 4px; background: rgba(6, 14, 21, .96); box-shadow: 0 7px 22px rgba(0, 0, 0, .3); transform: translateX(-50%); font: 550 8px var(--font-geist-mono); white-space: nowrap; pointer-events: none; }
 .timeline-event-tooltip svg { color: #6bc9ee; flex: 0 0 auto; }
-.advantage-chart { position: absolute; inset: 0 5px; width: calc(100% - 10px); height: 100%; overflow: visible; pointer-events: none; opacity: .46; }
-.advantage-chart line { stroke: rgba(116, 151, 171, .18); stroke-width: .25; vector-effect: non-scaling-stroke; }
-.advantage-chart polyline { fill: none; stroke-width: .7; vector-effect: non-scaling-stroke; }
-.advantage-chart .p1 { stroke: #4ba8d0; }
-.advantage-chart .p2 { stroke: #d15b70; }
 .timeline { --progress: 0%; appearance: none; width: 100%; height: 3px; background: linear-gradient(90deg, #5bd0ff var(--progress), #243541 var(--progress)); border-radius: 5px; cursor: pointer; }
 .timeline::-webkit-slider-thumb { appearance: none; width: 11px; height: 11px; background: #aee9ff; border: 2px solid #3abcf0; border-radius: 50%; box-shadow: 0 0 9px #43bfea; }
 .timeline-events { position: absolute; inset: 0 5px; pointer-events: none; }
@@ -904,7 +904,8 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   .comparison-overlay > footer span { display: none; }
   .controls { grid-template-columns: auto auto 1fr auto; padding: 0 12px; }
   .win-probability { padding-inline: 12px; }
-  .win-probability-heading > small { font-size: 0; }
+  .watcher-shell .win-probability-heading > small { font-size: 0; }
+  .watcher-shell .win-probability-heading > small > svg:first-child { display: none; }
   .win-probability-heading > span { font-size: 7px; }
   .controls > .info-tip { display: none; }
   .controls > .sound-toggle { display: none; }
