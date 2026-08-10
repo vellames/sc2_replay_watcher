@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { startTransition, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -11,7 +10,6 @@ import {
   Bird,
   Bomb,
   Bot,
-  Box,
   Boxes,
   Bug,
   ChevronDown,
@@ -45,7 +43,6 @@ import {
   Plus,
   Radar,
   RotateCcw,
-  RotateCw,
   Rocket,
   Shield,
   Scan,
@@ -68,20 +65,14 @@ import { useReplay } from "@/components/replay-context";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
 import { TimelineEventLayer, type TimelineEventPresentation } from "@/components/timeline-event-layer";
-import { createIsometricProjection, playableBounds, projectedHeading } from "@/lib/map-projection";
-import { createTerrainNavigator } from "@/lib/terrain-navigation";
+import { playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { engagementLossAt } from "@/lib/engagement-progress";
-import { sc2AttackVisual, sc2ModelAsset } from "@/lib/sc2-3d-assets";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayDeath, ReplayProduction, ReplayUnit } from "@/lib/types";
 
-const Sc2World3D = dynamic(() => import("@/components/sc2-world-3d").then((module) => module.Sc2World3D), { ssr: false });
-
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type ComparisonView = "composition" | "upgrades";
-type MapView = "2d" | "3d";
-type WorldProjection = { project: (x: number, y: number) => { left: number; bottom: number } };
 type MapSelection =
   | { kind: "unit"; unitId: number }
   | { kind: "engagement"; engagementId: string }
@@ -210,9 +201,6 @@ export function ReplayViewer() {
   const [cameraPlayers, setCameraPlayers] = useState<Record<number, boolean>>({});
   const [timelineHint, setTimelineHint] = useState<{ label: string; position: number } | null>(null);
   const [comparisonView, setComparisonView] = useState<ComparisonView | null>(null);
-  const [mapView, setMapView] = useState<MapView>("2d");
-  const [mapRotation, setMapRotation] = useState(0);
-  const [worldProjection, setWorldProjection] = useState<WorldProjection | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     terrain: true,
@@ -229,7 +217,6 @@ export function ReplayViewer() {
   const audioRef = useRef<ReplayAudioEngine | null>(null);
   const previousAudioTimeRef = useRef(0);
   const selectUnit = useCallback((unitId: number) => setSelection((current) => current?.kind === "unit" && current.unitId === unitId ? null : { kind: "unit", unitId }), []);
-  const updateWorldProjection = useCallback((projection: WorldProjection | null) => setWorldProjection(projection), []);
   const seekTimelineEvent = useCallback((time: number, engagementId?: string) => {
     setCurrentTime(time);
     setPlaying(false);
@@ -293,11 +280,6 @@ export function ReplayViewer() {
     return { currentFrame: current, nextFrame: next, frameProgress: progress };
   }, [replay, currentTime]);
 
-  const terrainNavigator = useMemo(
-    () => replay?.mapGeometry ? createTerrainNavigator(replay.mapGeometry) : null,
-    [replay],
-  );
-
   const renderedUnits = useMemo(() => {
     if (!currentFrame || !nextFrame || frameProgress <= 0) return currentFrame?.units ?? [];
     const nextUnits = new Map(nextFrame.units.map((unit) => [unit.id, unit]));
@@ -308,14 +290,8 @@ export function ReplayViewer() {
       const deltaX = target.x - unit.x;
       const deltaY = target.y - unit.y;
       if (Math.abs(deltaX) < 0.001 && Math.abs(deltaY) < 0.001) return unit;
-      const asset = sc2ModelAsset(unit.type);
-      const followsTerrain = mapView === "3d" && terrainNavigator && asset.elevation !== "air" && asset.elevation !== "high-air";
-      const position = followsTerrain
-        ? terrainNavigator.pointBetween(unit, target, frameProgress)
-        : { x: unit.x + deltaX * frameProgress, y: unit.y + deltaY * frameProgress };
-      const nextPosition = followsTerrain
-        ? terrainNavigator.pointBetween(unit, target, Math.min(1, frameProgress + .01))
-        : target;
+      const position = { x: unit.x + deltaX * frameProgress, y: unit.y + deltaY * frameProgress };
+      const nextPosition = target;
       const headingDeltaX = nextPosition.x - position.x;
       const headingDeltaY = nextPosition.y - position.y;
       return {
@@ -328,7 +304,7 @@ export function ReplayViewer() {
         targetY: unit.targetY ?? target.y,
       };
     });
-  }, [currentFrame, nextFrame, frameProgress, mapView, terrainNavigator]);
+  }, [currentFrame, nextFrame, frameProgress]);
 
   const renderedCameras = useMemo(() => {
     if (!replay) return [];
@@ -394,16 +370,10 @@ export function ReplayViewer() {
     });
   }, [replay, locale, t]);
 
-  const mapPresentation = useMemo(() => {
-    if (!replay) return null;
-    const bounds = playableBounds(replay.mapGeometry, replay.mapBounds);
-    const is3D = mapView === "3d" && replay.mapGeometry.source === "s2ma";
-    return {
-      bounds,
-      is3D,
-      projection: is3D ? createIsometricProjection(replay.mapGeometry, bounds, mapRotation) : null,
-    };
-  }, [replay, mapView, mapRotation]);
+  const presentedBounds = useMemo(
+    () => replay ? playableBounds(replay.mapGeometry, replay.mapBounds) : null,
+    [replay],
+  );
 
   useEffect(() => {
     if (!playing || !replay) return;
@@ -434,7 +404,7 @@ export function ReplayViewer() {
     };
     animationFrame = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [playing, replay, speed, mapView]);
+  }, [playing, replay, speed]);
 
   useEffect(() => {
     if (!replay) return;
@@ -445,10 +415,6 @@ export function ReplayViewer() {
         return;
       }
       if (comparisonView) return;
-      if (event.code === "KeyR" && mapView === "3d" && replay.mapGeometry.source === "s2ma") {
-        event.preventDefault();
-        setMapRotation((value) => (value + 1) % 4);
-      }
       if (event.code === "Space") {
         event.preventDefault();
         togglePlayback();
@@ -481,7 +447,7 @@ export function ReplayViewer() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [replay, comparisonView, togglePlayback, mapView]);
+  }, [replay, comparisonView, togglePlayback]);
 
   if (!replay) {
     return (
@@ -500,11 +466,10 @@ export function ReplayViewer() {
 
   const hasMapGeometry = replay.mapGeometry?.source === "s2ma";
   const mapMode = hasMapGeometry ? "geometric" : "procedural";
-  const bounds = mapPresentation?.bounds ?? replay.mapBounds;
-  const is3D = mapPresentation?.is3D ?? false;
+  const bounds = presentedBounds ?? replay.mapBounds;
   const width = Math.max(1, bounds.maxX - bounds.minX);
   const height = Math.max(1, bounds.maxY - bounds.minY);
-  const mapAspect = is3D ? 1 : width / height;
+  const mapAspect = width / height;
   const playerById = new Map(replay.players.map((player) => [player.id, player]));
   const playerOneStats = replay.players[0] ? currentFrame?.stats[String(replay.players[0].id)] : undefined;
   const playerTwoStats = replay.players[1] ? currentFrame?.stats[String(replay.players[1].id)] : undefined;
@@ -540,7 +505,7 @@ export function ReplayViewer() {
     return layers.army;
   });
 
-  const strategicView = !is3D && zoom < 1.25;
+  const strategicView = zoom < 1.25;
   const showBaseMarkers = strategicView && layers.buildings && (currentFrame?.bases?.length ?? 0) > 0;
   const townHallsByOwner = new Map<number, ReplayUnit[]>();
   for (const townHall of visibleUnits.filter((unit) => unit.isTownHall)) {
@@ -560,7 +525,7 @@ export function ReplayViewer() {
     return nearest && nearest.distance <= baseRadius ** 2 ? `${unit.ownerId}:${kind}:base:${nearest.base.id}` : fallback;
   };
   const clusterData = new Map<string, { id: string; ownerId: number; x: number; y: number; units: ReplayUnit[] }>();
-  if (!is3D && zoom < 1.55 && layers.army) {
+  if (zoom < 1.55 && layers.army) {
     const cell = (strategicView ? 18 : 14) / zoom;
     for (const unit of visibleUnits.filter((candidate) => candidate.isArmy && playerById.has(candidate.ownerId))) {
       const key = `${unit.ownerId}:${Math.floor(unit.x / cell)}:${Math.floor(unit.y / cell)}`;
@@ -590,7 +555,7 @@ export function ReplayViewer() {
     }).filter((group) => group.units.length > 0)
     : clusters;
   const workerClusterData = new Map<string, { id: string; ownerId: number; x: number; y: number; units: ReplayUnit[] }>();
-  if (!is3D && zoom < 1.7 && layers.workers) {
+  if (zoom < 1.7 && layers.workers) {
     const cell = (strategicView ? 14 : 9) / zoom;
     for (const unit of visibleUnits.filter((candidate) => candidate.category === "worker" && (!showBaseMarkers || !candidate.baseId) && playerById.has(candidate.ownerId))) {
       const fallbackKey = `${unit.ownerId}:worker:${Math.floor(unit.x / cell)}:${Math.floor(unit.y / cell)}`;
@@ -608,7 +573,7 @@ export function ReplayViewer() {
     y: cluster.y / cluster.units.length,
   }));
   const structureClusterData = new Map<string, { id: string; ownerId: number; x: number; y: number; units: ReplayUnit[] }>();
-  if (!is3D && zoom < 1.5 && layers.buildings) {
+  if (zoom < 1.5 && layers.buildings) {
     const cell = (strategicView ? 72 : 11) / zoom;
     for (const unit of visibleUnits.filter((candidate) => candidate.category === "building" && (!strategicView || !candidate.baseId) && !candidate.isTownHall && candidate.attachmentId == null && !candidate.type.toLowerCase().includes("creeptumor") && playerById.has(candidate.ownerId))) {
       const fallbackKey = `${unit.ownerId}:structure:${Math.floor(unit.x / cell)}:${Math.floor(unit.y / cell)}`;
@@ -626,7 +591,7 @@ export function ReplayViewer() {
     y: cluster.y / cluster.units.length,
   }));
   const resourceClusterData = new Map<string, { id: string; ownerId: number; x: number; y: number; units: ReplayUnit[] }>();
-  if (!is3D && zoom < 1.35 && layers.resources && !showBaseMarkers) {
+  if (zoom < 1.35 && layers.resources && !showBaseMarkers) {
     const cell = 14 / zoom;
     for (const unit of visibleUnits.filter((candidate) => candidate.category === "resource")) {
       const key = `resource:${Math.floor(unit.x / cell)}:${Math.floor(unit.y / cell)}`;
@@ -683,44 +648,11 @@ export function ReplayViewer() {
       return priority(left) - priority(right) || left.id - right.id;
     });
   const individualUnits = orderedIndividualUnits.slice(0, markerBudget);
-  const worldUnits3D = is3D ? visibleUnits
-    .filter((unit) => unit.attachmentId == null)
-    .sort((left, right) => Number(right.isBuilding) - Number(left.isBuilding) || left.id - right.id)
-    .slice(0, 1000)
-    .map((unit) => {
-      const player = playerById.get(unit.ownerId);
-      const resourceColor = unit.type.toLowerCase().includes("vespene") ? "#54b994" : "#73bde0";
-      return { ...unit, color: unit.category === "resource" ? resourceColor : player?.color ?? "#7b8794", race: player?.race };
-    }) : [];
-  const toPercent = (x: number, y: number) => (is3D ? worldProjection?.project(x, y) : null) ?? mapPresentation?.projection?.project(x, y) ?? ({
+  const toPercent = (x: number, y: number) => ({
     left: ((x - bounds.minX) / width) * 100,
     bottom: ((y - bounds.minY) / height) * 100,
   });
   const visibleEngagements = (replay.engagements ?? []).filter((engagement) => currentTime >= engagement.start && currentTime <= engagement.end + 8);
-  const activeEngagements = visibleEngagements.filter((engagement) => currentTime >= engagement.start && currentTime <= engagement.end);
-  const combatLinks = activeEngagements.flatMap((engagement) => {
-    const nearby = renderedUnits.filter((unit) => unit.isArmy && (unit.x - engagement.x) ** 2 + (unit.y - engagement.y) ** 2 <= 34 ** 2);
-    const links: Array<{ key: string; source: ReplayUnit; target: ReplayUnit; color: string; delay: number; kind: ReturnType<typeof sc2AttackVisual>["kind"] }> = [];
-    for (const source of nearby) {
-      const attack = sc2AttackVisual(source.type);
-      const target = nearby
-        .filter((candidate) => candidate.ownerId !== source.ownerId)
-        .map((candidate) => ({ candidate, distance: (candidate.x - source.x) ** 2 + (candidate.y - source.y) ** 2 }))
-        .filter((item) => item.distance <= attack.range ** 2)
-        .sort((left, right) => left.distance - right.distance)[0]?.candidate;
-      if (!target || source.id > target.id) continue;
-      links.push({
-        key: `${engagement.id}-${source.id}-${target.id}`,
-        source,
-        target,
-        color: playerById.get(source.ownerId)?.color ?? "#ffbd76",
-        delay: -((source.id + target.id) % 7) * .09,
-        kind: attack.kind,
-      });
-      if (links.length >= 12) break;
-    }
-    return links;
-  }).slice(0, 18);
   const toggleLayer = (layer: LayerKey) => {
     if (layer === "buildings" && layers.buildings && selection?.kind === "group" && selection.groupType === "base") setSelection(null);
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
@@ -1041,42 +973,19 @@ export function ReplayViewer() {
               onPointerCancel={() => { drag.current = null; setIsPanning(false); }}
             >
               <div
-                className={`map-canvas ${mapMode} ${is3D ? `view-3d ${individualUnits.length >= 360 ? "dense-3d" : ""} ${playing ? "is-playing" : "is-paused"}` : "view-2d"}`}
-                style={{ "--map-aspect": mapAspect, transform: is3D
-                  ? "translate(-50%, -50%)"
-                  : mapMode !== "procedural"
-                    ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
-                    : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
+                className={`map-canvas ${mapMode} view-2d`}
+                style={{ "--map-aspect": mapAspect, transform: mapMode !== "procedural"
+                  ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
+                  : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
               >
-                {is3D && <Sc2World3D bounds={bounds} geometry={replay.mapGeometry} pan={pan} rotation={mapRotation} units={worldUnits3D} selectedUnitId={selectedUnitId} showTerrain={layers.terrain} zoom={zoom} onProjectionChange={updateWorldProjection} onSelect={selectUnit} />}
-                {layers.terrain && hasMapGeometry && !is3D && <TerrainLayer geometry={replay.mapGeometry} bounds={bounds} />}
-                {layers.terrain && !is3D && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
+                {layers.terrain && hasMapGeometry && <TerrainLayer geometry={replay.mapGeometry} bounds={bounds} />}
+                {layers.terrain && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
                 <div className="map-overlay-layer">
                 {currentFrame?.deaths.map((death) => {
                   const point = toPercent(death.x, death.y);
                   const color = playerById.get(death.ownerId)?.color ?? "#ff7180";
-                  return is3D
-                    ? <div key={`burst-${death.id}-${death.time}`} className="death-burst-3d" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, "--combat-color": color } as React.CSSProperties}><i /><i /><i /><i /><b /></div>
-                    : <div key={`heat-${death.id}-${death.time}`} className="combat-heat" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, background: color }} />;
+                  return <div key={`heat-${death.id}-${death.time}`} className="combat-heat" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, background: color }} />;
                 })}
-                {is3D && activeEngagements.map((engagement) => {
-                  const point = toPercent(engagement.x, engagement.y);
-                  const totalLoss = engagementLossAt(engagement, replayDeaths, currentTime);
-                  const diameter = Math.min(78, 34 + Math.sqrt(totalLoss) * .8);
-                  return <i key={`combat-zone-${engagement.id}`} className="combat-zone-3d" style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, width: diameter, height: diameter * .48 }} />;
-                })}
-                {is3D && combatLinks.length > 0 && (
-                  <svg className="combat-links-3d" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                    {combatLinks.map((link) => {
-                      const source = toPercent(link.source.x, link.source.y);
-                      const target = toPercent(link.target.x, link.target.y);
-                      return <g key={link.key} className={`combat-link-${link.kind}`} style={{ "--combat-color": link.color, animationDelay: `${link.delay}s` } as React.CSSProperties}>
-                        <line x1={source.left} y1={100 - source.bottom} x2={target.left} y2={100 - target.bottom} />
-                        <circle cx={target.left} cy={100 - target.bottom} r=".38" />
-                      </g>;
-                    })}
-                  </svg>
-                )}
                 {layers.cameras && renderedCameras.filter((camera) => cameraPlayers[camera.playerId] !== false).map((camera) => {
                   const point = toPercent(camera.x, camera.y);
                   const player = playerById.get(camera.playerId);
@@ -1100,14 +1009,14 @@ export function ReplayViewer() {
                   return <button key={engagement.id} className={`engagement-marker ${selectedEngagement?.id === engagement.id ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => { setCurrentTime(engagement.start); setPlaying(false); setSelection({ kind: "engagement", engagementId: engagement.id }); }} title={`${t("watcher.engagement")} · ${compactNumber(totalLoss)}`}><Flame size={10} /><b>{compactNumber(totalLoss)}</b></button>;
                 })}
                 </div>
-                {!is3D && showBaseMarkers && (currentFrame?.bases ?? []).map((base) => {
+                {showBaseMarkers && (currentFrame?.bases ?? []).map((base) => {
                   const point = toPercent(base.x, base.y);
                   const color = playerById.get(base.ownerId)?.color ?? "#8295a5";
                   const memberIds = renderedUnits.filter((unit) => unit.baseId === base.id || unit.id === base.townHallId).map((unit) => unit.id);
                   const isSelected = selection?.kind === "group" && selection.groupType === "base" && memberIds.every((id) => selection.unitIds.includes(id));
                   return <button key={base.id} className={`base-marker ${base.status} ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "base", unitIds: memberIds })} title={`${t("watcher.base")} · ${base.workers} ${t("watcher.workers")} · ${base.structures} ${t("watcher.structures")}`}><Landmark size={10} /><b>{layers.workers ? base.workers : "–"}</b><small>{base.structures}</small></button>;
                 })}
-                {!is3D && semanticArmyClusters.map((cluster) => {
+                {semanticArmyClusters.map((cluster) => {
                   const point = toPercent(cluster.x, cluster.y);
                   const color = playerById.get(cluster.ownerId)?.color ?? "#8295a5";
                   const typeCounts = new Map<string, number>();
@@ -1118,24 +1027,24 @@ export function ReplayViewer() {
                   const isSelected = selection?.kind === "group" && selection.groupType === "army" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`army-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "army", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.armyUnits")} · ${entityName(dominantUnit.type)}`}><ClusterIcon size={11} /><b>{cluster.units.length}</b></button>;
                 })}
-                {!is3D && workerClusters.map((cluster) => {
+                {workerClusters.map((cluster) => {
                   const point = toPercent(cluster.x, cluster.y);
                   const color = playerById.get(cluster.ownerId)?.color ?? "#8295a5";
                   const isSelected = selection?.kind === "group" && selection.groupType === "workers" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`worker-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "workers", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.workers")}`}><Pickaxe size={9} /><b>{cluster.units.length}</b></button>;
                 })}
-                {!is3D && structureClusters.map((cluster) => {
+                {structureClusters.map((cluster) => {
                   const point = toPercent(cluster.x, cluster.y);
                   const color = playerById.get(cluster.ownerId)?.color ?? "#8295a5";
                   const isSelected = selection?.kind === "group" && selection.groupType === "structures" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`structure-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, color, "--cluster-color": color } as React.CSSProperties} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "structures", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.structures")}`}><Factory size={9} /><b>{cluster.units.length}</b></button>;
                 })}
-                {!is3D && resourceClusters.map((cluster) => {
+                {resourceClusters.map((cluster) => {
                   const point = toPercent(cluster.x, cluster.y);
                   const isSelected = selection?.kind === "group" && selection.groupType === "resources" && cluster.units.every((unit) => selection.unitIds.includes(unit.id));
                   return <button key={cluster.id} className={`resource-cluster ${isSelected ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => setSelection(isSelected ? null : { kind: "group", groupType: "resources", unitIds: cluster.units.map((unit) => unit.id) })} title={`${cluster.units.length} ${t("watcher.layer.resources")}`}><Database size={8} /><b>{cluster.units.length}</b></button>;
                 })}
-                {!is3D && individualUnits.map((unit) => {
+                {individualUnits.map((unit) => {
                   const player = playerById.get(unit.ownerId);
                   const visual = unitVisual(unit);
                   const UnitIcon = visual.icon;
@@ -1153,7 +1062,7 @@ export function ReplayViewer() {
                     <button
                       key={unit.id}
                       className={`unit ${unit.category} role-${visual.kind} ${unit.activity} ${unit.isTownHall ? "town-hall" : ""} ${productionCount > 0 ? "producing" : ""} ${unit.positionSource === "estimated" ? "estimated" : ""} ${selectedUnitId === unit.id ? "selected" : ""}`}
-                      style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, zIndex: is3D ? 1000 - Math.round(point.bottom * 5) : undefined, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${screenHeading}deg`, "--production-angle": `${productionRatio * 360}deg` } as React.CSSProperties}
+                      style={{ left: `${point.left}%`, bottom: `${point.bottom}%`, borderColor: color, background: unit.isBuilding || visual.kind === "air" ? `${color}33` : color, boxShadow: `0 0 ${unit.isBuilding ? 10 : 7}px ${color}66`, "--unit-color": color, "--heading": `${screenHeading}deg`, "--production-angle": `${productionRatio * 360}deg` } as React.CSSProperties}
                       title={title}
                       aria-label={ariaLabel}
                       onClick={() => selectUnit(unit.id)}
@@ -1186,10 +1095,6 @@ export function ReplayViewer() {
                   const active = cameraPlayers[player.id] !== false;
                   return <button key={`camera-player-${player.id}`} className={`camera-player-toggle ${active ? "active" : ""}`} aria-pressed={active} onClick={() => setCameraPlayers((current) => ({ ...current, [player.id]: !active }))} title={`${t("watcher.cameraPlayer")} · ${player.name}`} style={{ "--camera-player-color": player.color } as React.CSSProperties}><Scan size={11} /><span>P{index + 1}</span></button>;
                 })}
-                <i />
-                <button className={mapView === "2d" ? "active" : ""} aria-pressed={mapView === "2d"} onClick={() => { setMapView("2d"); resetMap(); }} title={t("watcher.view2d")}><MapIcon size={12} /><span>2D</span></button>
-                {hasMapGeometry && <button className={is3D ? "active" : ""} aria-pressed={is3D} onClick={() => { setMapView("3d"); resetMap(); }} title={t("watcher.view3d")}><Box size={12} /><span>3D</span></button>}
-                {is3D && <button onClick={() => setMapRotation((value) => (value + 1) % 4)} aria-keyshortcuts="R" aria-label={t("watcher.rotate3d")} title={`${t("watcher.rotate3d")} · R`}><RotateCw size={12} /><span>{mapRotation * 90}°</span></button>}
                 <InfoTip label={t("watcher.iconLegend")}><span className="icon-legend-list"><span><Crosshair size={10} />{t("watcher.icon.siege")}</span><span><Eye size={10} />{t("watcher.icon.detector")}</span><span><Bomb size={10} />{t("watcher.icon.explosive")}</span><span><Boxes size={10} />{t("watcher.icon.transport")}</span><span><Sparkles size={10} />{t("watcher.icon.caster")}</span><em>{t("watcher.iconLegendAction")}</em></span></InfoTip>
                 <i />
                 <button onClick={() => changeZoom(-.25)} aria-label={t("watcher.zoomOut")}><Minus size={13} /></button>

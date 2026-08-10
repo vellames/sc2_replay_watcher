@@ -175,51 +175,14 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .macro-panel .winner { margin-top: 10px; }
 .map-canvas { position: absolute; inset: 0; transform-origin: 50% 50%; transition: transform .12s ease-out; }
 .map-canvas.geometric { inset: auto; left: 50%; top: 50%; width: min(100cqw, calc(100cqh * var(--map-aspect))); height: min(100cqh, calc(100cqw / var(--map-aspect))); }
-.map-canvas.geometric.view-3d { width: 100cqw; height: 100cqh; }
 .terrain-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.terrain-layer-3d { filter: drop-shadow(0 24px 22px rgba(0, 0, 0, .28)); }
-.sc2-world-3d { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: auto; }
-.sc2-world-3d canvas { width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
 .map-overlay-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; transform-origin: 50% 50%; transition: transform .12s ease-out; }
 .map-overlay-layer .engagement-marker { pointer-events: auto; }
-.map-canvas.view-3d .army-cluster, .map-canvas.view-3d .worker-cluster, .map-canvas.view-3d .structure-cluster, .map-canvas.view-3d .resource-cluster, .map-canvas.view-3d .base-marker, .map-canvas.view-3d .engagement-marker { filter: drop-shadow(0 5px 4px rgba(0, 0, 0, .45)); }
 .map-stage.is-panning, .map-stage.is-panning .map-canvas { cursor: grabbing; }
 .map-grid { position: absolute; inset: 0; opacity: .28; background-image: linear-gradient(rgba(95, 142, 165, .12) 1px, transparent 1px), linear-gradient(90deg, rgba(95, 142, 165, .12) 1px, transparent 1px), linear-gradient(rgba(95, 142, 165, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(95, 142, 165, .05) 1px, transparent 1px); background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px; }
 .map-grid.over-terrain { display: none; }
 .map-vignette { position: absolute; inset: 0; box-shadow: inset 0 0 90px 30px rgba(0,0,0,.55); pointer-events: none; }
-.map-stage:has(.map-canvas.view-3d) .map-vignette { box-shadow: inset 0 0 52px 10px rgba(0, 0, 0, .28); }
 .combat-heat { position: absolute; width: 52px; height: 52px; margin: -26px; border-radius: 50%; opacity: .12; filter: blur(10px); animation: heat-fade 2.2s ease-in-out infinite; pointer-events: none; z-index: 1; }
-.combat-zone-3d { position: absolute; translate: -50% 50%; border: 1px solid rgba(255, 150, 91, .44); border-radius: 50%; background: radial-gradient(ellipse, rgba(255, 112, 68, .14), transparent 68%); box-shadow: inset 0 0 14px rgba(255, 114, 69, .13), 0 0 12px rgba(255, 100, 54, .12); animation: combat-zone-pulse 1.4s ease-in-out infinite; pointer-events: none; z-index: 2; }
-.combat-links-3d { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
-.combat-links-3d line { stroke: var(--combat-color); stroke-width: .65; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 2px var(--combat-color)); animation: combat-link-fire .63s linear infinite; animation-delay: inherit; }
-.combat-links-3d circle { fill: var(--combat-color); filter: drop-shadow(0 0 2px var(--combat-color)); transform-box: fill-box; transform-origin: center; animation: combat-impact .63s ease-out infinite; animation-delay: inherit; }
-.combat-links-3d .combat-link-contact line { stroke-width: 1.1; stroke-dasharray: none; opacity: .42; }
-.combat-links-3d .combat-link-contact circle { r: .55px; }
-.combat-links-3d .combat-link-rifle line { stroke-width: .48; stroke-dasharray: 3 6; animation-duration: .32s; }
-.combat-links-3d .combat-link-missile line { stroke-width: .7; stroke-dasharray: 1 4; animation-duration: .82s; }
-.combat-links-3d .combat-link-shell line { stroke-width: .9; stroke-dasharray: 1 7; animation-duration: 1s; }
-.combat-links-3d .combat-link-shell circle { r: .7px; }
-.combat-links-3d .combat-link-beam line { stroke: color-mix(in srgb, var(--combat-color) 42%, #c9fbff); stroke-width: 1; stroke-dasharray: none; animation: combat-beam .5s ease-in-out infinite alternate; }
-.combat-links-3d .combat-link-bio line { stroke: color-mix(in srgb, var(--combat-color) 62%, #a6e9a1); stroke-width: .72; stroke-dasharray: 2 5; animation-duration: .72s; }
-.combat-links-3d .combat-link-flame line { stroke: color-mix(in srgb, var(--combat-color) 52%, #ffb04f); stroke-width: 1.2; stroke-dasharray: 1 2; animation-duration: .28s; }
-.map-canvas.view-3d.is-paused .combat-zone-3d,
-.map-canvas.view-3d.is-paused .combat-links-3d line,
-.map-canvas.view-3d.is-paused .combat-links-3d circle,
-.map-canvas.view-3d.is-paused .death-burst-3d > i,
-.map-canvas.view-3d.is-paused .death-burst-3d > b,
-.map-canvas.view-3d.is-paused .model-construction-ring,
-.map-canvas.view-3d.is-paused .model-light,
-.map-canvas.view-3d.is-paused .unit.selected::before { animation-play-state: paused; }
-.map-canvas.view-3d.dense-3d .combat-links-3d line,
-.map-canvas.view-3d.dense-3d .combat-links-3d circle,
-.map-canvas.view-3d.dense-3d .death-burst-3d > i { filter: none; }
-.map-canvas.view-3d.dense-3d .model-light { filter: none; animation: none; }
-.death-burst-3d { position: absolute; width: 1px; height: 1px; pointer-events: none; z-index: 1100; }
-.death-burst-3d > i { position: absolute; left: 0; bottom: 0; width: 2px; height: 9px; transform-origin: 50% 100%; background: linear-gradient(var(--combat-color), transparent); filter: drop-shadow(0 0 3px var(--combat-color)); animation: death-spark .75s ease-out infinite; }
-.death-burst-3d > i:nth-child(2) { transform: rotate(72deg); animation-delay: -.12s; }
-.death-burst-3d > i:nth-child(3) { transform: rotate(144deg); animation-delay: -.24s; }
-.death-burst-3d > i:nth-child(4) { transform: rotate(216deg); animation-delay: -.36s; }
-.death-burst-3d > b { position: absolute; left: -5px; bottom: -3px; width: 11px; height: 7px; border-radius: 50%; background: rgba(255, 210, 146, .72); box-shadow: 0 0 10px 3px var(--combat-color); animation: death-core .75s ease-out infinite; }
 .camera-focus { position: absolute; width: 62px; height: 40px; transform: translate(-50%, 50%); color: inherit; border: 1px solid color-mix(in srgb, var(--camera-color) 72%, transparent); border-radius: 2px; background: color-mix(in srgb, var(--camera-color) 4%, transparent); box-shadow: inset 0 0 18px color-mix(in srgb, var(--camera-color) 7%, transparent), 0 0 13px color-mix(in srgb, var(--camera-color) 13%, transparent); pointer-events: none; z-index: 7; }
 .camera-focus::before, .camera-focus::after { content: ""; position: absolute; left: 50%; top: 50%; background: var(--camera-color); opacity: .72; transform: translate(-50%, -50%); }
 .camera-focus::before { width: 9px; height: 1px; }
@@ -228,12 +191,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .camera-focus small { position: absolute; right: 3px; bottom: 2px; max-width: 45px; overflow: hidden; color: color-mix(in srgb, var(--camera-color) 78%, white); font: 600 6px var(--font-geist-mono); text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
 .route-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
 .route-layer line { stroke: #a9e8ff; stroke-width: .22; stroke-dasharray: 1 1; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px #55cfff); }
-.resource-layer-3d { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 2; pointer-events: none; }
-.resource-layer-3d path { fill: color-mix(in srgb, var(--resource-color) 64%, #d9f7ff); stroke: color-mix(in srgb, var(--resource-color) 56%, #effcff); stroke-width: .24; vector-effect: non-scaling-stroke; opacity: .3; pointer-events: auto; cursor: pointer; }
-.resource-layer-3d path.geyser { fill: color-mix(in srgb, var(--resource-color) 40%, #0b322c); opacity: .38; }
-.resource-layer-3d path:hover, .resource-layer-3d path:focus-visible, .resource-layer-3d path.selected { opacity: .94; outline: none; stroke: #eaffff; stroke-width: .8; }
 .unit { appearance: none; padding: 0; position: absolute; width: 10px; height: 10px; margin: -5px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.3); border-radius: 50%; transition: left 120ms linear, bottom 120ms linear, outline-color .15s, filter .15s; z-index: 3; cursor: pointer; }
-.map-canvas.view-3d .unit { transition-duration: 170ms, 170ms, .15s, .15s; }
 .unit > svg { width: 6px; height: 6px; color: rgba(242, 251, 255, .92); stroke-width: 2.2; filter: drop-shadow(0 1px 1px rgba(0,0,0,.7)); pointer-events: none; }
 .unit.selected { outline: 1px solid #d8f5ff; outline-offset: 4px; z-index: 7; }
 .unit.worker { width: 6px; height: 6px; margin: -3px; border-radius: 1px; opacity: .9; transform: rotate(45deg); }
@@ -257,62 +215,6 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .unit.role-creep-node::before { content: ""; width: 2px; height: 2px; border-radius: 50%; background: rgba(255,255,255,.72); box-shadow: 0 0 3px var(--unit-color); }
 .unit.town-hall { width: 23px; height: 23px; margin: -11.5px; z-index: 3; }
 .unit.town-hall > svg { width: 9px; height: 9px; }
-.map-canvas.view-3d .unit { width: 1px; height: 1px; margin: 0; overflow: visible; border: 0; border-radius: 0; background: transparent !important; box-shadow: none !important; transform: none; opacity: 1; }
-.map-canvas.view-3d .unit.worker.harvesting { filter: none; }
-.map-canvas.view-3d .unit > svg:not(.sc2-model-3d), .map-canvas.view-3d .unit::before, .map-canvas.view-3d .unit::after { display: none; }
-.sc2-model-3d { --asset-w: 13px; position: absolute; left: 0; bottom: -5px; width: var(--asset-w); height: calc(var(--asset-w) * 1.125); overflow: visible; color: var(--unit-color); transform: translateX(-50%); transform-origin: 50% 72%; pointer-events: visiblePainted; cursor: pointer; }
-.map-canvas.view-3d .unit > .sc2-model-3d { width: var(--asset-w); height: calc(var(--asset-w) * 1.125); color: var(--unit-color); stroke-width: initial; filter: none; transform: translateX(-50%); }
-.map-canvas.view-3d .unit > .sc2-model-3d.faces-heading { transform: translateX(-50%) rotate(var(--heading)); }
-.sc2-model-sprite-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
-.sc2-model-3d.faces-heading { transform: translateX(-50%) rotate(var(--heading)); }
-.sc2-model-3d.footprint-tiny { --asset-w: 9px; }
-.sc2-model-3d.footprint-small { --asset-w: 12px; }
-.sc2-model-3d.footprint-medium { --asset-w: 16px; }
-.sc2-model-3d.footprint-large { --asset-w: 22px; }
-.sc2-model-3d.footprint-massive { --asset-w: 30px; }
-.sc2-model-3d.lod-overview.footprint-medium { --asset-w: 14px; }
-.sc2-model-3d.lod-overview.footprint-large { --asset-w: 18px; }
-.sc2-model-3d.lod-overview.footprint-massive { --asset-w: 25px; }
-.sc2-model-3d.elevation-hover { bottom: -1px; }
-.sc2-model-3d.elevation-air { bottom: 5px; }
-.sc2-model-3d.elevation-high-air { bottom: 9px; }
-.sc2-model-3d .model-shadow { fill: rgba(0, 0, 0, .48); }
-.sc2-model-3d .model-depth { fill: #02070a; stroke: color-mix(in srgb, currentColor 38%, #000); stroke-opacity: .82; }
-.sc2-model-3d .model-hull { fill: color-mix(in srgb, currentColor 68%, #11232b); fill-opacity: .94; stroke: color-mix(in srgb, currentColor 46%, #e7fbff); stroke-opacity: .88; }
-.sc2-model-3d .model-inset { fill: #061018; fill-opacity: .94; stroke: color-mix(in srgb, currentColor 34%, transparent); stroke-width: .45; }
-.sc2-model-3d .model-hardpoint, .sc2-model-3d .model-detail { fill: color-mix(in srgb, currentColor 28%, #e6fbff); stroke: color-mix(in srgb, currentColor 70%, #f2fdff); }
-.sc2-model-3d .model-identity { fill: color-mix(in srgb, currentColor 38%, #deeff2); fill-opacity: .88; stroke: color-mix(in srgb, currentColor 66%, #ecfdff); stroke-width: .52; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.sc2-model-3d .model-cut { fill: #02080c; fill-opacity: .88; stroke: currentColor; stroke-width: .35; }
-.sc2-model-3d .model-light { fill: #eaffff; stroke: currentColor; stroke-width: .42; filter: drop-shadow(0 0 1.7px currentColor); transform-box: fill-box; transform-origin: center; animation: model-reactor-pulse 1.8s ease-in-out infinite alternate; }
-.sc2-model-3d .model-specular { fill: none; stroke: #f4feff; stroke-width: .42; stroke-dasharray: 6 27; stroke-linecap: round; opacity: .68; vector-effect: non-scaling-stroke; }
-.sc2-model-3d.race-terran .model-hull { fill: color-mix(in srgb, currentColor 58%, #26333a); }
-.sc2-model-3d.race-terran .model-identity { fill: color-mix(in srgb, currentColor 28%, #c8d6da); }
-.sc2-model-3d.race-zerg .model-hull { fill: color-mix(in srgb, currentColor 64%, #25182d); stroke: color-mix(in srgb, currentColor 58%, #d9b9df); }
-.sc2-model-3d.race-zerg .model-depth { fill: #100914; stroke: color-mix(in srgb, currentColor 48%, #130917); }
-.sc2-model-3d.race-zerg .model-identity { fill: color-mix(in srgb, currentColor 54%, #a4cf8e); stroke: color-mix(in srgb, currentColor 62%, #ddf0c3); }
-.sc2-model-3d.race-protoss .model-hull { fill: color-mix(in srgb, currentColor 46%, #8f7845); stroke: color-mix(in srgb, currentColor 42%, #fff0a8); }
-.sc2-model-3d.race-protoss .model-depth { fill: #0b1018; stroke: color-mix(in srgb, currentColor 50%, #625733); }
-.sc2-model-3d.race-protoss .model-identity { fill: color-mix(in srgb, currentColor 32%, #ffe49a); stroke: color-mix(in srgb, currentColor 58%, #fff6c6); }
-.sc2-model-3d.race-protoss .model-light { fill: #eaffff; stroke: #8aeaff; filter: drop-shadow(0 0 2.2px currentColor); }
-.sc2-model-3d.lod-overview .model-specular { display: none; }
-.sc2-model-3d .model-altitude-line { stroke: currentColor; stroke-width: .75; stroke-dasharray: 1 2; vector-effect: non-scaling-stroke; opacity: .38; }
-.sc2-model-3d.elevation-air .model-shadow { transform: translateY(7px); opacity: .7; }
-.sc2-model-3d.elevation-high-air .model-shadow { transform: translateY(11px); opacity: .62; }
-.sc2-model-3d.race-neutral { opacity: .32; }
-.sc2-model-3d.constructing { opacity: .58; }
-.sc2-model-3d.constructing use { opacity: .5; }
-.sc2-model-3d .model-construction-ring { fill: none; stroke: currentColor; stroke-width: 1; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; transform-box: fill-box; transform-origin: center; animation: construction-ring 1.4s linear infinite; }
-.map-canvas.view-3d .unit.selected .sc2-model-3d { filter: drop-shadow(0 0 3px #d8f5ff); }
-.world-model-tooltip { position: fixed; max-width: 220px; padding: 5px 7px; translate: -50% -100%; color: #dff6fd; border: 1px solid color-mix(in srgb, var(--unit-color) 54%, #8ca9b5); border-radius: 3px; background: rgba(4, 11, 16, .96); box-shadow: 0 7px 18px rgba(0, 0, 0, .48); font: 650 8px/1.35 var(--font-geist-mono); pointer-events: none; z-index: 5000; }
-.map-canvas.view-3d .unit.selected::before, .map-canvas.view-3d .unit:focus-visible::before { content: ""; position: absolute; left: 0; bottom: -5px; width: 22px; height: 10px; display: block; translate: -50% 50%; border: 1px solid #d8f5ff; border-radius: 50%; background: color-mix(in srgb, var(--unit-color) 10%, transparent); box-shadow: 0 0 8px color-mix(in srgb, var(--unit-color) 65%, transparent); animation: selected-model-pulse 1.4s ease-in-out infinite; }
-.map-canvas.view-3d .unit.producing::after { content: ""; position: absolute; left: 0; bottom: -7px; width: 24px; height: 11px; display: block; translate: -50% 50%; border-radius: 50%; background: conic-gradient(from 90deg, color-mix(in srgb, var(--unit-color) 88%, white) var(--production-angle), rgba(51, 75, 88, .22) 0); mask: radial-gradient(ellipse, transparent 49%, #000 53%); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--unit-color) 55%, transparent)); opacity: .72; }
-.tactical-addon-3d { position: absolute; left: 8px; bottom: -2px; min-width: 9px; height: 8px; display: grid; place-items: center; color: transparent; border: 1px solid color-mix(in srgb, var(--unit-color) 62%, white); background: color-mix(in srgb, var(--unit-color) 32%, #061018); clip-path: polygon(50% 0, 100% 30%, 100% 78%, 50% 100%, 0 78%, 0 30%); box-shadow: 0 3px 4px rgba(0, 0, 0, .42); font-size: 0; z-index: 2; }
-.tactical-addon-3d::before, .tactical-addon-3d::after { content: ""; position: absolute; display: block; }
-.tactical-addon-3d.tech-lab::before { width: 4px; height: 4px; rotate: 45deg; border: 1px solid #dff8ff; background: color-mix(in srgb, var(--unit-color) 54%, #112631); }
-.tactical-addon-3d.tech-lab::after { left: 6px; top: 0; width: 1px; height: 4px; background: #c9f7ff; box-shadow: 0 0 3px var(--unit-color); }
-.tactical-addon-3d.reactor { border-radius: 50%; }
-.tactical-addon-3d.reactor::before { left: 2px; top: 2px; width: 2px; height: 3px; border-radius: 50%; background: #dff8ff; box-shadow: 3px 0 #dff8ff, 0 0 4px var(--unit-color), 3px 0 4px var(--unit-color); }
-.map-canvas.view-3d .production-badge { right: -18px; top: -22px; transform: none; z-index: 4; }
 .production-badge { position: absolute; right: -9px; top: -9px; min-width: 13px; height: 13px; padding: 0 3px; display: grid; place-items: center; color: #071119; background: #9ce7ff; border-radius: 7px; font: 750 7px var(--font-geist-mono); transform: rotate(-45deg); box-shadow: 0 0 8px rgba(77, 204, 255, .65); }
 .addon-badge { position: absolute; right: -8px; bottom: -8px; width: 12px; height: 10px; display: grid; place-items: center; color: #d8f4ff; border: 1px solid color-mix(in srgb, var(--unit-color) 58%, #d8f4ff); border-radius: 2px; background: #0a1720; font: 750 6px var(--font-geist-mono); transform: rotate(-45deg); box-shadow: 0 0 7px color-mix(in srgb, var(--unit-color) 45%, transparent); }
 .addon-badge.reactor { border-radius: 5px; }
@@ -637,11 +539,6 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   .new-replay-link { display: none !important; }
   .watcher-main { width: 100%; }
   .map-stage { min-height: 390px; }
-  .map-canvas.view-3d .sc2-model-3d.footprint-tiny { --asset-w: 7px; }
-  .map-canvas.view-3d .sc2-model-3d.footprint-small { --asset-w: 9px; }
-  .map-canvas.view-3d .sc2-model-3d.footprint-medium { --asset-w: 12px; }
-  .map-canvas.view-3d .sc2-model-3d.footprint-large { --asset-w: 16px; }
-  .map-canvas.view-3d .sc2-model-3d.footprint-massive { --asset-w: 21px; }
   .map-toolbar { max-width: calc(100% - 24px); overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; }
   .map-toolbar::-webkit-scrollbar { display: none; }
   .map-toolbar button { min-width: 32px; height: 32px; justify-content: center; }
@@ -666,13 +563,3 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
   footer span:last-child { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
-@keyframes combat-zone-pulse { 50% { opacity: .55; scale: 1.08; } }
-@keyframes combat-link-fire { from { opacity: .95; } to { stroke-dashoffset: -10; opacity: .46; } }
-@keyframes combat-beam { from { opacity: .45; } to { opacity: 1; } }
-@keyframes construction-ring { to { rotate: 360deg; } }
-@keyframes model-reactor-pulse { from { opacity: .62; scale: .82; } to { opacity: 1; scale: 1.18; } }
-@keyframes combat-impact { from { opacity: 1; scale: .45; } to { opacity: 0; scale: 1.9; } }
-@keyframes death-spark { from { opacity: 1; } to { opacity: 0; translate: 0 -8px; scale: .25; } }
-@keyframes death-core { from { opacity: .9; scale: .6; } to { opacity: 0; scale: 1.8; } }
-@keyframes construction-hologram { 50% { opacity: .35; filter: brightness(1.6); } }
-@keyframes selected-model-pulse { 50% { opacity: .48; scale: 1.12; } }
