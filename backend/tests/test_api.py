@@ -21,6 +21,20 @@ def test_health() -> None:
     assert response.json()["schemaVersion"] == "1.11"
 
 
+def test_replay_chat_config_exposes_safe_model_metadata(monkeypatch) -> None:
+    monkeypatch.setattr(main, "replay_chat_configured", lambda: True)
+    monkeypatch.setattr(main, "OPENROUTER_MODEL", "deepseek/deepseek-v4-flash")
+    response = client.get("/api/chat/config")
+    assert response.status_code == 200
+    assert response.json() == {
+        "enabled": True,
+        "model": "deepseek/deepseek-v4-flash",
+        "modelName": "DeepSeek V4 Flash",
+        "sponsor": "CBSC2",
+        "alpha": True,
+    }
+
+
 def test_rejects_wrong_extension() -> None:
     response = client.post(
         "/api/replays/parse", files={"file": ("notes.txt", b"not a replay")}
@@ -201,6 +215,80 @@ def test_missing_probability_service_does_not_break_replay(monkeypatch) -> None:
         "experimental": True,
         "points": [],
     }
+
+
+def test_replay_chat_uses_cached_replay_and_full_probability_series(monkeypatch) -> None:
+    replay = {"meta": {"duration": 60}, "frames": [{"time": 0}]}
+    probability = {
+        "status": "ready",
+        "cadenceSeconds": 30,
+        "points": [{"time": 0, "playerOne": 0.5}],
+    }
+    main._upload_cache["chat-fixture"] = replay
+    received = {}
+
+    async def fake_probability(analysis_id):
+        assert analysis_id == "chat-fixture"
+        return probability
+
+    async def fake_chat(payload, request, probability_payload):
+        received.update(
+            replay=payload, request=request, probability=probability_payload
+        )
+        return {"message": "Analysis", "model": "test", "snapshotTime": 0}
+
+    monkeypatch.setattr(main, "replay_win_probability", fake_probability)
+    monkeypatch.setattr(main, "ask_replay_model", fake_chat)
+    monkeypatch.setattr(main, "replay_chat_configured", lambda: True)
+
+    response = client.post(
+        "/api/replays/chat-fixture/chat",
+        json={
+            "time": 12,
+            "locale": "en",
+            "messages": [{"role": "user", "content": "When was the game lost?"}],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Analysis"
+    assert received == {
+        "replay": replay,
+        "request": received["request"],
+        "probability": probability,
+    }
+    assert received["request"].time == 12
+
+
+def test_replay_chat_rejects_expired_replay() -> None:
+    response = client.post(
+        "/api/replays/not-cached/chat",
+        json={
+            "time": 0,
+            "locale": "pt",
+            "messages": [{"role": "user", "content": "Onde perdi?"}],
+        },
+    )
+    assert response.status_code == 404
+
+
+def test_replay_chat_requires_openrouter_key_before_win_probability(monkeypatch) -> None:
+    main._upload_cache["no-key"] = {"meta": {"duration": 0}, "frames": [{"time": 0}]}
+
+    async def should_not_run(_analysis_id):
+        raise AssertionError("win probability should not run without chat configuration")
+
+    monkeypatch.setattr(main, "replay_chat_configured", lambda: False)
+    monkeypatch.setattr(main, "replay_win_probability", should_not_run)
+    response = client.post(
+        "/api/replays/no-key/chat",
+        json={
+            "time": 0,
+            "locale": "en",
+            "messages": [{"role": "user", "content": "What happened?"}],
+        },
+    )
+    assert response.status_code == 503
 
 
 def test_demo_is_compiled_by_world_engine() -> None:

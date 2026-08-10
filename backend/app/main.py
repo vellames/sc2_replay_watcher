@@ -19,6 +19,13 @@ from sc2_world_engine.errors import UnsupportedMatchFormatError
 from sc2_world_engine.archive import SCHEMA_VERSION
 
 from .world_adapter import parse_replay
+from .replay_chat import (
+    OPENROUTER_MODEL,
+    ReplayChatRequest,
+    ask_replay_model,
+    replay_chat_configured,
+    replay_chat_model_name,
+)
 from .win_probability import (
     CADENCE_SECONDS,
     WinProbabilityUnavailable,
@@ -127,6 +134,17 @@ def _replay_for_analysis(analysis_id: str) -> dict | None:
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "engineVersion": engine_version, "schemaVersion": SCHEMA_VERSION}
+
+
+@app.get("/api/chat/config")
+def replay_chat_config() -> dict:
+    return {
+        "enabled": replay_chat_configured(),
+        "model": OPENROUTER_MODEL,
+        "modelName": replay_chat_model_name(),
+        "sponsor": "CBSC2",
+        "alpha": True,
+    }
 
 
 @lru_cache(maxsize=1)
@@ -269,3 +287,17 @@ async def replay_win_probability(analysis_id: str) -> dict:
         while len(_win_probability_cache) > UPLOAD_CACHE_SIZE + 1:
             _win_probability_cache.popitem(last=False)
     return result
+
+
+@app.post("/api/replays/{analysis_id}/chat")
+async def replay_chat(analysis_id: str, request: ReplayChatRequest) -> dict:
+    replay = _replay_for_analysis(analysis_id)
+    if replay is None:
+        raise HTTPException(status_code=404, detail="The replay is no longer cached.")
+    if not replay_chat_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="Replay chat is not configured. Set OPENROUTER_API_KEY.",
+        )
+    probability = await replay_win_probability(analysis_id)
+    return await ask_replay_model(replay, request, probability)

@@ -62,6 +62,7 @@ import {
 
 import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
+import { ReplayChat } from "@/components/replay-chat";
 import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
 import { TimelineEventLayer, type TimelineEventPresentation } from "@/components/timeline-event-layer";
@@ -457,7 +458,11 @@ export function ReplayViewer() {
   useEffect(() => {
     if (!replay) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLElement
+        && (target.isContentEditable || target.closest("input, select, textarea, button, [contenteditable='true']"))
+      ) return;
       if (event.code === "Escape" && comparisonView) {
         closeComparison();
         return;
@@ -1092,6 +1097,7 @@ export function ReplayViewer() {
             <div
               className={`map-stage ${isPanning ? "is-panning" : ""}`}
               onWheel={(event) => {
+                if ((event.target as HTMLElement).closest(".replay-chat-panel")) return;
                 event.preventDefault();
                 changeZoom(-event.deltaY * .001);
               }}
@@ -1257,6 +1263,7 @@ export function ReplayViewer() {
                 <button className={comparisonView === "upgrades" ? "active" : ""} aria-pressed={comparisonView === "upgrades"} onClick={() => openComparison("upgrades")}><FlaskConical size={12} /><span>{t("watcher.upgrades")}</span></button>
               </div>
               {renderComparisonOverlay()}
+              {replay.meta.analysisId && <ReplayChat key={replay.meta.analysisId} analysisId={replay.meta.analysisId} currentTime={currentTime} probabilityStatus={winProbability.status} />}
               {nextEvent && <div className={`next-event next-event-${nextEvent.type}`} style={{ "--event-color": nextEventPlayer?.color ?? "#6eb5d2" } as React.CSSProperties}><small><i />{t("watcher.nextEvent")} · {t("watcher.inTime")} {formatTime(nextEvent.time - currentTime)}{nextEventPlayer ? ` · ${nextEventPlayer.name}` : ""}</small><strong><NextEventIcon size={11} /><span>{nextEventDisplay}</span></strong></div>}
               <div className="coordinates">X {Math.round(bounds.minX)}–{Math.round(bounds.maxX)} · Y {Math.round(bounds.minY)}–{Math.round(bounds.maxY)}</div>
             </div>

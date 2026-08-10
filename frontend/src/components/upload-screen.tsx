@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, BookOpen, BrainCircuit, Crosshair, Factory, FileUp, FlaskConical, HeartHandshake, History, Map, PackageOpen, Play, Sparkles, Upload, Zap } from "lucide-react";
+import { Activity, BookOpen, Bot, BrainCircuit, Crosshair, Factory, FileUp, FlaskConical, HeartHandshake, History, Map, MessageCircleQuestion, PackageOpen, Play, Sparkles, Upload, Zap } from "lucide-react";
 
 import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
@@ -127,6 +127,11 @@ export function UploadScreen() {
 
         <div className="section-label"><span>{t("features.label")}</span><i /></div>
         <section className="landing-capabilities" aria-label={t("features.label")}>
+          <article className="capability-card capability-coach">
+            <header><span><Bot size={20} /></span><small>{t("features.coachTag")}</small></header>
+            <div><strong>{t("features.coachTitle")}</strong><p>{t("features.coachText")}</p></div>
+            <aside><span><MessageCircleQuestion size={11} />{t("features.coachQuestions")}</span><span><Sparkles size={11} />DeepSeek V4 Flash</span></aside>
+          </article>
           <article className="capability-card capability-model">
             <header><span><BrainCircuit size={18} /></span><small>{t("features.modelTag")}</small></header>
             <strong>{t("features.modelTitle")}</strong>
