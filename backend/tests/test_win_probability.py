@@ -133,21 +133,10 @@ def test_series_batches_predictions_and_returns_both_players(monkeypatch) -> Non
         assert payload is not None
         calls.append(payload)
         return {
-            "pipeline": "SC2-WinProb-LightGBM-Full-2023Plus-v1",
+            "model": "SC2-WinProb-LightGBM-FullDecay-v1",
+            "model_sha256": "decay-hash",
             "predictions": [
-                {
-                    "index": index,
-                    "models": {
-                        "LightGBMFull": {
-                            "model_sha256": "full-hash",
-                            "win_probability": 0.4 + index * 0.02,
-                        },
-                        "LightGBM2023+": {
-                            "model_sha256": "recent-hash",
-                            "win_probability": 0.8 - index * 0.02,
-                        },
-                    },
-                }
+                {"index": index, "win_probability": 0.4 + index * 0.02}
                 for index, _ in enumerate(payload["snapshots"])
             ],
         }
@@ -157,8 +146,8 @@ def test_series_batches_predictions_and_returns_both_players(monkeypatch) -> Non
 
     assert len(calls) == 1
     assert result["status"] == "ready"
-    assert result["model"] == "LightGBMFull"
-    assert result["modelSha256"] == "full-hash"
+    assert result["model"] == "LightGBMFullDecay"
+    assert result["modelSha256"] == "decay-hash"
     assert result["provider"] == "lightgbm"
     assert result["cadenceSeconds"] == 0.5
     assert result["points"][0] == {"time": 0.0, "playerOne": 0.4, "playerTwo": 0.6}

@@ -14,9 +14,9 @@ from typing import Any, Iterator
 
 N3_BASE_URL = "https://c-vellames--sc2-winprob-n3-v1.modal.run"
 LIGHTGBM_BASE_URL = (
-    "https://c-vellames--sc2-winprob-lightgbm-full-2023plus-v1.modal.run"
+    "https://c-vellames--sc2-winprob-lightgbm-full-decay-v1.modal.run"
 )
-LIGHTGBM_MODEL_NAME = "LightGBMFull"
+LIGHTGBM_MODEL_NAME = "LightGBMFullDecay"
 CADENCE_SECONDS = 0.5
 
 _STAT_FEATURES = {
@@ -333,16 +333,8 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
             raise WinProbabilityUnavailable("Inference returned an incomplete batch")
         batch_points: list[dict[str, float]] = []
         for (time_seconds, _), prediction in zip(current, predictions, strict=True):
-            selected_prediction = prediction
-            if _provider_name() == "lightgbm":
-                try:
-                    selected_prediction = prediction["models"][LIGHTGBM_MODEL_NAME]
-                except (KeyError, TypeError) as exc:
-                    raise WinProbabilityUnavailable(
-                        f"Inference did not return {LIGHTGBM_MODEL_NAME}"
-                    ) from exc
             try:
-                probability = float(selected_prediction["win_probability"])
+                probability = float(prediction["win_probability"])
             except (KeyError, TypeError, ValueError) as exc:
                 raise WinProbabilityUnavailable(
                     "Inference returned an invalid probability"
@@ -356,11 +348,7 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
                     "playerTwo": 1.0 - probability,
                 }
             )
-        fingerprint = (
-            selected_prediction.get("model_sha256")
-            if _provider_name() == "lightgbm"
-            else response.get("model_sha256") or response.get("ensemble_sha256")
-        )
+        fingerprint = response.get("model_sha256") or response.get("ensemble_sha256")
         return (
             LIGHTGBM_MODEL_NAME
             if _provider_name() == "lightgbm"
