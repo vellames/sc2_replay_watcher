@@ -8,6 +8,19 @@ from app.main import app
 client = TestClient(app)
 
 
+def test_model_feature_frames_never_leave_the_backend_payload() -> None:
+    public = main._public_replay(
+        {
+            "meta": {"analysisId": "fixture"},
+            "frames": [],
+            "_n3FeatureContract": "n3-r1-v1",
+            "_n3FeatureFrames": [{"time_seconds": 1}],
+        }
+    )
+
+    assert public == {"meta": {"analysisId": "fixture"}, "frames": []}
+
+
 @pytest.fixture(autouse=True)
 def isolate_upload_log(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(main, "UPLOAD_LOG_PATH", tmp_path / "replay_uploads.txt")

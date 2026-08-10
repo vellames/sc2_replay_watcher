@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import base64
+import gc
 import tempfile
 from pathlib import Path
 from typing import Any
 
 from sc2_world_engine import WorldArchiveReader, compile_replay
+
+from .n3_features import build_n3_feature_frames
 
 PLAYER_COLORS = ("#48a9ff", "#ff5b72", "#55d68b", "#f4b942")
 
@@ -152,5 +155,18 @@ def parse_replay(path: Path, *, filename: str | None = None) -> dict[str, Any]:
     path = Path(path)
     with tempfile.TemporaryDirectory(prefix="sc2-world-") as directory:
         archive_path = Path(directory) / "replay.sc2world"
+        # Build the compact model rows before materializing the much larger watcher
+        # payload so both representations are never resident with a decoder graph.
+        feature_frames = build_n3_feature_frames(path)
+        feature_columns = list(feature_frames[0]) if feature_frames else []
+        packed_feature_frames = {
+            "columns": feature_columns,
+            "rows": [[frame.get(column) for column in feature_columns] for frame in feature_frames],
+        }
+        del feature_frames
+        gc.collect()
         compile_replay(path, archive_path)
-        return watcher_payload(WorldArchiveReader(archive_path), filename=filename)
+        payload = watcher_payload(WorldArchiveReader(archive_path), filename=filename)
+        payload["_n3FeatureFrames"] = packed_feature_frames
+        payload["_n3FeatureContract"] = "n3-r1-v1"
+        return payload

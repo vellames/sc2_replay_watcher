@@ -213,6 +213,37 @@ def iter_snapshots(
         raise WinProbabilityUnavailable("A 1v1 world timeline is required")
     required = [str(value) for value in schema["required_features"]]
     duration = max(0.0, float(replay.get("meta", {}).get("duration", 0)))
+    feature_frames = replay.get("_n3FeatureFrames")
+    packed_columns = feature_frames.get("columns", []) if isinstance(feature_frames, dict) else []
+    packed_rows = feature_frames.get("rows", []) if isinstance(feature_frames, dict) else []
+    full_frames = packed_rows if packed_columns and packed_rows else feature_frames
+    column_indexes = {name: index for index, name in enumerate(packed_columns)}
+    if replay.get("_n3FeatureContract") == "n3-r1-v1" and isinstance(full_frames, list) and full_frames:
+        def frame_value(source: Any, name: str, default: Any = None) -> Any:
+            if isinstance(source, dict):
+                return source.get(name, default)
+            index = column_indexes.get(name)
+            return source[index] if index is not None and index < len(source) else default
+
+        feature_index = 0
+        final_tick = math.ceil(duration / CADENCE_SECONDS)
+        for tick in range(final_tick + 1):
+            time_seconds = min(duration, tick * CADENCE_SECONDS)
+            while (
+                feature_index + 1 < len(full_frames)
+                and float(
+                    frame_value(
+                        full_frames[feature_index + 1],
+                        "_watcher_time",
+                        frame_value(full_frames[feature_index + 1], "time_seconds", 0),
+                    )
+                )
+                <= time_seconds
+            ):
+                feature_index += 1
+            source = full_frames[feature_index]
+            yield time_seconds, {name: frame_value(source, name) for name in required}
+        return
     build_order = sorted(
         replay.get("buildOrder", []), key=lambda item: item.get("completedAt", 0)
     )
@@ -256,6 +287,15 @@ def iter_snapshots(
 
 def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dict[str, Any]:
     schema = inference_schema()
+    required_features = schema.get("required_features", [])
+    if (
+        _provider_name() == "n3"
+        and len(required_features) >= 400
+        and replay.get("_n3FeatureContract") != "n3-r1-v1"
+    ):
+        raise WinProbabilityUnavailable(
+            "The replay does not contain the complete N3 feature contract"
+        )
     points: list[dict[str, float]] = []
     batches: list[list[tuple[float, dict[str, Any]]]] = []
     batch: list[tuple[float, dict[str, Any]]] = []
@@ -321,5 +361,7 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
         "perspectivePlayerId": int(replay["players"][0]["id"]),
         "cadenceSeconds": CADENCE_SECONDS,
         "experimental": True,
+        "featureContract": replay.get("_n3FeatureContract", "legacy-reduced"),
+        "featureCompleteness": 1.0 if replay.get("_n3FeatureContract") == "n3-r1-v1" else None,
         "points": points,
     }

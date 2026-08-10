@@ -79,6 +79,11 @@ def _cached_upload(digest: str, filename: str) -> dict | None:
         return {**payload, "meta": {**payload["meta"], "filename": filename}}
 
 
+def _public_replay(payload: dict) -> dict:
+    """Keep model-only feature frames in the server cache, never in the browser payload."""
+    return {key: value for key, value in payload.items() if not key.startswith("_n3")}
+
+
 def _remember_upload(digest: str, payload: dict) -> None:
     with _upload_cache_lock:
         _upload_cache[digest] = payload
@@ -163,7 +168,7 @@ def _demo_replay() -> dict:
 @app.get("/api/replays/demo")
 def demo_replay() -> dict:
     try:
-        return _demo_replay()
+        return _public_replay(_demo_replay())
     except Exception as exc:
         raise HTTPException(
             status_code=503, detail="The demo replay is unavailable."
@@ -207,7 +212,7 @@ async def upload_replay(
             result="cache_hit",
         )
         response.headers["X-Replay-Cache"] = "HIT"
-        return cached
+        return _public_replay(cached)
 
     temp_path: Path | None = None
     try:
@@ -228,7 +233,7 @@ async def upload_replay(
             result="processed",
         )
         response.headers["X-Replay-Cache"] = "MISS"
-        return payload
+        return _public_replay(payload)
     except HTTPException:
         raise
     except UnsupportedMatchFormatError as exc:

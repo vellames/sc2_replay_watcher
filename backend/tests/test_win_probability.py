@@ -89,6 +89,36 @@ def test_snapshots_hold_world_state_and_preserve_missing_values() -> None:
     assert snapshots[8][1]["aggregate_self__scoreValueMineralsCurrent"] == 100
 
 
+def test_snapshots_prefer_the_full_n3_contract_when_available() -> None:
+    replay = replay_fixture()
+    replay["_n3FeatureContract"] = "n3-r1-v1"
+    replay["_n3FeatureFrames"] = [
+        {
+            "time_seconds": 0,
+            "self_race": "Terr",
+            "enemy_race": "Zerg",
+            "matchup": "TvZ",
+            "map": "Test LE",
+            "patch": "5.0.15",
+            "aggregate_self__scoreValueMineralsCurrent": 999,
+            "aggregate_enemy__scoreValueMineralsCurrent": 1,
+            "aggregate_diff__scoreValueMineralsCurrent": 998,
+            "command_semantic_self__production__count__60s": 7,
+            "entity_self_complete_json": {"Marine": 4},
+            "entity_self_in_progress_json": {},
+            "entity_self_upgrades_json": {},
+            "entity_enemy_complete_json": {},
+            "entity_enemy_in_progress_json": {},
+            "entity_enemy_upgrades_json": {},
+        }
+    ]
+
+    snapshot = next(win_probability.iter_snapshots(replay, SCHEMA))[1]
+
+    assert snapshot["aggregate_self__scoreValueMineralsCurrent"] == 999
+    assert snapshot["command_semantic_self__production__count__60s"] == 7
+
+
 def test_series_batches_predictions_and_returns_both_players(monkeypatch) -> None:
     calls: list[dict] = []
     monkeypatch.setattr(win_probability, "inference_schema", lambda: SCHEMA)
