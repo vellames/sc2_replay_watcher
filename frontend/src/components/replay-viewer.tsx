@@ -525,6 +525,13 @@ export function ReplayViewer() {
   const height = Math.max(1, bounds.maxY - bounds.minY);
   const mapAspect = width / height;
   const playerById = new Map(replay.players.map((player) => [player.id, player]));
+  const winnerName = replay.meta.winner?.trim()
+    || replay.players.find((player) => player.result.toLowerCase() === "win")?.name
+    || null;
+  const winnerPlayer = winnerName
+    ? replay.players.find((player) => player.name.toLowerCase() === winnerName.toLowerCase())
+    : null;
+  const replayFinished = currentTime >= replay.meta.duration - 0.05;
   const playerOneStats = replay.players[0] ? currentFrame?.stats[String(replay.players[0].id)] : undefined;
   const playerTwoStats = replay.players[1] ? currentFrame?.stats[String(replay.players[1].id)] : undefined;
   const playerOneDeltas = {
@@ -1204,6 +1211,20 @@ export function ReplayViewer() {
                 })}
               </div>
               <div className="map-vignette" />
+              {replayFinished && winnerName && (
+                <div
+                  className="winner-reveal"
+                  role="status"
+                  aria-live="polite"
+                  style={{ "--winner-color": winnerPlayer?.color ?? "#eac863" } as React.CSSProperties}
+                >
+                  <div className="winner-reveal-content">
+                    <span><Crown size={16} />{t("watcher.winner")}</span>
+                    <strong>{winnerName}</strong>
+                    <small>{t("watcher.matchComplete")}</small>
+                  </div>
+                </div>
+              )}
               {renderSelectionInspector()}
               <div className="general-state">
                 <strong>{formatTime(currentTime)}</strong><small>/ {formatTime(replay.meta.duration)}</small>
