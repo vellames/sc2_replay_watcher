@@ -392,8 +392,6 @@ function curvedTerrainSegments(paths: TerrainPoint[][], scaleX: number, scaleY: 
 function createTerrain(geometry: MapGeometry, bounds: MapBounds, sampling: TerrainSampling) {
   const mapWidth = geometry.width ?? 0;
   const mapHeight = geometry.height ?? 0;
-  const expectedPathing = mapWidth * mapHeight;
-  const walkable = decodeMapRle(geometry.walkableRle, expectedPathing);
   const gridWidth = geometry.gridWidth ?? 0;
   const gridHeight = geometry.gridHeight ?? 0;
   const cliffLevels = decodeMapRle(geometry.cliffRle, gridWidth * gridHeight);
@@ -505,55 +503,10 @@ function createTerrain(geometry: MapGeometry, bounds: MapBounds, sampling: Terra
     contourHeight,
     bounds,
   );
-  const pathEdgePositions = curvedTerrainSegments(
-    traceTerrainContours(walkable, mapWidth, mapHeight, "walkable"),
-    1,
-    1,
-    contourHeight,
-    bounds,
-  );
   root.add(new THREE.Mesh(
-    ribbonGeometry(cliffEdgePositions, .18),
-    new THREE.MeshBasicMaterial({ color: "#7fc2d0", transparent: true, opacity: .7, depthWrite: false, side: THREE.DoubleSide }),
+    ribbonGeometry(cliffEdgePositions, .12),
+    new THREE.MeshBasicMaterial({ color: "#6f9ca7", transparent: true, opacity: .3, depthWrite: false, side: THREE.DoubleSide }),
   ));
-  root.add(new THREE.Mesh(
-    ribbonGeometry(pathEdgePositions, .12),
-    new THREE.MeshBasicMaterial({ color: "#8bd0de", transparent: true, opacity: .58, depthWrite: false, side: THREE.DoubleSide }),
-  ));
-
-  const borderPoints = [
-    new THREE.Vector3(minX, sampling.heightAt(minX + .5, minY + .5) + .08, minY),
-    new THREE.Vector3(maxX, sampling.heightAt(maxX - .5, minY + .5) + .08, minY),
-    new THREE.Vector3(maxX, sampling.heightAt(maxX - .5, maxY - .5) + .08, maxY),
-    new THREE.Vector3(minX, sampling.heightAt(minX + .5, maxY - .5) + .08, maxY),
-  ];
-  const borderSegments: number[] = [];
-  for (let index = 0; index < borderPoints.length; index++) {
-    const a = borderPoints[index];
-    const b = borderPoints[(index + 1) % borderPoints.length];
-    borderSegments.push(a.x, a.y, a.z, b.x, b.y, b.z);
-  }
-  root.add(new THREE.Mesh(
-    ribbonGeometry(borderSegments, .42),
-    new THREE.MeshBasicMaterial({ color: "#91e0e8", transparent: true, opacity: .84, depthWrite: false, side: THREE.DoubleSide }),
-  ));
-
-  const rampMaterial = new THREE.MeshBasicMaterial({ color: "#d5fbff", transparent: true, opacity: .76, depthWrite: false, side: THREE.DoubleSide });
-  for (const ramp of geometry.ramps) {
-    const angle = ramp.direction * Math.PI / 4;
-    const forward = new THREE.Vector2(Math.cos(angle), Math.sin(angle));
-    const side = new THREE.Vector2(-forward.y, forward.x);
-    const rampLines: number[] = [];
-    for (const offset of [-2.4, 0, 2.4]) {
-      for (const along of [-1.7, 0, 1.7]) {
-        const centerX = ramp.x + side.x * offset + forward.x * along;
-        const centerY = ramp.y + side.y * offset + forward.y * along;
-        const h = sampling.heightAt(centerX, centerY) + .09;
-        rampLines.push(centerX - forward.x * .55, h, centerY - forward.y * .55, centerX + forward.x * .55, h + .02, centerY + forward.y * .55);
-      }
-    }
-    root.add(new THREE.Mesh(ribbonGeometry(rampLines, .28), rampMaterial));
-  }
 
   const fixtureMaterial = new THREE.MeshStandardMaterial({ color: "#574b3e", roughness: .96, metalness: .04 });
   for (const item of geometry.staticObjects) {
