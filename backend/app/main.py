@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from datetime import datetime, timezone
 from collections import OrderedDict
 from functools import lru_cache
 from hashlib import sha256
@@ -9,7 +10,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Annotated
 
-from fastapi import FastAPI, File, HTTPException, Response, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -26,6 +27,13 @@ from .win_probability import (
 
 MAX_REPLAY_SIZE = 50 * 1024 * 1024
 UPLOAD_CACHE_SIZE = 2
+UPLOAD_LOG_PATH = Path(
+    os.getenv(
+        "REPLAY_UPLOAD_LOG_PATH",
+        Path(__file__).resolve().parents[1] / "data" / "replay_uploads.txt",
+    )
+)
+UPLOAD_LOG_SALT = os.getenv("REPLAY_UPLOAD_LOG_SALT", "sc2-replay-watcher")
 DEMO_REPLAY_PATH = (
     Path(__file__).resolve().parents[2]
     / "samples"
@@ -50,6 +58,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
 
 _upload_cache: OrderedDict[str, dict] = OrderedDict()
 _upload_cache_lock = Lock()
+_upload_log_lock = Lock()
 _win_probability_cache: OrderedDict[str, dict] = OrderedDict()
 _win_probability_cache_lock = Lock()
 
@@ -69,6 +78,43 @@ def _remember_upload(digest: str, payload: dict) -> None:
         _upload_cache.move_to_end(digest)
         while len(_upload_cache) > UPLOAD_CACHE_SIZE:
             _upload_cache.popitem(last=False)
+
+
+def _anonymous_visitor_id(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for", "").split(",", 1)[0].strip()
+    address = forwarded or (request.client.host if request.client else "unknown")
+    return sha256(f"{UPLOAD_LOG_SALT}|{address}".encode()).hexdigest()[:16]
+
+
+def _record_upload(
+    request: Request,
+    *,
+    filename: str,
+    size: int,
+    digest: str | None,
+    result: str,
+) -> None:
+    """Append one upload attempt without retaining the visitor's raw address."""
+    clean_filename = filename.replace("\t", " ").replace("\r", " ").replace("\n", " ")
+    fields = (
+        datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        _anonymous_visitor_id(request),
+        clean_filename,
+        str(size),
+        digest or "-",
+        result,
+    )
+    try:
+        with _upload_log_lock:
+            UPLOAD_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            needs_header = not UPLOAD_LOG_PATH.exists() or UPLOAD_LOG_PATH.stat().st_size == 0
+            with UPLOAD_LOG_PATH.open("a", encoding="utf-8") as log:
+                if needs_header:
+                    log.write("timestamp_utc\tvisitor_id\tfilename\tsize_bytes\treplay_sha256\tresult\n")
+                log.write("\t".join(fields) + "\n")
+    except OSError:
+        # Telemetry must never prevent the user from parsing a replay.
+        return
 
 
 def _replay_for_analysis(analysis_id: str) -> dict | None:
@@ -107,15 +153,27 @@ def demo_replay() -> dict:
 
 
 @app.post("/api/replays/parse")
-async def upload_replay(response: Response, file: Annotated[UploadFile, File()]) -> dict:
+async def upload_replay(
+    request: Request, response: Response, file: Annotated[UploadFile, File()]
+) -> dict:
     filename = file.filename or "replay.SC2Replay"
     if not filename.lower().endswith(".sc2replay"):
+        _record_upload(
+            request, filename=filename, size=0, digest=None, result="rejected_extension"
+        )
         raise HTTPException(
             status_code=415, detail="Envie um arquivo .SC2Replay válido."
         )
 
     content = await file.read(MAX_REPLAY_SIZE + 1)
     if len(content) > MAX_REPLAY_SIZE:
+        _record_upload(
+            request,
+            filename=filename,
+            size=len(content),
+            digest=None,
+            result="rejected_size",
+        )
         raise HTTPException(
             status_code=413, detail="O replay excede o limite de 50 MB."
         )
@@ -123,6 +181,13 @@ async def upload_replay(response: Response, file: Annotated[UploadFile, File()])
     digest = sha256(content).hexdigest()
     cached = _cached_upload(digest, filename)
     if cached is not None:
+        _record_upload(
+            request,
+            filename=filename,
+            size=len(content),
+            digest=digest,
+            result="cache_hit",
+        )
         response.headers["X-Replay-Cache"] = "HIT"
         return cached
 
@@ -137,16 +202,37 @@ async def upload_replay(response: Response, file: Annotated[UploadFile, File()])
         if isinstance(payload.get("meta"), dict):
             payload["meta"]["analysisId"] = digest
         _remember_upload(digest, payload)
+        _record_upload(
+            request,
+            filename=filename,
+            size=len(content),
+            digest=digest,
+            result="processed",
+        )
         response.headers["X-Replay-Cache"] = "MISS"
         return payload
     except HTTPException:
         raise
     except UnsupportedMatchFormatError as exc:
+        _record_upload(
+            request,
+            filename=filename,
+            size=len(content),
+            digest=digest,
+            result="rejected_format",
+        )
         raise HTTPException(
             status_code=422,
             detail="Apenas replays 1v1 são suportados no momento.",
         ) from exc
     except Exception as exc:
+        _record_upload(
+            request,
+            filename=filename,
+            size=len(content),
+            digest=digest,
+            result="parse_error",
+        )
         raise HTTPException(
             status_code=422,
             detail="Não foi possível interpretar este replay. Ele pode estar corrompido ou usar uma versão ainda não suportada.",

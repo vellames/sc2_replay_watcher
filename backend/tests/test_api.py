@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 from sc2_world_engine.errors import UnsupportedMatchFormatError
 
@@ -5,6 +6,11 @@ from app import main
 from app.main import app
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def isolate_upload_log(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(main, "UPLOAD_LOG_PATH", tmp_path / "replay_uploads.txt")
 
 
 def test_health() -> None:
@@ -98,6 +104,56 @@ def test_repeated_upload_reuses_compiled_payload(monkeypatch) -> None:
     assert first.headers["X-Replay-Cache"] == "MISS"
     assert second.headers["X-Replay-Cache"] == "HIT"
     assert second.json()["meta"]["filename"] == "renamed.SC2Replay"
+
+
+def test_uploads_are_recorded_without_raw_ip(monkeypatch, tmp_path) -> None:
+    upload_log = tmp_path / "replay_uploads.txt"
+
+    def fake_parse(_path, *, filename):
+        return {"meta": {"filename": filename}, "frames": []}
+
+    monkeypatch.setattr(main, "UPLOAD_LOG_PATH", upload_log)
+    monkeypatch.setattr(main, "parse_replay", fake_parse)
+    main._upload_cache.clear()
+
+    headers = {"x-forwarded-for": "203.0.113.42"}
+    first = client.post(
+        "/api/replays/parse",
+        files={"file": ("first.SC2Replay", b"tracked replay")},
+        headers=headers,
+    )
+    second = client.post(
+        "/api/replays/parse",
+        files={"file": ("renamed.SC2Replay", b"tracked replay")},
+        headers=headers,
+    )
+
+    assert first.status_code == second.status_code == 200
+    lines = upload_log.read_text(encoding="utf-8").splitlines()
+    assert lines[0] == (
+        "timestamp_utc\tvisitor_id\tfilename\tsize_bytes\treplay_sha256\tresult"
+    )
+    assert len(lines) == 3
+    assert lines[1].endswith("\tprocessed")
+    assert lines[2].endswith("\tcache_hit")
+    assert "203.0.113.42" not in upload_log.read_text(encoding="utf-8")
+    assert lines[1].split("\t")[1] == lines[2].split("\t")[1]
+
+
+def test_upload_log_failure_does_not_break_parsing(monkeypatch, tmp_path) -> None:
+    def fake_parse(_path, *, filename):
+        return {"meta": {"filename": filename}, "frames": []}
+
+    monkeypatch.setattr(main, "UPLOAD_LOG_PATH", tmp_path)
+    monkeypatch.setattr(main, "parse_replay", fake_parse)
+    main._upload_cache.clear()
+
+    response = client.post(
+        "/api/replays/parse",
+        files={"file": ("match.SC2Replay", b"valid replay")},
+    )
+
+    assert response.status_code == 200
 
 
 def test_win_probability_is_computed_outside_event_loop(monkeypatch) -> None:
