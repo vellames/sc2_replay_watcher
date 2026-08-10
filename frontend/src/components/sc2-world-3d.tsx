@@ -13,6 +13,7 @@ type WorldUnit = ReplayUnit & { color: string; race?: string };
 type Props = {
   bounds: MapBounds;
   geometry: MapGeometry;
+  onProjectionChange: (projection: { project: (x: number, y: number) => { left: number; bottom: number } } | null) => void;
   onSelect: (id: number) => void;
   rotation: number;
   selectedUnitId: number | null;
@@ -520,7 +521,7 @@ function createTerrain(geometry: MapGeometry, bounds: MapBounds, sampling: Terra
   return root;
 }
 
-export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect, rotation, selectedUnitId, showTerrain, units, zoom }: Props) {
+export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onProjectionChange, onSelect, rotation, selectedUnitId, showTerrain, units, zoom }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -532,6 +533,7 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
   const selectedUnitIdRef = useRef(selectedUnitId);
   const picksRef = useRef<BatchPick[]>([]);
   const renderRef = useRef<() => void>(() => undefined);
+  const projectionUpdateRef = useRef<() => void>(() => undefined);
   const matrixUpdateRef = useRef<(blend: number, force?: boolean) => boolean>(() => false);
   const targetUnitsRef = useRef(new Map<number, WorldUnit>());
   const displayedTransformsRef = useRef(new Map<number, DisplayedTransform>());
@@ -588,6 +590,20 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
 
     const render = () => renderer.render(scene, camera);
     renderRef.current = render;
+    const emitProjection = () => {
+      camera.updateMatrixWorld(true);
+      world.updateMatrixWorld(true);
+      unitRoot.updateMatrixWorld(true);
+      onProjectionChange({
+        project: (x, y) => {
+          const point = new THREE.Vector3(x, terrainSampling.heightAt(x, y) + .12, y);
+          unitRoot.localToWorld(point);
+          point.project(camera);
+          return { left: (point.x + 1) * 50, bottom: (point.y + 1) * 50 };
+        },
+      });
+    };
+    projectionUpdateRef.current = emitProjection;
     const matrixDummy = new THREE.Object3D();
     matrixUpdateRef.current = (blend, force = false) => {
       let pending = false;
@@ -666,6 +682,7 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
       render();
+      emitProjection();
     };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(host);
@@ -709,8 +726,10 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
       rendererRef.current = null;
       sceneRef.current = null;
       matrixUpdateRef.current = () => false;
+      projectionUpdateRef.current = () => undefined;
+      onProjectionChange(null);
     };
-  }, [bounds, geometry, onSelect, terrainSampling]);
+  }, [bounds, geometry, onProjectionChange, onSelect, terrainSampling]);
 
   useEffect(() => {
     if (terrainRef.current) terrainRef.current.visible = showTerrain;
@@ -725,6 +744,7 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
     worldRef.current.position.set(centerX, 0, centerY);
     worldRef.current.children.forEach((child) => child.position.set(-centerX, 0, -centerY));
     renderRef.current();
+    projectionUpdateRef.current();
   }, [bounds, rotation]);
 
   useEffect(() => {
@@ -733,6 +753,7 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onSelect,
     camera.zoom = zoom;
     camera.updateProjectionMatrix();
     renderRef.current();
+    projectionUpdateRef.current();
   }, [zoom]);
 
   useEffect(() => {

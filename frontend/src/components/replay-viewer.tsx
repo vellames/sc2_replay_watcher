@@ -80,6 +80,7 @@ const Sc2World3D = dynamic(() => import("@/components/sc2-world-3d").then((modul
 type LayerKey = "terrain" | "army" | "workers" | "buildings" | "resources" | "cameras";
 type ComparisonView = "composition" | "upgrades";
 type MapView = "2d" | "3d";
+type WorldProjection = { project: (x: number, y: number) => { left: number; bottom: number } };
 type MapSelection =
   | { kind: "unit"; unitId: number }
   | { kind: "engagement"; engagementId: string }
@@ -210,6 +211,7 @@ export function ReplayViewer() {
   const [comparisonView, setComparisonView] = useState<ComparisonView | null>(null);
   const [mapView, setMapView] = useState<MapView>("2d");
   const [mapRotation, setMapRotation] = useState(0);
+  const [worldProjection, setWorldProjection] = useState<WorldProjection | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     terrain: true,
@@ -226,6 +228,7 @@ export function ReplayViewer() {
   const audioRef = useRef<ReplayAudioEngine | null>(null);
   const previousAudioTimeRef = useRef(0);
   const selectUnit = useCallback((unitId: number) => setSelection((current) => current?.kind === "unit" && current.unitId === unitId ? null : { kind: "unit", unitId }), []);
+  const updateWorldProjection = useCallback((projection: WorldProjection | null) => setWorldProjection(projection), []);
   const seekTimelineEvent = useCallback((time: number, engagementId?: string) => {
     setCurrentTime(time);
     setPlaying(false);
@@ -673,7 +676,7 @@ export function ReplayViewer() {
       const resourceColor = unit.type.toLowerCase().includes("vespene") ? "#54b994" : "#73bde0";
       return { ...unit, color: unit.category === "resource" ? resourceColor : player?.color ?? "#7b8794", race: player?.race };
     }) : [];
-  const toPercent = (x: number, y: number) => mapPresentation?.projection?.project(x, y) ?? ({
+  const toPercent = (x: number, y: number) => (is3D ? worldProjection?.project(x, y) : null) ?? mapPresentation?.projection?.project(x, y) ?? ({
     left: ((x - bounds.minX) / width) * 100,
     bottom: ((y - bounds.minY) / height) * 100,
   });
@@ -1029,10 +1032,10 @@ export function ReplayViewer() {
                     ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
                     : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
               >
-                {is3D && <Sc2World3D bounds={bounds} geometry={replay.mapGeometry} rotation={mapRotation} units={worldUnits3D} selectedUnitId={selectedUnitId} showTerrain={layers.terrain} zoom={zoom} onSelect={selectUnit} />}
+                {is3D && <Sc2World3D bounds={bounds} geometry={replay.mapGeometry} rotation={mapRotation} units={worldUnits3D} selectedUnitId={selectedUnitId} showTerrain={layers.terrain} zoom={zoom} onProjectionChange={updateWorldProjection} onSelect={selectUnit} />}
                 {layers.terrain && hasMapGeometry && !is3D && <TerrainLayer geometry={replay.mapGeometry} bounds={bounds} />}
                 {layers.terrain && !is3D && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
-                <div className="map-overlay-layer" style={{ transform: is3D ? `scale(${zoom})` : undefined }}>
+                <div className="map-overlay-layer">
                 {currentFrame?.deaths.map((death) => {
                   const point = toPercent(death.x, death.y);
                   const color = playerById.get(death.ownerId)?.color ?? "#ff7180";
