@@ -364,7 +364,6 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .engagement-actions li > span { overflow: hidden; color: #829aa7; font: 550 10px var(--font-geist-mono); text-overflow: ellipsis; white-space: nowrap; }
 .engagement-actions li > span strong { color: #b9cbd3; font-weight: 650; }
 .engagement-actions li > em { color: #67818e; font: 600 9px var(--font-geist-mono); font-style: normal; }
-.engagement-more { padding: 2px 8px 9px; display: block; color: #647d89; font: 550 9px var(--font-geist-mono); }
 .engagement-review > footer { min-height: 38px; padding: 6px 12px; display: flex; align-items: center; gap: 7px; border-top: 1px solid rgba(101, 151, 173, .11); background: rgba(5, 13, 19, .94); }
 .engagement-review > footer > span { flex: 1; color: #607986; font: 550 9px var(--font-geist-mono); }
 .engagement-review > footer > button { height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 5px; color: #9eb1ba; border: 1px solid rgba(108, 157, 178, .16); border-radius: 3px; background: rgba(13, 28, 37, .8); font: 600 9px var(--font-geist-mono); cursor: pointer; }
