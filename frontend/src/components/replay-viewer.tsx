@@ -457,7 +457,7 @@ export function ReplayViewer() {
 
   const winProbability = useMemo<WinProbabilitySeries>(() => {
     if (winProbabilityResult && winProbabilityResult.analysisId === replay?.meta.analysisId) return winProbabilityResult.series;
-    return { status: "loading", model: "SC2-WinProb-N3-v1", provider: "n3", cadenceSeconds: 0.5, experimental: true, points: [] };
+    return { status: "loading", model: "SC2-WinProb-LightGBM-v1", provider: "lightgbm", cadenceSeconds: 0.5, experimental: true, points: [] };
   }, [replay?.meta.analysisId, winProbabilityResult]);
 
   const currentWinProbability = useMemo(() => {

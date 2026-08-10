@@ -55,8 +55,8 @@ def _base_url() -> str:
 
 
 def _provider_name() -> str:
-    value = os.getenv("SC2_WINPROB_PROVIDER", "n3").strip().lower()
-    return value if value in {"n3", "lightgbm"} else "n3"
+    value = os.getenv("SC2_WINPROB_PROVIDER", "lightgbm").strip().lower()
+    return value if value in {"n3", "lightgbm"} else "lightgbm"
 
 
 def _batch_size(schema: dict[str, Any]) -> int:
@@ -297,12 +297,11 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
     schema = inference_schema()
     required_features = schema.get("required_features", [])
     if (
-        _provider_name() == "n3"
-        and len(required_features) >= 400
+        len(required_features) >= 400
         and replay.get("_n3FeatureContract") != "n3-r1-v1"
     ):
         raise WinProbabilityUnavailable(
-            "The replay does not contain the complete N3 feature contract"
+            "The replay does not contain the complete inference feature contract"
         )
     points: list[dict[str, float]] = []
     batches: list[list[tuple[float, dict[str, Any]]]] = []
