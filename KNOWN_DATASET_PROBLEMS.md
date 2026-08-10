@@ -60,6 +60,24 @@ Other mode families remain unresolved, including siege, burrowed, flying, phasin
 
 Cosmetic command filtering is deliberately narrow. It excludes command names beginning with known dance, emote, taunt, or race-specific spray prefixes. It must not use a generic substring match: `CausticSpray` is a legitimate Corruptor ability and is retained.
 
+The same player intent can also be encoded differently by race and unit. In the audited Washout PvT, Terran worker actions appeared as explicit `Gather` and `ReturnCargo` abilities while most Protoss equivalents appeared as unresolved `RightClick` commands. Terran-only `LowerSupplyDepot` and `RaiseSupplyDepot` commands added more protocol-specific activity. At 2:25, these routine commands inflated the Terran prediction from approximately 49.78% to 63.33%.
+
+Current mitigation:
+
+- exclude `Gather`, `ReturnCargo`, `LowerSupplyDepot`, and `RaiseSupplyDepot` from inference command accounting;
+- retain the behavioral columns required by the frozen contract, but set each self/enemy command and control-group pair to their midpoint and every corresponding difference to zero;
+- continue accounting for causal lifecycle flows such as births, completions, losses, kills, and upgrades.
+
+This midpoint neutralization is intentionally temporary. It prevents APM, control-group habits, race-specific command availability, and protocol resolution from expressing a relative advantage while avoiding an all-zero behavioral vector that is far outside the training distribution.
+
+Replay-level verification after applying the mitigation:
+
+| Replay point | Before | After | Interpretation |
+| --- | ---: | ---: | --- |
+| Washout PvT at 2:25 | 63.33% | 49.80% | No state-based Terran advantage |
+| Washout PvT at 5:05 | 92.17% | 80.35% | Real Terran army and damage advantage remains |
+| Audited opening TvT at 1:00 | 57.65% | 51.89% | Symmetric opening moves closer to neutral |
+
 Permanent correction: rebuild command semantics from normalized ability identifiers rather than relying primarily on `has_ability`, validate the mapping by patch, then regenerate and retrain R1.
 
 ## Perspective asymmetry

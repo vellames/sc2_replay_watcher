@@ -6,7 +6,7 @@ from app.n3_features import (
     _State,
     _canonical_entity,
     _command_class,
-    _is_cosmetic_command,
+    _is_excluded_command,
     _is_excluded_entity,
     _is_cosmetic_upgrade,
 )
@@ -46,10 +46,14 @@ def test_cosmetic_and_internal_signals_are_excluded_from_inference_features() ->
     assert _is_cosmetic_upgrade("RewardDanceGhost", 100)
     assert _is_cosmetic_upgrade("AnyAccountLoadout", 0)
     assert not _is_cosmetic_upgrade("Stimpack", 100)
-    assert _is_cosmetic_command(command("SprayTerran"))
-    assert _is_cosmetic_command(command("Dance"))
-    assert not _is_cosmetic_command(command("CausticSpray"))
-    assert not _is_cosmetic_command(command("Attack"))
+    assert _is_excluded_command(command("SprayTerran"))
+    assert _is_excluded_command(command("Dance"))
+    assert _is_excluded_command(command("Gather"))
+    assert _is_excluded_command(command("ReturnCargo"))
+    assert _is_excluded_command(command("LowerSupplyDepot"))
+    assert _is_excluded_command(command("RaiseSupplyDepot"))
+    assert not _is_excluded_command(command("CausticSpray"))
+    assert not _is_excluded_command(command("Attack"))
 
 
 def test_supply_depot_modes_share_one_inference_entity() -> None:
@@ -156,3 +160,57 @@ def test_snapshot_populates_the_complete_numeric_feature_families() -> None:
         f"command_semantic_self__{semantic}__count__60s" in row
         for semantic in COMMAND_CLASSES
     )
+
+
+def test_snapshot_neutralizes_commands_and_control_group_activity() -> None:
+    state = _State((1, 2))
+    stats = {field: 0.0 for field in STAT_ATTRIBUTES}
+    state.stats = {1: (100, stats), 2: (100, stats)}
+    player_one = SimpleNamespace(pid=1)
+    player_two = SimpleNamespace(pid=2)
+
+    for frame in (10, 20, 30):
+        state.game(event("ControlGroupEvent", frame=frame, player=player_one))
+    state.game(event("ControlGroupEvent", frame=10, player=player_two))
+    for frame in (10, 20):
+        state.game(
+            event(
+                "TargetPointCommandEvent",
+                frame=frame,
+                player=player_one,
+                has_ability=True,
+                ability_name="Attack",
+            )
+        )
+    state.game(
+        event(
+            "TargetPointCommandEvent",
+            frame=10,
+            player=player_two,
+            has_ability=True,
+            ability_name="Attack",
+        )
+    )
+
+    row = state.snapshot(
+        100,
+        {
+            "self_race": "Terr",
+            "enemy_race": "Prot",
+            "matchup": "PvT",
+            "map": "Test LE",
+            "patch": "5.0.16",
+        },
+    )
+
+    assert row is not None
+    assert row["behavior_self__control_group__all"] == 2
+    assert row["behavior_enemy__control_group__all"] == 2
+    assert row["behavior_diff__control_group__all"] == 0
+    assert row["command_semantic_self__tactical_control__count__all"] == 1.5
+    assert row["command_semantic_enemy__tactical_control__count__all"] == 1.5
+    assert row["command_semantic_diff__tactical_control__count__all"] == 0
+    assert row["command_total_self__rate_per_minute__all"] == row[
+        "command_total_enemy__rate_per_minute__all"
+    ]
+    assert row["command_total_diff__rate_per_minute__all"] == 0

@@ -42,7 +42,15 @@ COSMETIC_UPGRADE_PREFIXES = (
     "rewarddance",
     "spray",
 )
-COSMETIC_COMMAND_PREFIXES = (
+EXCLUDED_COMMAND_NAMES = frozenset(
+    {
+        "gather",
+        "lowersupplydepot",
+        "raisesupplydepot",
+        "returncargo",
+    }
+)
+EXCLUDED_COMMAND_PREFIXES = (
     "dance",
     "emote",
     "sprayprotoss",
@@ -197,11 +205,11 @@ def _is_cosmetic_upgrade(name: Any, loop: int) -> bool:
     return loop == 0 or normalized.startswith(COSMETIC_UPGRADE_PREFIXES)
 
 
-def _is_cosmetic_command(event: Any) -> bool:
-    if not bool(getattr(event, "has_ability", False)):
-        return False
+def _is_excluded_command(event: Any) -> bool:
     normalized = _normalized_name(getattr(event, "ability_name", ""))
-    return normalized.startswith(COSMETIC_COMMAND_PREFIXES)
+    return normalized in EXCLUDED_COMMAND_NAMES or normalized.startswith(
+        EXCLUDED_COMMAND_PREFIXES
+    )
 
 
 def _recent(values: list[int], cutoff: int, window: int | None = None) -> int:
@@ -298,7 +306,7 @@ class _State:
         if "ControlGroupEvent" in name:
             self.control_groups[pid].append(loop)
         if "CommandEvent" in name:
-            if _is_cosmetic_command(event):
+            if _is_excluded_command(event):
                 return
             semantic = _command_class(event)
             self.commands[pid][semantic].append(loop)
@@ -345,6 +353,7 @@ class _State:
             cutoff,
         )
         self._command_features(row, own, enemy, cutoff)
+        self._neutralize_noncompetitive_behavior(row)
         return row
 
     def _entities(self, pid: int) -> tuple[Counter[str], Counter[str]]:
@@ -398,6 +407,38 @@ class _State:
         row["command_total_self__rate_per_minute__all"] = own_rate
         row["command_total_enemy__rate_per_minute__all"] = enemy_rate
         row["command_total_diff__rate_per_minute__all"] = own_rate - enemy_rate
+
+    @staticmethod
+    def _neutralize_noncompetitive_behavior(row: dict[str, Any]) -> None:
+        # The frozen corpus lets protocol resolution, race-specific mechanics,
+        # APM, and control-group habits leak into win probability. Preserve a
+        # representative activity level for distribution compatibility, but
+        # make it identical on both sides so it cannot express an advantage.
+        for self_prefix, enemy_prefix, diff_prefix in (
+            ("behavior_self__", "behavior_enemy__", "behavior_diff__"),
+            (
+                "command_semantic_self__",
+                "command_semantic_enemy__",
+                "command_semantic_diff__",
+            ),
+            ("command_total_self__", "command_total_enemy__", "command_total_diff__"),
+        ):
+            for key in tuple(row):
+                if not key.startswith(self_prefix):
+                    continue
+                suffix = key[len(self_prefix) :]
+                enemy_key = f"{enemy_prefix}{suffix}"
+                left, right = row[key], row.get(enemy_key)
+                if not isinstance(left, (int, float)) or not isinstance(
+                    right, (int, float)
+                ):
+                    continue
+                neutral = (left + right) / 2
+                row[key] = neutral
+                row[enemy_key] = neutral
+                diff_key = f"{diff_prefix}{suffix}"
+                if diff_key in row:
+                    row[diff_key] = 0
 
 
 def build_n3_feature_frames(path: Path) -> list[dict[str, Any]]:
