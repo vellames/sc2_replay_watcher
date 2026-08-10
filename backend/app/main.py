@@ -148,7 +148,7 @@ def demo_replay() -> dict:
         return _demo_replay()
     except Exception as exc:
         raise HTTPException(
-            status_code=503, detail="O replay de demonstração não está disponível."
+            status_code=503, detail="The demo replay is unavailable."
         ) from exc
 
 
@@ -162,7 +162,7 @@ async def upload_replay(
             request, filename=filename, size=0, digest=None, result="rejected_extension"
         )
         raise HTTPException(
-            status_code=415, detail="Envie um arquivo .SC2Replay válido."
+            status_code=415, detail="Upload a valid .SC2Replay file."
         )
 
     content = await file.read(MAX_REPLAY_SIZE + 1)
@@ -175,7 +175,7 @@ async def upload_replay(
             result="rejected_size",
         )
         raise HTTPException(
-            status_code=413, detail="O replay excede o limite de 50 MB."
+            status_code=413, detail="The replay exceeds the 50 MB limit."
         )
 
     digest = sha256(content).hexdigest()
@@ -223,7 +223,7 @@ async def upload_replay(
         )
         raise HTTPException(
             status_code=422,
-            detail="Apenas replays 1v1 são suportados no momento.",
+            detail="Only 1v1 replays are currently supported.",
         ) from exc
     except Exception as exc:
         _record_upload(
@@ -235,7 +235,7 @@ async def upload_replay(
         )
         raise HTTPException(
             status_code=422,
-            detail="Não foi possível interpretar este replay. Ele pode estar corrompido ou usar uma versão ainda não suportada.",
+            detail="The replay could not be parsed. It may be corrupted or use an unsupported version.",
         ) from exc
     finally:
         if temp_path:
@@ -251,7 +251,7 @@ async def replay_win_probability(analysis_id: str) -> dict:
             return cached
     replay = _replay_for_analysis(analysis_id)
     if replay is None:
-        raise HTTPException(status_code=404, detail="O replay não está mais no cache.")
+        raise HTTPException(status_code=404, detail="The replay is no longer cached.")
     try:
         result = await run_in_threadpool(
             build_win_probability_series, replay, analysis_id

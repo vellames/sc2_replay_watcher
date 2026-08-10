@@ -10,12 +10,12 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
 
   return (
     <header className="topbar">
-      <Link className="brand" href="/" aria-label="SC2 Replay Watcher — início">
+      <Link className="brand" href="/" aria-label="SC2 Replay Watcher — home">
         <span className="brand-mark"><Swords size={18} /></span>
         <span><strong>SC2</strong> Replay Watcher</span>
         <span className="beta">ALPHA</span>
       </Link>
-      <nav className="top-actions" aria-label="Links do projeto">
+      <nav className="top-actions" aria-label="Project links">
         {compact && <Link className="new-replay-link" href="/">{t("header.newReplay")}</Link>}
         <div className="locale-switch" aria-label="Language"><Globe2 size={14} /><button className={locale === "pt" ? "active" : ""} onClick={() => setLocale("pt")} aria-pressed={locale === "pt"}>PT</button><span>/</span><button className={locale === "en" ? "active" : ""} onClick={() => setLocale("en")} aria-pressed={locale === "en"}>EN</button></div>
       </nav>

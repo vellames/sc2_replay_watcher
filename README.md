@@ -1,13 +1,15 @@
 # SC2 Replay Watcher
 
-MVP full-stack que transforma arquivos `.SC2Replay` em uma visualização tática 2D. O frontend oferece upload, reprodução da linha do tempo e inspeção das unidades; o backend compila o replay em estados do mundo com a `sc2_world_engine`.
+A full-stack MVP that transforms `.SC2Replay` files into an interactive 2D tactical view. The
+frontend handles uploads, timeline playback, and unit inspection; the backend compiles replays into
+world states with `sc2_world_engine`.
 
 ## Stack
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS
 - Backend: Python, FastAPI, `sc2_world_engine`
 
-## Rodando localmente
+## Local development
 
 ### Backend
 
@@ -19,7 +21,8 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8010
 ```
 
-A API fica em `http://localhost:8010` e a documentação em `http://localhost:8010/docs`.
+The API runs at `http://localhost:8010`, with interactive documentation at
+`http://localhost:8010/docs`.
 
 ### Frontend
 
@@ -30,22 +33,28 @@ npm install
 npm run dev
 ```
 
-Abra `http://localhost:3000`. A página inicial envia o replay ao FastAPI, que o compila com o projeto independente `../sc2_world_engine`. O backend adapta o `.sc2world` validado para o contrato do watcher; o frontend apenas reproduz e renderiza os estados recebidos. Depois do processamento, o app navega para `/watcher`, onde ficam mapa, timeline e controles.
+Open `http://localhost:3000`. The home page sends the replay to FastAPI, which compiles it with the
+versioned `sc2_world_engine` dependency. The backend adapts the validated `.sc2world` archive to the
+watcher contract; the frontend only plays and renders the resulting states. After processing, the
+app navigates to `/watcher`, which contains the map, timeline, and playback controls.
 
-A interface está disponível em português e inglês. O seletor `PT / EN` fica no cabeçalho e salva a preferência no navegador.
+The interface is available in English and Portuguese. The `PT / EN` selector is in the header and
+stores the selected language in the browser.
 
-## Camada de apresentação do SC2
+## StarCraft II presentation layer
 
-Nomes, aliases, estados e papéis visuais de unidades, estruturas e upgrades ficam centralizados em
-`frontend/src/lib/sc2-catalog.ts`. A UI nunca deve traduzir identificadores do replay diretamente:
+Unit, structure, and upgrade names, aliases, states, and visual roles are centralized in
+`frontend/src/lib/sc2-catalog.ts`. UI code must not translate raw replay identifiers directly:
 
-- `sc2Name` fornece o nome localizado e mantém fallback legível para conteúdo futuro;
-- `canonicalSc2Type` agrupa formas transitórias na composição (enterrado, voando, modo de cerco);
-- `sc2StateName` preserva essa forma como detalhe no inspector e no hover;
-- `sc2IconKey` garante a mesma silhueta tática no mapa, HUD, produção e drawer responsivo.
+- `sc2Name` provides localized names with a readable fallback for future content;
+- `canonicalSc2Type` groups transient forms in composition views, such as burrowed, flying, and
+  siege-mode variants;
+- `sc2StateName` preserves the transient form as a detail in inspectors and hover states;
+- `sc2IconKey` keeps tactical silhouettes consistent across the map, HUD, production views, and
+  responsive drawer.
 
-Ao incluir uma entidade, adicione o alias ao catálogo e um caso em `sc2-catalog.test.ts`. Para validar
-frontend, catálogo e build de produção:
+When adding an entity, add its alias to the catalog and a case to `sc2-catalog.test.ts`. Validate
+the frontend, catalog, and production build with:
 
 ```bash
 cd frontend
@@ -54,55 +63,60 @@ npm run lint
 npm run build
 ```
 
-Métricas reconstruídas ou inferidas precisam ser descritas como tal nos tooltips. Não apresente vida,
-escudo ou outro estado que o replay não registre como se fosse telemetria factual.
+Metrics that are reconstructed or inferred must be labeled accordingly in tooltips. Do not present
+health, shields, or any state absent from the replay as factual telemetry.
 
-## Replay de exemplo
+## Sample replay
 
-Use `samples/HSC-XXIX-Grand-Final-G4-2026.SC2Replay`. É o jogo 4 da Grand Final da HomeStory Cup XXIX: Serral vs Clem, uma partida de 34:24 jogada na versão 5.0.16.97425. A origem, os detalhes e o checksum estão documentados em `samples/README.md`.
+Use `samples/HSC-XXIX-Grand-Final-G4-2026.SC2Replay`. It is game 4 of the HomeStory Cup XXIX Grand
+Final between Serral and Clem, a 34:24 match played on version 5.0.16.97425. Provenance, match
+details, and the checksum are documented in `samples/README.md`.
 
-## Limitações atuais
+## Current limitations
 
-O formato de replay registra apenas amostras de posição em determinados eventos. Por isso, o movimento entre amostras é uma aproximação visual marcada como `estimated`, não uma reconstrução exata do motor do jogo. Terreno, visão e física detalhada ficam fora do escopo atual.
+The replay format records position samples only for certain events. Movement between samples is
+therefore a visual approximation marked as `estimated`, not an exact reconstruction of the
+StarCraft II simulation. Detailed terrain rendering, vision, and physics remain out of scope.
 
-O watcher exibe supply, banco, composição e valor do exército, renda, deltas entre jogadores,
-perdas, produção e build path sincronizado. A timeline separa tech, macro, movimentos e combates,
-mostra intervalos de supply block/confronto e plota o histórico da vantagem militar. Confrontos são
-clicáveis e abrem perdas de mineral, gás, supply, unidades e eficiência estimada da troca.
+The watcher displays supply, bank, composition, army value, income, player deltas, losses,
+production, and synchronized build paths. The timeline separates technology, macro, movement, and
+combat events; shows supply-block and engagement intervals; and plots military-advantage history.
+Engagements are interactive and expose mineral, gas, supply, and unit losses alongside estimated
+trade efficiency.
 
-O mapa possui filtros de camadas, zoom/pan, agrupamento semântico de exércitos, bases, atividade de
-combate, destinos e confiança das posições. As câmeras podem ser isoladas por jogador e, quando a
-camada está ativa, o HUD mostra ritmo derivado de atenção sem tratá-lo como APM.
+The map supports layer filters, zoom and pan, semantic grouping of armies and bases, combat
+activity, movement destinations, and position confidence. Player cameras can be isolated. When the
+camera layer is active, the HUD shows a derived attention rhythm without presenting it as APM.
 
-Atalhos do watcher:
+Watcher shortcuts:
 
-- `Space`: play/pause;
-- `←` / `→`: voltar/avançar 5 segundos;
-- `Shift` + `←` / `→`: voltar/avançar 1 segundo;
-- `[` / `]`: evento analítico relevante anterior/seguinte;
-- `Home` / `End`: início/fim do replay;
-- `Escape`: fechar o inspector.
+- `Space`: play or pause;
+- `←` / `→`: move backward or forward 5 seconds;
+- `Shift` + `←` / `→`: move backward or forward 1 second;
+- `[` / `]`: jump to the previous or next relevant analytical event;
+- `Home` / `End`: jump to the beginning or end of the replay;
+- `Escape`: close the inspector.
 
-Uploads repetidos com o mesmo conteúdo reutilizam um cache LRU pequeno identificado pelo SHA-256;
-a compilação pesada roda fora do event loop da API.
+Repeated uploads with identical content reuse a small SHA-256-keyed LRU cache. Heavy compilation
+runs outside the API event loop.
 
-Quando a referência `.s2ma` do replay está disponível no depot da Blizzard, a world engine monta um
-bootstrap estático com níveis do terreno, cliffs, rampas e bloqueios destrutíveis. O watcher desenha
-essa geometria antes do frame zero e usa o minimapa oficial apenas como asset de referência. Se o mapa
-não estiver disponível ou o download falhar, a resposta usa o cenário procedural sem interromper a
-leitura do replay.
+When a replay contains an available `.s2ma` depot reference, the world engine builds a static
+bootstrap containing terrain levels, cliffs, ramps, and destructible blockers. The watcher renders
+this geometry before frame zero and uses the official minimap only as a reference asset. If the map
+is unavailable or the download fails, the response falls back to a procedural scene without
+interrupting replay playback.
 
-Quando essas camadas estão presentes, movimentos terrestres estimados usam uma malha caminhável com
-clearance e corredores A* compartilhados por comando. Unidades voadoras continuam em linha direta e
-posições registradas pelo tracker nunca são substituídas pelo pathfinder.
+When these terrain layers are present, estimated ground movement uses a walkable mesh with
+clearance and shared A* corridors. Flying units continue in straight lines, and the pathfinder never
+replaces tracker-recorded positions.
 
-As câmeras dos jogadores usam as amostras originais de `CameraEvent`: o watcher mantém a última
-posição registrada até a próxima amostra e nunca interpola coordenadas entre dois eventos.
+Player cameras use the original `CameraEvent` samples. The watcher holds the latest recorded
+position until the next sample and never interpolates coordinates between camera events.
 
 ## License
 
 Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE).
-Noncommercial research, education, personal study and hobby use are permitted. Commercial use is
+Noncommercial research, education, personal study, and hobby use are permitted. Commercial use is
 not permitted without a separate license from the copyright holder.
 
 The bundled replay fixture is third-party material and is not licensed under PolyForm. See

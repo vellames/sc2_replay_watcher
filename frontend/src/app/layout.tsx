@@ -10,24 +10,24 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: "SC2 Replay Watcher",
-  description: "Visualize replays de StarCraft II em um mapa tático 2D.",
+  description: "Explore StarCraft II replays on an interactive 2D tactical map.",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     shortcut: "/favicon.svg",
   },
   openGraph: {
     title: "SC2 Replay Watcher",
-    description: "Veja a partida. Entenda o movimento.",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "SC2 Replay Watcher — mapa tático 2D" }],
+    description: "Watch the match. Understand the movement.",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "SC2 Replay Watcher — 2D tactical map" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "SC2 Replay Watcher",
-    description: "Veja a partida. Entenda o movimento.",
+    description: "Watch the match. Understand the movement.",
     images: ["/og.png"],
   },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="pt-BR"><body className={`${geistSans.variable} ${geistMono.variable}`}><I18nProvider><ReplayProvider>{children}</ReplayProvider></I18nProvider></body></html>;
+  return <html lang="en"><body className={`${geistSans.variable} ${geistMono.variable}`}><I18nProvider><ReplayProvider>{children}</ReplayProvider></I18nProvider></body></html>;
 }

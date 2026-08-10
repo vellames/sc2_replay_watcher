@@ -75,7 +75,7 @@ def test_rejects_non_1v1_with_clear_message(monkeypatch) -> None:
 
     assert response.status_code == 422
     assert response.json() == {
-        "detail": "Apenas replays 1v1 são suportados no momento."
+        "detail": "Only 1v1 replays are currently supported."
     }
 
 
