@@ -5,6 +5,7 @@ from app import win_probability
 
 SCHEMA = {
     "model": "fixture-model",
+    "max_batch_size": 256,
     "required_features": [
         "time_seconds",
         "self_race",
@@ -109,7 +110,27 @@ def test_series_batches_predictions_and_returns_both_players(monkeypatch) -> Non
 
     assert len(calls) == 1
     assert result["status"] == "ready"
+    assert result["provider"] == "n3"
     assert result["cadenceSeconds"] == 0.25
     assert result["points"][0] == {"time": 0.0, "playerOne": 0.4, "playerTwo": 0.6}
     assert result["points"][2]["time"] == 0.5
     assert result["points"][2]["playerOne"] == pytest.approx(0.44)
+
+
+def test_n3_is_the_default_provider(monkeypatch) -> None:
+    monkeypatch.delenv("SC2_WINPROB_PROVIDER", raising=False)
+    monkeypatch.delenv("SC2_WINPROB_URL", raising=False)
+    monkeypatch.delenv("SC2_N3_URL", raising=False)
+
+    assert win_probability._provider_name() == "n3"
+    assert win_probability._base_url() == win_probability.N3_BASE_URL
+    assert win_probability._batch_size({"max_batch_size": 256}) == 256
+
+
+def test_lightgbm_remains_configurable(monkeypatch) -> None:
+    monkeypatch.setenv("SC2_WINPROB_PROVIDER", "lightgbm")
+    monkeypatch.delenv("SC2_WINPROB_URL", raising=False)
+    monkeypatch.delenv("SC2_LIGHTGBM_URL", raising=False)
+
+    assert win_probability._base_url() == win_probability.LIGHTGBM_BASE_URL
+    assert win_probability._batch_size({"max_batch_size": 64}) == 64

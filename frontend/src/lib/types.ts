@@ -255,6 +255,8 @@ export type ReplayData = {
 export type WinProbabilitySeries = {
   status: "loading" | "ready" | "unavailable";
   model?: string;
+  modelSha256?: string | null;
+  provider?: "n3" | "lightgbm";
   perspectivePlayerId?: number;
   cadenceSeconds: number;
   experimental: boolean;

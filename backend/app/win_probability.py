@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Any, Iterator
 
 
-DEFAULT_BASE_URL = "https://c-vellames--sc2-winprob-lightgbm-v1.modal.run"
-BATCH_SIZE = 64
+N3_BASE_URL = "https://c-vellames--sc2-winprob-n3-v1.modal.run"
+LIGHTGBM_BASE_URL = "https://c-vellames--sc2-winprob-lightgbm-v1.modal.run"
 CADENCE_SECONDS = 0.25
 
 _STAT_FEATURES = {
@@ -34,7 +34,35 @@ class WinProbabilityUnavailable(RuntimeError):
 
 
 def _base_url() -> str:
-    return os.getenv("SC2_WINPROB_URL", DEFAULT_BASE_URL).rstrip("/")
+    explicit = os.getenv("SC2_WINPROB_URL")
+    if explicit:
+        return explicit.rstrip("/")
+    if _provider_name() == "lightgbm":
+        return os.getenv("SC2_LIGHTGBM_URL", LIGHTGBM_BASE_URL).rstrip("/")
+    return os.getenv("SC2_N3_URL", N3_BASE_URL).rstrip("/")
+
+
+def _provider_name() -> str:
+    value = os.getenv("SC2_WINPROB_PROVIDER", "n3").strip().lower()
+    return value if value in {"n3", "lightgbm"} else "n3"
+
+
+def _batch_size(schema: dict[str, Any]) -> int:
+    fallback = 256 if _provider_name() == "n3" else 64
+    value = schema.get("max_batch_size", fallback)
+    try:
+        return max(1, min(fallback, int(value)))
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _worker_count() -> int:
+    fallback = 1 if _provider_name() == "n3" else 8
+    try:
+        configured = int(os.getenv("SC2_WINPROB_CONCURRENCY", str(fallback)))
+    except ValueError:
+        configured = fallback
+    return max(1, min(8, configured))
 
 
 @lru_cache(maxsize=1)
@@ -231,11 +259,14 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
     points: list[dict[str, float]] = []
     batches: list[list[tuple[float, dict[str, Any]]]] = []
     batch: list[tuple[float, dict[str, Any]]] = []
-    model = str(schema.get("model", "SC2-WinProb-LightGBM-v1"))
+    default_model = "SC2-WinProb-N3-v1" if _provider_name() == "n3" else "SC2-WinProb-LightGBM-v1"
+    model = str(schema.get("model", default_model))
+    model_sha256: str | None = None
+    batch_size = _batch_size(schema)
 
     def predict(
         current: list[tuple[float, dict[str, Any]]],
-    ) -> tuple[str, list[dict[str, float]]]:
+    ) -> tuple[str, str | None, list[dict[str, float]]]:
         response = _request_json(
             "/v1/predict",
             {
@@ -263,28 +294,30 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
                     "playerTwo": 1.0 - probability,
                 }
             )
-        return str(response.get("model") or model), batch_points
+        fingerprint = response.get("model_sha256") or response.get("ensemble_sha256")
+        return (
+            str(response.get("model") or model),
+            str(fingerprint) if fingerprint else None,
+            batch_points,
+        )
 
     for item in iter_snapshots(replay, schema):
         batch.append(item)
-        if len(batch) == BATCH_SIZE:
+        if len(batch) == batch_size:
             batches.append(batch)
             batch = []
     if batch:
         batches.append(batch)
-    try:
-        configured_workers = int(os.getenv("SC2_WINPROB_CONCURRENCY", "8"))
-    except ValueError:
-        configured_workers = 8
-    worker_count = max(1, min(8, configured_workers))
-    with ThreadPoolExecutor(max_workers=worker_count) as executor:
-        for batch_model, batch_points in executor.map(predict, batches):
+    with ThreadPoolExecutor(max_workers=_worker_count()) as executor:
+        for batch_model, batch_fingerprint, batch_points in executor.map(predict, batches):
             model = batch_model
+            model_sha256 = batch_fingerprint or model_sha256
             points.extend(batch_points)
     return {
         "status": "ready",
         "model": model,
-        "modelSha256": None,
+        "modelSha256": model_sha256,
+        "provider": _provider_name(),
         "perspectivePlayerId": int(replay["players"][0]["id"]),
         "cadenceSeconds": CADENCE_SECONDS,
         "experimental": True,

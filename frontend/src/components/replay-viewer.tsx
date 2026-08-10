@@ -204,7 +204,7 @@ export function ReplayViewer() {
   const [timelineHint, setTimelineHint] = useState<{ label: string; position: number } | null>(null);
   const [comparisonView, setComparisonView] = useState<ComparisonView | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [winProbability, setWinProbability] = useState<WinProbabilitySeries | null>(null);
+  const [winProbabilityResult, setWinProbabilityResult] = useState<{ analysisId: string; series: WinProbabilitySeries } | null>(null);
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     terrain: true,
     army: true,
@@ -272,16 +272,17 @@ export function ReplayViewer() {
     if (!replay?.meta.analysisId) {
       return;
     }
+    const analysisId = replay.meta.analysisId;
     const controller = new AbortController();
-    fetch(`${API_URL}/api/replays/${encodeURIComponent(replay.meta.analysisId)}/win-probability`, { signal: controller.signal })
+    fetch(`${API_URL}/api/replays/${encodeURIComponent(analysisId)}/win-probability`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("Win probability request failed");
         return await response.json() as WinProbabilitySeries;
       })
-      .then(setWinProbability)
+      .then((series) => setWinProbabilityResult({ analysisId, series }))
       .catch((error) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
-        setWinProbability({ status: "unavailable", cadenceSeconds: 0.25, experimental: true, points: [] });
+        setWinProbabilityResult({ analysisId, series: { status: "unavailable", cadenceSeconds: 0.25, experimental: true, points: [] } });
       });
     return () => controller.abort();
   }, [replay?.meta.analysisId]);
@@ -386,6 +387,11 @@ export function ReplayViewer() {
     }).join(" ");
     return { positive: points("positive"), negative: points("negative") };
   }, [replay]);
+
+  const winProbability = useMemo<WinProbabilitySeries>(() => {
+    if (winProbabilityResult && winProbabilityResult.analysisId === replay?.meta.analysisId) return winProbabilityResult.series;
+    return { status: "loading", model: "SC2-WinProb-N3-v1", provider: "n3", cadenceSeconds: 0.25, experimental: true, points: [] };
+  }, [replay?.meta.analysisId, winProbabilityResult]);
 
   const currentWinProbability = useMemo(() => {
     if (winProbability?.status !== "ready" || winProbability.points.length === 0) return null;
@@ -1202,12 +1208,12 @@ export function ReplayViewer() {
             {replay.players[1] && renderPlayerPanel(replay.players[1], "right")}
           </div>
 
-          {winProbability?.status !== "unavailable" && (
-            <div className={`win-probability ${winProbability?.status ?? "loading"}`} aria-live="polite">
+          {winProbability.status !== "unavailable" && (
+            <div className={`win-probability ${winProbability.status}`} aria-live="polite" aria-busy={winProbability.status === "loading"}>
               <div className="win-probability-heading">
-                <span style={{ "--win-color": replay.players[0]?.color } as React.CSSProperties}><i />{replay.players[0]?.name}<b>{currentWinProbability ? `${Math.round(currentWinProbability.playerOne * 100)}%` : "—"}</b></span>
-                <small><Activity size={11} />{t("watcher.winProbability")}<InfoTip label={t("watcher.winProbability")}>{t("watcher.help.winProbability")}</InfoTip></small>
-                <span style={{ "--win-color": replay.players[1]?.color } as React.CSSProperties}><b>{currentWinProbability ? `${Math.round(currentWinProbability.playerTwo * 100)}%` : "—"}</b>{replay.players[1]?.name}<i /></span>
+                <span style={{ "--win-color": replay.players[0]?.color } as React.CSSProperties}><i />{replay.players[0]?.name}<b>{currentWinProbability ? `${Math.round(currentWinProbability.playerOne * 100)}%` : "···"}</b></span>
+                <small><Activity size={11} />{winProbability.status === "loading" ? t("watcher.loadingWinModel") : t("watcher.winProbability")}<InfoTip label={t("watcher.winProbability")}>{t("watcher.help.winProbability")}</InfoTip></small>
+                <span style={{ "--win-color": replay.players[1]?.color } as React.CSSProperties}><b>{currentWinProbability ? `${Math.round(currentWinProbability.playerTwo * 100)}%` : "···"}</b>{replay.players[1]?.name}<i /></span>
               </div>
               <div className="win-probability-track" role="meter" aria-label={t("watcher.winProbability")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentWinProbability ? Math.round(currentWinProbability.playerOne * 100) : undefined}>
                 <span style={{ width: `${currentWinProbability ? currentWinProbability.playerOne * 100 : 50}%`, background: replay.players[0]?.color }} />
