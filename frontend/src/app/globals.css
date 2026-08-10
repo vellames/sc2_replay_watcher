@@ -85,7 +85,7 @@ main { width: min(1400px, calc(100% - 40px)); margin: 0 auto; }
 .winner small { font: 600 8px var(--font-geist-mono); letter-spacing: .1em; color: #796f50; margin-bottom: 3px; }
 .winner strong { font-size: 10px; color: #d5c68c; }
 .map-stage { position: relative; min-width: 0; overflow: hidden; container-type: size; background: radial-gradient(circle at 30% 30%, rgba(44, 91, 111, .15), transparent 26%), radial-gradient(circle at 70% 65%, rgba(36, 85, 105, .12), transparent 30%), #081018; }
-.macro-viewer-grid { grid-template-columns: clamp(245px, 20vw, 310px) minmax(0, 1fr) clamp(245px, 20vw, 310px); }
+.macro-viewer-grid { grid-template-columns: clamp(270px, 18vw, 360px) minmax(0, 1fr) clamp(270px, 18vw, 360px); }
 .macro-panel { padding: 16px 16px 20px; }
 .player-side { min-width: 0; overflow-y: auto; }
 .player-side-right { border-right: 0; border-left: 1px solid var(--line); }
@@ -634,7 +634,19 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
 .research-callout > div small { color: #6f6ba6; }
 .research-callout aside span { color: #77769a; border-color: rgba(137, 126, 216, .13); background: rgba(24, 21, 47, .42); }
 .research-callout aside svg { color: #9188db; }
-.watcher-shell { height: 100dvh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: #05090e; }
+.watcher-shell {
+  --watcher-text-micro: clamp(9px, .38vw, 10px);
+  --watcher-text-label: clamp(10px, .42vw, 11px);
+  --watcher-text-secondary: clamp(11px, .46vw, 12px);
+  --watcher-text-body: clamp(12px, .5vw, 13px);
+  --watcher-text-value: clamp(14px, .58vw, 15px);
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #05090e;
+}
 .watcher-main { width: 100%; max-width: none; min-height: 0; flex: 1; padding: 0; display: flex; }
 .watcher-main .workspace { width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; display: grid; grid-template-rows: 78px minmax(0, 1fr) 70px; box-shadow: none; }
 .watcher-main .viewer-grid { min-height: 0; height: 100%; }
@@ -642,6 +654,107 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
 .watcher-main .map-stage { min-height: 0; }
 .watcher-main .match-meta { max-width: min(28vw, 320px); }
 .watcher-main .match-meta small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.watcher-shell .matchbar small,
+.watcher-shell .panel-heading,
+.watcher-shell .legend > small { font-size: var(--watcher-text-label); }
+.watcher-shell .map-title strong { font-size: var(--watcher-text-value); }
+.watcher-shell .player { font-size: var(--watcher-text-body); }
+.watcher-shell .player div small,
+.watcher-shell .vs { font-size: var(--watcher-text-label); }
+.watcher-shell .match-meta strong { font-size: var(--watcher-text-value); }
+.watcher-shell .side-player-identity > span { font-size: var(--watcher-text-value); }
+.watcher-shell .side-player-identity > small,
+.watcher-shell .side-macro-player .macro-player-title > span { font-size: var(--watcher-text-label); }
+.watcher-shell .info-tip-card b,
+.watcher-shell .info-tip-card small,
+.watcher-shell .icon-legend-list > span,
+.watcher-shell .icon-legend-list > em { font-size: var(--watcher-text-label); }
+.watcher-shell .state-pulse span { font-size: var(--watcher-text-secondary); }
+.watcher-shell .macro-player-title > span { font-size: var(--watcher-text-secondary); }
+.watcher-shell .macro-player-title > span em { font-size: var(--watcher-text-micro); }
+.watcher-shell .macro-player-title > b { font-size: var(--watcher-text-value); }
+.watcher-shell .macro-player-title > b small { font-size: var(--watcher-text-secondary); }
+.watcher-shell .hud-section-label,
+.watcher-shell .resource-bank small { font-size: var(--watcher-text-label); }
+.watcher-shell .resource-bank b { font-size: var(--watcher-text-body); }
+.watcher-shell .macro-metrics small { font-size: var(--watcher-text-label); }
+.watcher-shell .macro-metrics strong { font-size: var(--watcher-text-value); }
+.watcher-shell .macro-metrics strong em,
+.watcher-shell .macro-metrics > div > span,
+.watcher-shell .macro-metrics .metric-detail > span > small,
+.watcher-shell .macro-metrics .metric-commitment,
+.watcher-shell .macro-metrics .metric-delta { font-size: var(--watcher-text-micro); }
+.watcher-shell .production-title,
+.watcher-shell .production-order strong,
+.watcher-shell .queue-empty,
+.watcher-shell .queue-more { font-size: var(--watcher-text-label); }
+.watcher-shell .production-order small { font-size: var(--watcher-text-micro); }
+.watcher-shell .production-order > b { font-size: var(--watcher-text-label); }
+.watcher-shell .camera-focus span,
+.watcher-shell .camera-focus small,
+.watcher-shell .production-badge,
+.watcher-shell .addon-badge { font-size: var(--watcher-text-micro); }
+.watcher-shell .army-cluster b,
+.watcher-shell .worker-cluster b,
+.watcher-shell .structure-cluster b,
+.watcher-shell .resource-cluster b,
+.watcher-shell .base-marker b,
+.watcher-shell .base-marker small,
+.watcher-shell .engagement-marker b { font-size: var(--watcher-text-label); }
+.watcher-shell .map-toolbar button,
+.watcher-shell .map-toolbar > b,
+.watcher-shell .map-analysis-toolbar button { font-size: var(--watcher-text-label); }
+.watcher-shell .replay-chat-trigger span,
+.watcher-shell .comparison-overlay > header small,
+.watcher-shell .comparison-player-title small,
+.watcher-shell .comparison-overlay > footer span,
+.watcher-shell .comparison-overlay > footer button { font-size: var(--watcher-text-label); }
+.watcher-shell .comparison-overlay > header strong,
+.watcher-shell .comparison-player-title span,
+.watcher-shell .comparison-entity-card strong,
+.watcher-shell .comparison-upgrade-card strong { font-size: var(--watcher-text-secondary); }
+.watcher-shell .comparison-entity-card small,
+.watcher-shell .comparison-upgrade-card small { font-size: var(--watcher-text-micro); }
+.watcher-shell .general-state strong { font-size: var(--watcher-text-body); }
+.watcher-shell .general-state small,
+.watcher-shell .general-state > em,
+.watcher-shell .general-state span,
+.watcher-shell .next-event small,
+.watcher-shell .next-event strong,
+.watcher-shell .coordinates { font-size: var(--watcher-text-label); }
+.watcher-shell .selection-inspector header small,
+.watcher-shell .selection-inspector header em,
+.watcher-shell .inspector-economy > div small,
+.watcher-shell .inspector-economy > span,
+.watcher-shell .inspector-addon span,
+.watcher-shell .inspector-addon small,
+.watcher-shell .inspector-section h3,
+.watcher-shell .inspector-section h3 > em,
+.watcher-shell .composition-row > small,
+.watcher-shell .inspector-production p,
+.watcher-shell .inspector-order b,
+.watcher-shell .inspector-order small,
+.watcher-shell .position-section > div,
+.watcher-shell .position-section > small { font-size: var(--watcher-text-micro); }
+.watcher-shell .selection-inspector header strong,
+.watcher-shell .inspector-addon strong,
+.watcher-shell .composition-row > span b,
+.watcher-shell .composition-row > strong { font-size: var(--watcher-text-label); }
+.watcher-shell .inspector-economy > div strong { font-size: var(--watcher-text-value); }
+.watcher-shell .win-probability-heading > span,
+.watcher-shell .win-probability-heading > small,
+.watcher-shell .timeline-event-tooltip,
+.watcher-shell kbd { font-size: var(--watcher-text-label); }
+.watcher-shell .control-time,
+.watcher-shell .speed select { font-size: var(--watcher-text-secondary); }
+.watcher-shell .compact-scoreboard header span,
+.watcher-shell .compact-scoreboard header small,
+.watcher-shell .compact-player-drawer > header small,
+.watcher-shell .compact-player-metrics small { font-size: var(--watcher-text-micro); }
+.watcher-shell .compact-scoreboard header strong,
+.watcher-shell .compact-player-drawer > header strong,
+.watcher-shell .compact-player-metrics b,
+.watcher-shell .compact-scoreboard section > div span { font-size: var(--watcher-text-label); }
 .watcher-breadcrumb { min-height: 36px; display: flex; align-items: center; gap: 9px; color: #405766; font: 500 9px var(--font-geist-mono); }
 .watcher-breadcrumb a { color: #7890a0; text-decoration: none; display: flex; align-items: center; gap: 6px; }
 .watcher-breadcrumb strong { color: #5c7180; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -660,7 +773,7 @@ kbd { color: #8298a7; background: #111d27; border: 1px solid #283945; padding: 2
 @keyframes winner-reveal-frame { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
 @keyframes winner-reveal-content { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-@media (max-width: 1300px) {
+@media (max-width: 1700px) {
   .map-toolbar button span { display: none; }
   .map-toolbar .camera-player-toggle span { display: inline; }
   .comparison-backdrop { padding: 48px 18px 28px; }
