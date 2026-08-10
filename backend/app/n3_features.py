@@ -34,6 +34,10 @@ COSMETIC_UPGRADE_PREFIXES = (
     "spray",
 )
 COSMETIC_COMMAND_TOKENS = ("dance", "emote", "spray", "taunt")
+ENTITY_ALIASES = {
+    "SupplyDepotLowered": "SupplyDepot",
+    "SupplyDepotRaised": "SupplyDepot",
+}
 
 # Names in the frozen N3 contract mapped to sc2reader's PlayerStatsEvent API.
 STAT_ATTRIBUTES = {
@@ -158,6 +162,11 @@ def _normalized_name(value: Any) -> str:
     return str(value or "").lower().replace(" ", "")
 
 
+def _canonical_entity(name: Any) -> str:
+    value = str(name or "Unknown")
+    return ENTITY_ALIASES.get(value, value)
+
+
 def _is_cosmetic_entity(name: Any) -> bool:
     normalized = _normalized_name(name)
     return normalized.startswith(COSMETIC_ENTITY_PREFIXES)
@@ -209,7 +218,7 @@ class _State:
         loop = int(getattr(event, "frame", 0) or 0)
         unit_id = int(getattr(event, "unit_id", 0) or 0)
         if name in {"UnitBornEvent", "UnitInitEvent"}:
-            unit_type = str(getattr(event, "unit_type_name", "Unknown"))
+            unit_type = _canonical_entity(getattr(event, "unit_type_name", "Unknown"))
             if _is_cosmetic_entity(unit_type):
                 return
             owner = _owner_id(event)
@@ -225,7 +234,9 @@ class _State:
         elif name == "UnitTypeChangeEvent":
             unit = self.units.get(unit_id)
             if unit:
-                unit.unit_type = str(getattr(event, "unit_type_name", "Unknown"))
+                unit.unit_type = _canonical_entity(
+                    getattr(event, "unit_type_name", "Unknown")
+                )
         elif name == "UnitOwnerChangeEvent":
             unit = self.units.get(unit_id)
             if unit:

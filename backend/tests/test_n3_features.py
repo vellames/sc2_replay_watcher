@@ -4,6 +4,7 @@ from app.n3_features import (
     COMMAND_CLASSES,
     STAT_ATTRIBUTES,
     _State,
+    _canonical_entity,
     _command_class,
     _is_cosmetic_command,
     _is_cosmetic_entity,
@@ -44,6 +45,12 @@ def test_cosmetic_signals_are_excluded_from_inference_features() -> None:
     assert not _is_cosmetic_command(command("Attack"))
 
 
+def test_supply_depot_modes_share_one_inference_entity() -> None:
+    assert _canonical_entity("SupplyDepot") == "SupplyDepot"
+    assert _canonical_entity("SupplyDepotLowered") == "SupplyDepot"
+    assert _canonical_entity("SupplyDepotRaised") == "SupplyDepot"
+
+
 def test_state_does_not_count_cosmetic_tracker_or_command_events() -> None:
     state = _State((1, 2))
     player = SimpleNamespace(pid=1)
@@ -55,6 +62,23 @@ def test_state_does_not_count_cosmetic_tracker_or_command_events() -> None:
             unit_id=10,
             unit_type_name="BeaconArmy",
             unit_controller=player,
+        )
+    )
+    state.tracker(
+        event(
+            "UnitBornEvent",
+            frame=20,
+            unit_id=20,
+            unit_type_name="SupplyDepotLowered",
+            unit_controller=player,
+        )
+    )
+    state.tracker(
+        event(
+            "UnitTypeChangeEvent",
+            frame=30,
+            unit_id=20,
+            unit_type_name="SupplyDepotRaised",
         )
     )
     state.tracker(
@@ -75,9 +99,9 @@ def test_state_does_not_count_cosmetic_tracker_or_command_events() -> None:
         )
     )
 
-    assert state.units == {}
+    assert state.units[20].unit_type == "SupplyDepot"
     assert state.upgrades[1] == {}
-    assert state.flow[1]["born"] == []
+    assert state.flow[1]["born"] == [20]
     assert state.flow[1]["upgrade"] == []
     assert state.commands[1]["special_ability"] == []
     assert state.commands[1]["__total__"] == []
