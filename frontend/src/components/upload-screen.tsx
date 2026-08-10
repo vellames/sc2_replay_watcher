@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, BrainCircuit, Crosshair, Factory, FileUp, FlaskConical, HeartHandshake, History, Map, Play, Sparkles, Upload, Zap } from "lucide-react";
+import { Activity, BookOpen, BrainCircuit, Crosshair, Factory, FileUp, FlaskConical, HeartHandshake, History, Map, PackageOpen, Play, Sparkles, Upload, Zap } from "lucide-react";
 
 import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
@@ -145,6 +145,12 @@ export function UploadScreen() {
           <span className="community-icon"><HeartHandshake size={25} /></span>
           <div><small>{t("community.eyebrow")}</small><strong>{t("community.title")}</strong><p>{t("community.text")}</p></div>
           <aside><span><i />LOTV · 1V1</span><span><Activity size={10} />{t("community.evolving")}</span><span><Sparkles size={10} />{t("community.feedback")}</span></aside>
+        </section>
+
+        <section className="community-callout research-callout">
+          <span className="community-icon research-icon"><BrainCircuit size={25} /></span>
+          <div><small>{t("research.eyebrow")}</small><strong>{t("research.title")}</strong><p>{t("research.text")}</p></div>
+          <aside><span><PackageOpen size={10} />{t("research.weights")}</span><span><BookOpen size={10} />{t("research.paper")}</span></aside>
         </section>
       </main>
       <SiteFooter />
