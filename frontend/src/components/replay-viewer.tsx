@@ -100,6 +100,13 @@ function formatLocaleNumber(value: number, locale: "pt" | "en") {
   return new Intl.NumberFormat(locale === "pt" ? "pt-BR" : "en-US", { maximumFractionDigits: 1 }).format(value);
 }
 
+function formatProbability(value: number, locale: "pt" | "en") {
+  return new Intl.NumberFormat(locale === "pt" ? "pt-BR" : "en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value * 100);
+}
+
 function InfoTip({ label, side = "left", children }: { label: string; side?: "left" | "right"; children: React.ReactNode }) {
   const triggerRef = useRef<HTMLSpanElement>(null);
   const tooltipId = useId();
@@ -137,6 +144,7 @@ function WinProbabilityHistory({
   currentTime,
   players,
   label,
+  locale,
   onSeek,
 }: {
   points: WinProbabilityPoint[];
@@ -144,6 +152,7 @@ function WinProbabilityHistory({
   currentTime: number;
   players: Array<{ name: string; color: string }>;
   label: string;
+  locale: "pt" | "en";
   onSeek: (time: number) => void;
 }) {
   const [hover, setHover] = useState<{ x: number; time: number; point: WinProbabilityPoint } | null>(null);
@@ -197,8 +206,8 @@ function WinProbabilityHistory({
       <span className="win-history-hover-needle" style={{ left: `${hover.x}%` }} />
       <span className="win-history-tooltip" role="tooltip" style={{ "--hover-x": `${hover.x}%` } as React.CSSProperties}>
         <b>{formatTime(hover.time)}</b>
-        <em style={{ color: players[0]?.color }}>{players[0]?.name} {Math.round(hover.point.playerOne * 100)}%</em>
-        <em style={{ color: players[1]?.color }}>{Math.round(hover.point.playerTwo * 100)}% {players[1]?.name}</em>
+        <em style={{ color: players[0]?.color }}>{players[0]?.name} {formatProbability(hover.point.playerOne, locale)}%</em>
+        <em style={{ color: players[1]?.color }}>{formatProbability(hover.point.playerTwo, locale)}% {players[1]?.name}</em>
       </span>
     </>}
   </div>;
@@ -965,8 +974,8 @@ export function ReplayViewer() {
             <header>
               <div><Activity size={12} /><span>{t("watcher.engagementProbability")}</span><small>N3 · 4 Hz</small></div>
               {fightStartProbability && fightEndProbability && <div className="engagement-probability-legend">
-                <span style={{ "--probability-color": replay.players[0]?.color } as React.CSSProperties}><i />{replay.players[0]?.name}<b>{Math.round(fightStartProbability.playerOne * 100)}% → {Math.round(fightEndProbability.playerOne * 100)}%</b></span>
-                <span style={{ "--probability-color": replay.players[1]?.color } as React.CSSProperties}><i />{replay.players[1]?.name}<b>{Math.round(fightStartProbability.playerTwo * 100)}% → {Math.round(fightEndProbability.playerTwo * 100)}%</b></span>
+                <span style={{ "--probability-color": replay.players[0]?.color } as React.CSSProperties}><i />{replay.players[0]?.name}<b>{formatProbability(fightStartProbability.playerOne, locale)}% → {formatProbability(fightEndProbability.playerOne, locale)}%</b></span>
+                <span style={{ "--probability-color": replay.players[1]?.color } as React.CSSProperties}><i />{replay.players[1]?.name}<b>{formatProbability(fightStartProbability.playerTwo, locale)}% → {formatProbability(fightEndProbability.playerTwo, locale)}%</b></span>
               </div>}
             </header>
             {fightProbabilities.length > 1 ? <div className="engagement-probability-chart">
@@ -1329,15 +1338,15 @@ export function ReplayViewer() {
           {winProbability.status !== "unavailable" && (
             <div className={`win-probability ${winProbability.status}`} aria-live="polite" aria-busy={winProbability.status === "loading"}>
               <div className="win-probability-heading">
-                <span style={{ "--win-color": replay.players[0]?.color } as React.CSSProperties}><i />{replay.players[0]?.name}<b>{currentWinProbability ? `${Math.round(currentWinProbability.playerOne * 100)}%` : "···"}</b></span>
+                <span style={{ "--win-color": replay.players[0]?.color } as React.CSSProperties}><i />{replay.players[0]?.name}<b>{currentWinProbability ? `${formatProbability(currentWinProbability.playerOne, locale)}%` : "···"}</b></span>
                 <small><Activity size={11} />{winProbability.status === "loading" ? t("watcher.loadingWinModel") : t("watcher.winProbability")}<InfoTip label={t("watcher.winProbability")}>{t("watcher.help.winProbability")}</InfoTip></small>
-                <span style={{ "--win-color": replay.players[1]?.color } as React.CSSProperties}><b>{currentWinProbability ? `${Math.round(currentWinProbability.playerTwo * 100)}%` : "···"}</b>{replay.players[1]?.name}<i /></span>
+                <span style={{ "--win-color": replay.players[1]?.color } as React.CSSProperties}><b>{currentWinProbability ? `${formatProbability(currentWinProbability.playerTwo, locale)}%` : "···"}</b>{replay.players[1]?.name}<i /></span>
               </div>
               <div className="win-probability-track" role="meter" aria-label={t("watcher.winProbability")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentWinProbability ? Math.round(currentWinProbability.playerOne * 100) : undefined}>
                 <span style={{ width: `${currentWinProbability ? currentWinProbability.playerOne * 100 : 50}%`, background: replay.players[0]?.color }} />
                 <span style={{ background: replay.players[1]?.color }} />
               </div>
-              {winProbability.status === "ready" && winProbability.points.length > 1 && <WinProbabilityHistory points={winProbability.points} duration={replay.meta.duration} currentTime={currentTime} players={replay.players.slice(0, 2)} label={t("watcher.winProbabilityHistory")} onSeek={(time) => { setCurrentTime(time); setPlaying(false); }} />}
+              {winProbability.status === "ready" && winProbability.points.length > 1 && <WinProbabilityHistory points={winProbability.points} duration={replay.meta.duration} currentTime={currentTime} players={replay.players.slice(0, 2)} label={t("watcher.winProbabilityHistory")} locale={locale} onSeek={(time) => { setCurrentTime(time); setPlaying(false); }} />}
             </div>
           )}
           <div className="controls">
