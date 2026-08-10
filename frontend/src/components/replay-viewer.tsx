@@ -69,9 +69,10 @@ import { SiteHeader } from "@/components/site-chrome";
 import { TerrainLayer } from "@/components/terrain-layer";
 import { TimelineEventLayer, type TimelineEventPresentation } from "@/components/timeline-event-layer";
 import { createIsometricProjection, playableBounds, projectedHeading } from "@/lib/map-projection";
+import { createTerrainNavigator } from "@/lib/terrain-navigation";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { engagementLossAt } from "@/lib/engagement-progress";
-import { sc2AttackVisual } from "@/lib/sc2-3d-assets";
+import { sc2AttackVisual, sc2ModelAsset } from "@/lib/sc2-3d-assets";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayDeath, ReplayProduction, ReplayUnit } from "@/lib/types";
 
@@ -292,6 +293,11 @@ export function ReplayViewer() {
     return { currentFrame: current, nextFrame: next, frameProgress: progress };
   }, [replay, currentTime]);
 
+  const terrainNavigator = useMemo(
+    () => replay?.mapGeometry ? createTerrainNavigator(replay.mapGeometry) : null,
+    [replay],
+  );
+
   const renderedUnits = useMemo(() => {
     if (!currentFrame || !nextFrame || frameProgress <= 0) return currentFrame?.units ?? [];
     const nextUnits = new Map(nextFrame.units.map((unit) => [unit.id, unit]));
@@ -302,17 +308,27 @@ export function ReplayViewer() {
       const deltaX = target.x - unit.x;
       const deltaY = target.y - unit.y;
       if (Math.abs(deltaX) < 0.001 && Math.abs(deltaY) < 0.001) return unit;
+      const asset = sc2ModelAsset(unit.type);
+      const followsTerrain = mapView === "3d" && terrainNavigator && asset.elevation !== "air" && asset.elevation !== "high-air";
+      const position = followsTerrain
+        ? terrainNavigator.pointBetween(unit, target, frameProgress)
+        : { x: unit.x + deltaX * frameProgress, y: unit.y + deltaY * frameProgress };
+      const nextPosition = followsTerrain
+        ? terrainNavigator.pointBetween(unit, target, Math.min(1, frameProgress + .01))
+        : target;
+      const headingDeltaX = nextPosition.x - position.x;
+      const headingDeltaY = nextPosition.y - position.y;
       return {
         ...unit,
-        x: unit.x + deltaX * frameProgress,
-        y: unit.y + deltaY * frameProgress,
+        x: position.x,
+        y: position.y,
         isMoving: true,
-        heading: Math.atan2(deltaY, deltaX) * (180 / Math.PI),
+        heading: Math.atan2(headingDeltaY || deltaY, headingDeltaX || deltaX) * (180 / Math.PI),
         targetX: unit.targetX ?? target.x,
         targetY: unit.targetY ?? target.y,
       };
     });
-  }, [currentFrame, nextFrame, frameProgress]);
+  }, [currentFrame, nextFrame, frameProgress, mapView, terrainNavigator]);
 
   const renderedCameras = useMemo(() => {
     if (!replay) return [];
