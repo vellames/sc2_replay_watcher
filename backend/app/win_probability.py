@@ -13,7 +13,10 @@ from typing import Any, Iterator
 
 
 N3_BASE_URL = "https://c-vellames--sc2-winprob-n3-v1.modal.run"
-LIGHTGBM_BASE_URL = "https://c-vellames--sc2-winprob-lightgbm-v1.modal.run"
+LIGHTGBM_BASE_URL = (
+    "https://c-vellames--sc2-winprob-lightgbm-full-2023plus-v1.modal.run"
+)
+LIGHTGBM_MODEL_NAME = "LightGBMFull"
 CADENCE_SECONDS = 0.5
 
 _STAT_FEATURES = {
@@ -306,7 +309,11 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
     points: list[dict[str, float]] = []
     batches: list[list[tuple[float, dict[str, Any]]]] = []
     batch: list[tuple[float, dict[str, Any]]] = []
-    default_model = "SC2-WinProb-N3-v1" if _provider_name() == "n3" else "SC2-WinProb-LightGBM-v1"
+    default_model = (
+        "SC2-WinProb-N3-v1"
+        if _provider_name() == "n3"
+        else LIGHTGBM_MODEL_NAME
+    )
     model = str(schema.get("model", default_model))
     model_sha256: str | None = None
     batch_size = _batch_size(schema)
@@ -326,8 +333,16 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
             raise WinProbabilityUnavailable("Inference returned an incomplete batch")
         batch_points: list[dict[str, float]] = []
         for (time_seconds, _), prediction in zip(current, predictions, strict=True):
+            selected_prediction = prediction
+            if _provider_name() == "lightgbm":
+                try:
+                    selected_prediction = prediction["models"][LIGHTGBM_MODEL_NAME]
+                except (KeyError, TypeError) as exc:
+                    raise WinProbabilityUnavailable(
+                        f"Inference did not return {LIGHTGBM_MODEL_NAME}"
+                    ) from exc
             try:
-                probability = float(prediction["win_probability"])
+                probability = float(selected_prediction["win_probability"])
             except (KeyError, TypeError, ValueError) as exc:
                 raise WinProbabilityUnavailable(
                     "Inference returned an invalid probability"
@@ -341,9 +356,15 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
                     "playerTwo": 1.0 - probability,
                 }
             )
-        fingerprint = response.get("model_sha256") or response.get("ensemble_sha256")
+        fingerprint = (
+            selected_prediction.get("model_sha256")
+            if _provider_name() == "lightgbm"
+            else response.get("model_sha256") or response.get("ensemble_sha256")
+        )
         return (
-            str(response.get("model") or model),
+            LIGHTGBM_MODEL_NAME
+            if _provider_name() == "lightgbm"
+            else str(response.get("model") or model),
             str(fingerprint) if fingerprint else None,
             batch_points,
         )
