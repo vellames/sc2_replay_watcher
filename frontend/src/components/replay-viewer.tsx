@@ -68,6 +68,7 @@ import { TimelineEventLayer, type TimelineEventPresentation } from "@/components
 import { playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { engagementLossAt } from "@/lib/engagement-progress";
+import { probabilityWindow } from "@/lib/win-probability";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayDeath, ReplayProduction, ReplayUnit, WinProbabilitySeries } from "@/lib/types";
 
@@ -861,6 +862,18 @@ export function ReplayViewer() {
       const totalLoss = Object.values(selectedEngagement.losses).reduce((sum, value) => sum + value, 0);
       const efficiencyLeaderId = Object.entries(selectedEngagement.tradeEfficiency ?? {}).sort((left, right) => right[1] - left[1])[0]?.[0];
       const tradeLeader = playerById.get(efficiencyLeaderId != null ? Number(efficiencyLeaderId) : selectedEngagement.winnerId ?? 0);
+      const fightProbabilities = winProbability.status === "ready"
+        ? probabilityWindow(winProbability.points, selectedEngagement.start, selectedEngagement.end)
+        : [];
+      const fightDuration = Math.max(.25, selectedEngagement.end - selectedEngagement.start);
+      const probabilityLine = (side: "playerOne" | "playerTwo") => fightProbabilities.map((point) => {
+        const x = 4 + ((point.time - selectedEngagement.start) / fightDuration) * 92;
+        const y = 50 - point[side] * 42;
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      }).join(" ");
+      const fightStartProbability = fightProbabilities[0];
+      const fightEndProbability = fightProbabilities.at(-1);
+      const fightCurrentX = 4 + Math.min(1, Math.max(0, (currentTime - selectedEngagement.start) / fightDuration)) * 92;
       const engagementComposition = (field: "initialComposition" | "finalComposition" | "lossesByType", playerId: number) => {
         const source = selectedEngagement[field]?.[String(playerId)] ?? {};
         const canonical = new Map<string, { type: string; count: number }>();
@@ -880,6 +893,27 @@ export function ReplayViewer() {
             <section><span><Skull size={11} />{Object.values(selectedEngagement.unitsLost).reduce((sum, value) => sum + value, 0)} {t("watcher.unitsLost")}</span><span><Database size={11} />{compactNumber(totalLoss)} {t("watcher.valueLost")}</span>{tradeLeader && <b><i style={{ background: tradeLeader.color }} />{t("watcher.tradeAdvantage")}: {tradeLeader.name}</b>}</section>
             <button onClick={closeEngagement} aria-label={t("watcher.closeInspector")}><X size={16} /></button>
           </header>
+          <section className={`engagement-probability ${winProbability.status}`} aria-label={t("watcher.engagementProbability")} aria-busy={winProbability.status === "loading"}>
+            <header>
+              <div><Activity size={12} /><span>{t("watcher.engagementProbability")}</span><small>N3 · 4 Hz</small></div>
+              {fightStartProbability && fightEndProbability && <div className="engagement-probability-legend">
+                <span style={{ "--probability-color": replay.players[0]?.color } as React.CSSProperties}><i />{replay.players[0]?.name}<b>{Math.round(fightStartProbability.playerOne * 100)}% → {Math.round(fightEndProbability.playerOne * 100)}%</b></span>
+                <span style={{ "--probability-color": replay.players[1]?.color } as React.CSSProperties}><i />{replay.players[1]?.name}<b>{Math.round(fightStartProbability.playerTwo * 100)}% → {Math.round(fightEndProbability.playerTwo * 100)}%</b></span>
+              </div>}
+            </header>
+            {fightProbabilities.length > 1 ? <div className="engagement-probability-chart">
+              <svg viewBox="0 0 100 56" preserveAspectRatio="none" role="img" aria-label={t("watcher.engagementProbabilityChart")}>
+                <line className="probability-grid probability-grid-75" x1="4" y1="18.5" x2="96" y2="18.5" />
+                <line className="probability-grid probability-grid-50" x1="4" y1="29" x2="96" y2="29" />
+                <line className="probability-grid probability-grid-25" x1="4" y1="39.5" x2="96" y2="39.5" />
+                <polyline className="probability-player-one" points={probabilityLine("playerOne")} style={{ stroke: replay.players[0]?.color }} />
+                <polyline className="probability-player-two" points={probabilityLine("playerTwo")} style={{ stroke: replay.players[1]?.color }} />
+                {currentTime >= selectedEngagement.start && currentTime <= selectedEngagement.end && <line className="probability-current" x1={fightCurrentX} y1="6" x2={fightCurrentX} y2="52" />}
+              </svg>
+              <span className="probability-axis axis-75">75%</span><span className="probability-axis axis-50">50%</span><span className="probability-axis axis-25">25%</span>
+              <small className="probability-time-start">{formatTime(selectedEngagement.start)}</small><small className="probability-time-end">{formatTime(selectedEngagement.end)}</small>
+            </div> : <div className="engagement-probability-empty"><Activity size={13} /><span>{winProbability.status === "loading" ? t("watcher.loadingWinModel") : t("watcher.probabilityUnavailable")}</span></div>}
+          </section>
           <div className="engagement-review-players">
             {selectedEngagement.participants.map((playerId) => {
               const player = playerById.get(playerId);
