@@ -26,7 +26,16 @@ COMMAND_CLASSES = (
     "special_ability",
     "unknown",
 )
-COSMETIC_ENTITY_PREFIXES = ("beacon",)
+EXCLUDED_ENTITY_PREFIXES = ("beacon",)
+EXCLUDED_ENTITY_NAMES = frozenset(
+    {
+        "broodlingescort",
+        "invisibletargetdummy",
+        "parasiticbombdummy",
+        "parasiticbombrelaydummy",
+        "releaseinterceptorsbeacon",
+    }
+)
 COSMETIC_UPGRADE_PREFIXES = (
     "gameheart",
     "ghostalternate",
@@ -174,9 +183,11 @@ def _canonical_entity(name: Any) -> str:
     return ENTITY_ALIASES.get(value, value)
 
 
-def _is_cosmetic_entity(name: Any) -> bool:
+def _is_excluded_entity(name: Any) -> bool:
     normalized = _normalized_name(name)
-    return normalized.startswith(COSMETIC_ENTITY_PREFIXES)
+    return normalized in EXCLUDED_ENTITY_NAMES or normalized.startswith(
+        EXCLUDED_ENTITY_PREFIXES
+    )
 
 
 def _is_cosmetic_upgrade(name: Any, loop: int) -> bool:
@@ -226,7 +237,7 @@ class _State:
         unit_id = int(getattr(event, "unit_id", 0) or 0)
         if name in {"UnitBornEvent", "UnitInitEvent"}:
             unit_type = _canonical_entity(getattr(event, "unit_type_name", "Unknown"))
-            if _is_cosmetic_entity(unit_type):
+            if _is_excluded_entity(unit_type):
                 return
             owner = _owner_id(event)
             self.units[unit_id] = _Unit(owner, unit_type, name == "UnitBornEvent")
@@ -241,9 +252,13 @@ class _State:
         elif name == "UnitTypeChangeEvent":
             unit = self.units.get(unit_id)
             if unit:
-                unit.unit_type = _canonical_entity(
+                unit_type = _canonical_entity(
                     getattr(event, "unit_type_name", "Unknown")
                 )
+                if _is_excluded_entity(unit_type):
+                    self.units.pop(unit_id, None)
+                else:
+                    unit.unit_type = unit_type
         elif name == "UnitOwnerChangeEvent":
             unit = self.units.get(unit_id)
             if unit:

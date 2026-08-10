@@ -7,7 +7,7 @@ from app.n3_features import (
     _canonical_entity,
     _command_class,
     _is_cosmetic_command,
-    _is_cosmetic_entity,
+    _is_excluded_entity,
     _is_cosmetic_upgrade,
 )
 
@@ -34,9 +34,15 @@ def test_command_taxonomy_covers_race_specific_production_and_technology() -> No
     assert _command_class(command(None, has_ability=False)) == "no_explicit_ability"
 
 
-def test_cosmetic_signals_are_excluded_from_inference_features() -> None:
-    assert _is_cosmetic_entity("BeaconArmy")
-    assert not _is_cosmetic_entity("Marine")
+def test_cosmetic_and_internal_signals_are_excluded_from_inference_features() -> None:
+    assert _is_excluded_entity("BeaconArmy")
+    assert _is_excluded_entity("InvisibleTargetDummy")
+    assert _is_excluded_entity("BroodlingEscort")
+    assert _is_excluded_entity("ParasiticBombDummy")
+    assert _is_excluded_entity("ParasiticBombRelayDummy")
+    assert _is_excluded_entity("ReleaseInterceptorsBeacon")
+    assert not _is_excluded_entity("LocustMPPrecursor")
+    assert not _is_excluded_entity("Marine")
     assert _is_cosmetic_upgrade("RewardDanceGhost", 100)
     assert _is_cosmetic_upgrade("AnyAccountLoadout", 0)
     assert not _is_cosmetic_upgrade("Stimpack", 100)
@@ -52,7 +58,7 @@ def test_supply_depot_modes_share_one_inference_entity() -> None:
     assert _canonical_entity("SupplyDepotRaised") == "SupplyDepot"
 
 
-def test_state_does_not_count_cosmetic_tracker_or_command_events() -> None:
+def test_state_does_not_count_cosmetic_or_internal_events() -> None:
     state = _State((1, 2))
     player = SimpleNamespace(pid=1)
 
@@ -62,6 +68,15 @@ def test_state_does_not_count_cosmetic_tracker_or_command_events() -> None:
             frame=0,
             unit_id=10,
             unit_type_name="BeaconArmy",
+            unit_controller=player,
+        )
+    )
+    state.tracker(
+        event(
+            "UnitBornEvent",
+            frame=10,
+            unit_id=11,
+            unit_type_name="InvisibleTargetDummy",
             unit_controller=player,
         )
     )
@@ -84,6 +99,14 @@ def test_state_does_not_count_cosmetic_tracker_or_command_events() -> None:
     )
     state.tracker(
         event(
+            "UnitTypeChangeEvent",
+            frame=31,
+            unit_id=20,
+            unit_type_name="ParasiticBombRelayDummy",
+        )
+    )
+    state.tracker(
+        event(
             "UpgradeCompleteEvent",
             frame=0,
             player=player,
@@ -100,7 +123,7 @@ def test_state_does_not_count_cosmetic_tracker_or_command_events() -> None:
         )
     )
 
-    assert state.units[20].unit_type == "SupplyDepot"
+    assert state.units == {}
     assert state.upgrades[1] == {}
     assert state.flow[1]["born"] == [20]
     assert state.flow[1]["upgrade"] == []
