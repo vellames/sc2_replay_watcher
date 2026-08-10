@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, FileUp, LockKeyhole, Map, Play, ShieldCheck, Sparkles, Upload, Zap } from "lucide-react";
+import { Activity, BrainCircuit, Crosshair, Factory, FileUp, FlaskConical, HeartHandshake, History, LockKeyhole, Map, Play, Sparkles, Upload, Zap } from "lucide-react";
 
 import { useI18n } from "@/components/i18n";
 import { useReplay } from "@/components/replay-context";
@@ -85,11 +85,11 @@ export function UploadScreen() {
       <main className="landing-main">
         <section className="landing-hero">
           <div className="landing-copy">
-            <div className="premium-pill"><Sparkles size={13} /><span>TACTICAL REPLAY INTELLIGENCE</span><i /></div>
+            <div className="premium-pill"><Sparkles size={13} /><span>COMMUNITY-BUILT SC2 ANALYTICS</span><i /></div>
             <p className="eyebrow"><Zap size={14} /> {t("home.eyebrow")}</p>
             <h1>{t("home.titleLine1")}<br /><span>{t("home.titleLine2")}</span></h1>
             <p>{t("home.description")}</p>
-            <div className="product-proof"><span><LockKeyhole size={13} /> {t("home.proofPrivate")}</span><i /><span><Zap size={13} /> {t("home.proofFast")}</span></div>
+            <div className="product-proof"><span><LockKeyhole size={13} /> {t("home.proofPrivate")}</span><i /><span><Zap size={13} /> {t("home.proofModel")}</span></div>
           </div>
 
           <div className="upload-card">
@@ -122,11 +122,25 @@ export function UploadScreen() {
           </div>
         </section>
 
-        <div className="section-label"><span>{t("steps.label")}</span><i /></div>
-        <section className="landing-features" aria-label={t("steps.label")}>
-          <div><span className="feature-number">01</span><Activity size={20} /><div><strong>{t("steps.oneTitle")}</strong><p>{t("steps.oneText")}</p></div></div>
-          <div><span className="feature-number">02</span><Map size={20} /><div><strong>{t("steps.twoTitle")}</strong><p>{t("steps.twoText")}</p></div></div>
-          <div><span className="feature-number">03</span><ShieldCheck size={20} /><div><strong>{t("steps.threeTitle")}</strong><p>{t("steps.threeText")}</p></div></div>
+        <div className="section-label"><span>{t("features.label")}</span><i /></div>
+        <section className="landing-capabilities" aria-label={t("features.label")}>
+          <article className="capability-card capability-model">
+            <header><span><BrainCircuit size={18} /></span><small>N3 DEEPSETS · 4 HZ</small></header>
+            <strong>{t("features.modelTitle")}</strong>
+            <p>{t("features.modelText")}</p>
+            <div className="capability-probability" aria-hidden="true"><div><span>PLAYER 1 <b>58%</b></span><span><b>42%</b> PLAYER 2</span></div><i><em /><em /></i></div>
+          </article>
+          <article className="capability-card"><header><span><Crosshair size={18} /></span><small>{t("features.combatTag")}</small></header><strong>{t("features.combatTitle")}</strong><p>{t("features.combatText")}</p></article>
+          <article className="capability-card"><header><span><Factory size={18} /></span><small>{t("features.macroTag")}</small></header><strong>{t("features.macroTitle")}</strong><p>{t("features.macroText")}</p></article>
+          <article className="capability-card"><header><span><FlaskConical size={18} /></span><small>{t("features.armyTag")}</small></header><strong>{t("features.armyTitle")}</strong><p>{t("features.armyText")}</p></article>
+          <article className="capability-card"><header><span><History size={18} /></span><small>{t("features.timelineTag")}</small></header><strong>{t("features.timelineTitle")}</strong><p>{t("features.timelineText")}</p></article>
+          <article className="capability-card"><header><span><Map size={18} /></span><small>{t("features.mapTag")}</small></header><strong>{t("features.mapTitle")}</strong><p>{t("features.mapText")}</p></article>
+        </section>
+
+        <section className="community-callout">
+          <span className="community-icon"><HeartHandshake size={25} /></span>
+          <div><small>{t("community.eyebrow")}</small><strong>{t("community.title")}</strong><p>{t("community.text")}</p></div>
+          <aside><span><i />LOTV · 1V1</span><span><Activity size={10} />{t("community.evolving")}</span><span><Sparkles size={10} />{t("community.feedback")}</span></aside>
         </section>
       </main>
       <SiteFooter />
