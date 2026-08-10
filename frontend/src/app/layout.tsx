@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: "SC2 Replay Watcher",
   description: "Visualize replays de StarCraft II em um mapa tático 2D.",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.svg",
+  },
   openGraph: {
     title: "SC2 Replay Watcher",
     description: "Veja a partida. Entenda o movimento.",
