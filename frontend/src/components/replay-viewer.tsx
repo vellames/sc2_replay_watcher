@@ -356,7 +356,7 @@ export function ReplayViewer() {
     const stride = Math.max(1, Math.ceil(replay.frames.length / 220));
     const samples = replay.frames.filter((_, index) => index % stride === 0 || index === replay.frames.length - 1).map((frame) => ({
       x: (frame.time / replay.meta.duration) * 100,
-      delta: (frame.stats[firstId]?.armyValue ?? 0) - (frame.stats[secondId]?.armyValue ?? 0),
+      delta: (frame.stats[firstId]?.fieldedArmyValue ?? frame.stats[firstId]?.armyValue ?? 0) - (frame.stats[secondId]?.fieldedArmyValue ?? frame.stats[secondId]?.armyValue ?? 0),
     }));
     const max = Math.max(1, ...samples.map((sample) => Math.abs(sample.delta)));
     const points = (side: "positive" | "negative") => samples.map((sample) => {
@@ -494,8 +494,8 @@ export function ReplayViewer() {
   const playerOneStats = replay.players[0] ? currentFrame?.stats[String(replay.players[0].id)] : undefined;
   const playerTwoStats = replay.players[1] ? currentFrame?.stats[String(replay.players[1].id)] : undefined;
   const playerOneDeltas = {
-    armySupply: (playerOneStats?.armySupply ?? 0) - (playerTwoStats?.armySupply ?? 0),
-    workers: (playerOneStats?.workers ?? 0) - (playerTwoStats?.workers ?? 0),
+    armySupply: (playerOneStats?.fieldedArmySupply ?? playerOneStats?.armySupply ?? 0) - (playerTwoStats?.fieldedArmySupply ?? playerTwoStats?.armySupply ?? 0),
+    workers: (playerOneStats?.fieldedWorkers ?? playerOneStats?.workers ?? 0) - (playerTwoStats?.fieldedWorkers ?? playerTwoStats?.workers ?? 0),
     income: ((playerOneStats?.mineralRate ?? 0) + (playerOneStats?.vespeneRate ?? 0)) - ((playerTwoStats?.mineralRate ?? 0) + (playerTwoStats?.vespeneRate ?? 0)),
   };
   const attachedAddonByParent = new Map(
@@ -771,8 +771,16 @@ export function ReplayViewer() {
     const isSupplyBlocked = supplyCap < 200 && supplyUsed >= supplyCap;
     const activeSupplyBlock = [...replay.timeline].reverse().find((event) => event.type === "supply" && event.playerId === player.id && event.time <= currentTime && (event.end != null ? currentTime <= event.end : isSupplyBlocked));
     const production = currentFrame?.production[String(player.id)] ?? [];
-    const armySupplyDelta = (stats?.armySupply ?? 0) - (opponentStats?.armySupply ?? 0);
-    const workerDelta = (stats?.workers ?? 0) - (opponentStats?.workers ?? 0);
+    const fieldedArmySupply = stats?.fieldedArmySupply ?? stats?.armySupply ?? 0;
+    const committedArmySupply = stats?.committedArmySupply ?? stats?.armySupply ?? 0;
+    const fieldedArmyValue = stats?.fieldedArmyValue ?? stats?.armyValue ?? 0;
+    const fieldedWorkers = stats?.fieldedWorkers ?? stats?.workers ?? 0;
+    const opponentFieldedArmySupply = opponentStats?.fieldedArmySupply ?? opponentStats?.armySupply ?? 0;
+    const opponentFieldedWorkers = opponentStats?.fieldedWorkers ?? opponentStats?.workers ?? 0;
+    const armySupplyDelta = fieldedArmySupply - opponentFieldedArmySupply;
+    const workerDelta = fieldedWorkers - opponentFieldedWorkers;
+    const statsAge = Math.max(0, currentTime - (stats?.statsRecordedAt ?? currentFrame?.time ?? currentTime));
+    const snapshotAge = t("watcher.snapshotAge").replace("{seconds}", number(Math.ceil(statsAge)));
     const deltaClass = (value: number) => value > 0 ? "leading" : value < 0 ? "trailing" : "tied";
     const RaceIcon = raceIcon(player.race);
     return (
@@ -784,16 +792,16 @@ export function ReplayViewer() {
             <small><RaceIcon size={9} />{player.race}</small>
             <InfoTip label={t("watcher.help.playerHud")} side={side}>{t("watcher.help.playerHudText")}</InfoTip>
           </div>
-          <div className="macro-player-title"><span>{t("watcher.supply")}<InfoTip label={t("watcher.supply")} side={side}>{t("watcher.help.supply")}</InfoTip>{isSupplyBlocked && <em>{t("watcher.blocked")}{activeSupplyBlock ? ` ${formatTime(currentTime - activeSupplyBlock.time)}` : ""}</em>}</span><b>{number(supplyUsed)}<small>/ {number(supplyCap)}</small></b></div>
+          <div className="macro-player-title"><span>{t("watcher.supply")}<InfoTip label={t("watcher.supply")} side={side}>{t("watcher.help.supply")} {snapshotAge}</InfoTip>{isSupplyBlocked && <em>{t("watcher.blocked")}{activeSupplyBlock ? ` ${formatTime(currentTime - activeSupplyBlock.time)}` : ""}</em>}</span><b>{number(supplyUsed)}<small>/ {number(supplyCap)}</small></b></div>
           <div className={`supply-track ${isSupplyBlocked ? "blocked" : ""}`}><i style={{ width: `${Math.min(100, (supplyUsed / supplyCap) * 100)}%` }} /></div>
-          <div className="hud-section-label"><span><Database size={9} />{t("watcher.bank")}</span><InfoTip label={t("watcher.bank")} side={side}>{t("watcher.help.resources")}</InfoTip></div>
+          <div className="hud-section-label"><span><Database size={9} />{t("watcher.bank")}</span><InfoTip label={t("watcher.bank")} side={side}>{t("watcher.help.resources")} {snapshotAge}</InfoTip></div>
           <div className="resource-bank">
             <span><Pickaxe size={10} /><b>{compactNumber(stats?.minerals ?? 0)}</b><small>{t("watcher.minerals")}</small></span>
             <span><Zap size={10} /><b>{compactNumber(stats?.vespene ?? 0)}</b><small>{t("watcher.vespene")}</small></span>
           </div>
           <div className="macro-metrics side-macro-metrics">
-            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{number(stats?.armySupply ?? 0)} <em>{t("watcher.supplyUnit")}</em><em className={`metric-delta ${deltaClass(armySupplyDelta)}`} title={t("watcher.armySupplyVersusOpponent")}>{signedCompactNumber(armySupplyDelta)}</em></strong><span className="metric-detail"><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(stats?.armyValue ?? 0)} {t("watcher.valueShort")}</span></span></div>
-            <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")}</InfoTip></small><strong>{stats?.workers ?? 0}<em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></strong><span className="metric-detail"><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <small>{t("watcher.perMinute")}</small></span></span></div>
+            <div><small className="metric-help-title"><span>{t("watcher.army")}</span><InfoTip label={t("watcher.army")} side={side}>{t("watcher.help.army")}</InfoTip></small><strong>{number(fieldedArmySupply)} <em>{t("watcher.supplyUnit")}</em><em className={`metric-delta ${deltaClass(armySupplyDelta)}`} title={t("watcher.armySupplyVersusOpponent")}>{signedCompactNumber(armySupplyDelta)}</em></strong><span className="metric-detail"><span>{stats?.armyUnits ?? 0} {t("watcher.units")} · {compactNumber(fieldedArmyValue)} {t("watcher.valueShort")}</span></span><span className="metric-commitment">{number(committedArmySupply)} {t("watcher.committedSupply")}</span></div>
+            <div><small className="metric-help-title"><span>{t("watcher.workers")}</span><InfoTip label={t("watcher.workers")} side={side}>{t("watcher.help.workers")} {snapshotAge}</InfoTip></small><strong>{fieldedWorkers}<em className={`metric-delta ${deltaClass(workerDelta)}`} title={t("watcher.workerDelta")}>{signedCompactNumber(workerDelta)}</em></strong><span className="metric-detail"><span>{compactNumber(stats?.mineralRate ?? 0)} <Pickaxe size={9} /> · {compactNumber(stats?.vespeneRate ?? 0)} <Zap size={9} /> <small>{t("watcher.perMinute")}</small></span></span></div>
           </div>
           <div className="production-list side-production-list">
             <div className="production-title"><span><Factory size={11} /> {t("watcher.production")}<InfoTip label={t("watcher.production")} side={side}>{t("watcher.help.production")}</InfoTip></span><b>{production.length}</b></div>
@@ -960,8 +968,8 @@ export function ReplayViewer() {
         <header><span><i /><RaceIcon size={12} /></span><div><strong>{player.name}</strong><small>{player.race}</small></div><button onClick={() => setCompactPlayerId(null)} aria-label={t("watcher.closePlayerSummary")}><X size={13} /></button></header>
         <div className="compact-player-metrics">
           <span><Package size={11} /><small>{t("watcher.supply")}</small><b>{number(stats?.supplyUsed ?? 0)}/{number(stats?.supplyCap ?? 0)}</b></span>
-          <span><Pickaxe size={11} /><small>{t("watcher.workers")}</small><b>{stats?.workers ?? 0}</b></span>
-          <span><Swords size={11} /><small>{t("watcher.army")}</small><b>{number(stats?.armySupply ?? 0)} {t("watcher.supplyUnit")}</b></span>
+          <span><Pickaxe size={11} /><small>{t("watcher.workers")}</small><b>{stats?.fieldedWorkers ?? stats?.workers ?? 0}</b></span>
+          <span><Swords size={11} /><small>{t("watcher.army")}</small><b>{number(stats?.fieldedArmySupply ?? stats?.armySupply ?? 0)} {t("watcher.supplyUnit")}</b></span>
           <span><Zap size={11} /><small>{t("watcher.income")}</small><b>{compactNumber((stats?.mineralRate ?? 0) + (stats?.vespeneRate ?? 0))}{t("watcher.perMinute")}</b></span>
         </div>
       </aside>
@@ -993,8 +1001,8 @@ export function ReplayViewer() {
                     <header><span>P{index + 1}</span><strong>{player.name}</strong><small><RaceIcon size={8} />{player.race}</small><InfoTip label={t("watcher.compactScoreboard")} side={index === 0 ? "left" : "right"}>{t("watcher.help.compactScoreboard")}</InfoTip><button className="compact-player-expand" aria-expanded={compactPlayerId === player.id} aria-label={t("watcher.openPlayerSummary", { player: player.name })} onClick={() => setCompactPlayerId((current) => current === player.id ? null : player.id)}><ChevronDown size={11} /></button></header>
                     <div>
                       <span title={t("watcher.supply")}><Package size={10} />{number(stats?.supplyUsed ?? 0)}/{number(stats?.supplyCap ?? 0)}</span>
-                      <span title={t("watcher.workers")}><Pickaxe size={10} />{stats?.workers ?? 0}</span>
-                      <span title={t("watcher.armyValue")}><Swords size={10} />{compactNumber(stats?.armyValue ?? 0)}</span>
+                      <span title={t("watcher.workers")}><Pickaxe size={10} />{stats?.fieldedWorkers ?? stats?.workers ?? 0}</span>
+                      <span title={t("watcher.armyValue")}><Swords size={10} />{compactNumber(stats?.fieldedArmyValue ?? stats?.armyValue ?? 0)}</span>
                       <span title={t("watcher.bank")}><Database size={10} />{compactNumber((stats?.minerals ?? 0) + (stats?.vespene ?? 0))}</span>
                     </div>
                   </section>

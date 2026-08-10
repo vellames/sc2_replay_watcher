@@ -102,6 +102,11 @@ export type ReplayPlayerStats = {
   armyLost: number;
   resourcesKilled: number;
   resourcesLost: number;
+  statsRecordedAt: number;
+  committedArmySupply: number;
+  fieldedWorkers: number;
+  fieldedArmySupply: number;
+  fieldedArmyValue: number;
 };
 
 export type ReplayProduction = {
