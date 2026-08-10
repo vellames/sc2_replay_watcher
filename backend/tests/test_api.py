@@ -109,7 +109,7 @@ def test_win_probability_is_computed_outside_event_loop(monkeypatch) -> None:
     def fake_build(payload, request_id):
         assert payload is replay
         assert request_id == "fixture"
-        return {"status": "ready", "cadenceSeconds": 1, "points": []}
+        return {"status": "ready", "cadenceSeconds": 0.25, "points": []}
 
     async def fake_threadpool(function, *args, **kwargs):
         calls.append((function, args, kwargs))
@@ -141,7 +141,7 @@ def test_missing_probability_service_does_not_break_replay(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "status": "unavailable",
-        "cadenceSeconds": 1,
+        "cadenceSeconds": 0.25,
         "experimental": True,
         "points": [],
     }

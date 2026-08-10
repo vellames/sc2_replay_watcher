@@ -281,7 +281,7 @@ export function ReplayViewer() {
       .then(setWinProbability)
       .catch((error) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
-        setWinProbability({ status: "unavailable", cadenceSeconds: 1, experimental: true, points: [] });
+        setWinProbability({ status: "unavailable", cadenceSeconds: 0.25, experimental: true, points: [] });
       });
     return () => controller.abort();
   }, [replay?.meta.analysisId]);

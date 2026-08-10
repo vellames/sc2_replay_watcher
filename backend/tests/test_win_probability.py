@@ -64,7 +64,17 @@ def replay_fixture(duration: int = 2) -> dict:
 def test_snapshots_hold_world_state_and_preserve_missing_values() -> None:
     snapshots = list(win_probability.iter_snapshots(replay_fixture(), SCHEMA))
 
-    assert [second for second, _ in snapshots] == [0, 1, 2]
+    assert [time for time, _ in snapshots] == [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1,
+        1.25,
+        1.5,
+        1.75,
+        2,
+    ]
     first = snapshots[0][1]
     assert first["self_race"] == "Terr"
     assert first["enemy_race"] == "Zerg"
@@ -73,8 +83,9 @@ def test_snapshots_hold_world_state_and_preserve_missing_values() -> None:
     assert first["command_semantic_self__production__count__60s"] is None
     assert first["entity_self_complete_json"] == {"SCV": 1}
     assert first["entity_enemy_in_progress_json"] == {"Zergling": 1}
-    assert snapshots[1][1]["entity_self_upgrades_json"] == {"Stimpack": 1}
-    assert snapshots[2][1]["aggregate_self__scoreValueMineralsCurrent"] == 100
+    assert snapshots[3][1]["entity_self_upgrades_json"] == {}
+    assert snapshots[4][1]["entity_self_upgrades_json"] == {"Stimpack": 1}
+    assert snapshots[8][1]["aggregate_self__scoreValueMineralsCurrent"] == 100
 
 
 def test_series_batches_predictions_and_returns_both_players(monkeypatch) -> None:
@@ -88,7 +99,7 @@ def test_series_batches_predictions_and_returns_both_players(monkeypatch) -> Non
         return {
             "model": "fixture-model",
             "predictions": [
-                {"index": index, "win_probability": 0.4 + index * 0.1}
+                {"index": index, "win_probability": 0.4 + index * 0.02}
                 for index, _ in enumerate(payload["snapshots"])
             ],
         }
@@ -98,6 +109,7 @@ def test_series_batches_predictions_and_returns_both_players(monkeypatch) -> Non
 
     assert len(calls) == 1
     assert result["status"] == "ready"
-    assert result["cadenceSeconds"] == 1
+    assert result["cadenceSeconds"] == 0.25
     assert result["points"][0] == {"time": 0.0, "playerOne": 0.4, "playerTwo": 0.6}
-    assert result["points"][2]["playerOne"] == pytest.approx(0.6)
+    assert result["points"][2]["time"] == 0.5
+    assert result["points"][2]["playerOne"] == pytest.approx(0.44)

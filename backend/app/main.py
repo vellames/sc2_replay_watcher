@@ -18,7 +18,11 @@ from sc2_world_engine.errors import UnsupportedMatchFormatError
 from sc2_world_engine.archive import SCHEMA_VERSION
 
 from .world_adapter import parse_replay
-from .win_probability import WinProbabilityUnavailable, build_win_probability_series
+from .win_probability import (
+    CADENCE_SECONDS,
+    WinProbabilityUnavailable,
+    build_win_probability_series,
+)
 
 MAX_REPLAY_SIZE = 50 * 1024 * 1024
 UPLOAD_CACHE_SIZE = 2
@@ -169,7 +173,7 @@ async def replay_win_probability(analysis_id: str) -> dict:
     except WinProbabilityUnavailable:
         return {
             "status": "unavailable",
-            "cadenceSeconds": 1,
+            "cadenceSeconds": CADENCE_SECONDS,
             "experimental": True,
             "points": [],
         }

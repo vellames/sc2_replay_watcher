@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import urllib.error
 import urllib.request
@@ -13,6 +14,7 @@ from typing import Any, Iterator
 
 DEFAULT_BASE_URL = "https://c-vellames--sc2-winprob-lightgbm-v1.modal.run"
 BATCH_SIZE = 64
+CADENCE_SECONDS = 0.25
 
 _STAT_FEATURES = {
     "scoreValueFoodMade": "supplyCap",
@@ -127,13 +129,13 @@ def _snapshot(
     required: list[str],
     replay: dict[str, Any],
     frame: dict[str, Any],
-    second: int,
+    time_seconds: float,
     self_player: dict[str, Any],
     enemy_player: dict[str, Any],
     upgrades: dict[int, Counter[str]],
 ) -> dict[str, Any]:
     values: dict[str, Any] = {feature: None for feature in required}
-    values["time_seconds"] = float(second)
+    values["time_seconds"] = time_seconds
     values["self_race"] = _race(str(self_player.get("race", "")))
     values["enemy_race"] = _race(str(enemy_player.get("race", "")))
     values["matchup"] = _matchup(replay["players"])
@@ -176,13 +178,13 @@ def _snapshot(
 
 def iter_snapshots(
     replay: dict[str, Any], schema: dict[str, Any]
-) -> Iterator[tuple[int, dict[str, Any]]]:
+) -> Iterator[tuple[float, dict[str, Any]]]:
     players = replay.get("players", [])[:2]
     frames = replay.get("frames", [])
     if len(players) != 2 or not frames:
         raise WinProbabilityUnavailable("A 1v1 world timeline is required")
     required = [str(value) for value in schema["required_features"]]
-    duration = max(0, int(float(replay.get("meta", {}).get("duration", 0))))
+    duration = max(0.0, float(replay.get("meta", {}).get("duration", 0)))
     build_order = sorted(
         replay.get("buildOrder", []), key=lambda item: item.get("completedAt", 0)
     )
@@ -192,15 +194,17 @@ def iter_snapshots(
     }
     frame_index = 0
     build_index = 0
-    for second in range(duration + 1):
+    final_tick = math.ceil(duration / CADENCE_SECONDS)
+    for tick in range(final_tick + 1):
+        time_seconds = min(duration, tick * CADENCE_SECONDS)
         while (
             frame_index + 1 < len(frames)
-            and float(frames[frame_index + 1].get("time", 0)) <= second
+            and float(frames[frame_index + 1].get("time", 0)) <= time_seconds
         ):
             frame_index += 1
         while (
             build_index < len(build_order)
-            and float(build_order[build_index].get("completedAt", 0)) <= second
+            and float(build_order[build_index].get("completedAt", 0)) <= time_seconds
         ):
             item = build_order[build_index]
             if (
@@ -211,11 +215,11 @@ def iter_snapshots(
                     str(item.get("product") or "Unknown")
                 ] += 1
             build_index += 1
-        yield second, _snapshot(
+        yield time_seconds, _snapshot(
             required,
             replay,
             frames[frame_index],
-            second,
+            time_seconds,
             players[0],
             players[1],
             upgrades,
@@ -225,12 +229,12 @@ def iter_snapshots(
 def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dict[str, Any]:
     schema = inference_schema()
     points: list[dict[str, float]] = []
-    batches: list[list[tuple[int, dict[str, Any]]]] = []
-    batch: list[tuple[int, dict[str, Any]]] = []
+    batches: list[list[tuple[float, dict[str, Any]]]] = []
+    batch: list[tuple[float, dict[str, Any]]] = []
     model = str(schema.get("model", "SC2-WinProb-LightGBM-v1"))
 
     def predict(
-        current: list[tuple[int, dict[str, Any]]],
+        current: list[tuple[float, dict[str, Any]]],
     ) -> tuple[str, list[dict[str, float]]]:
         response = _request_json(
             "/v1/predict",
@@ -243,7 +247,7 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
         if not isinstance(predictions, list) or len(predictions) != len(current):
             raise WinProbabilityUnavailable("Inference returned an incomplete batch")
         batch_points: list[dict[str, float]] = []
-        for (second, _), prediction in zip(current, predictions, strict=True):
+        for (time_seconds, _), prediction in zip(current, predictions, strict=True):
             try:
                 probability = float(prediction["win_probability"])
             except (KeyError, TypeError, ValueError) as exc:
@@ -254,7 +258,7 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
                 raise WinProbabilityUnavailable("Inference returned an invalid probability")
             batch_points.append(
                 {
-                    "time": float(second),
+                    "time": time_seconds,
                     "playerOne": probability,
                     "playerTwo": 1.0 - probability,
                 }
@@ -269,9 +273,9 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
     if batch:
         batches.append(batch)
     try:
-        configured_workers = int(os.getenv("SC2_WINPROB_CONCURRENCY", "6"))
+        configured_workers = int(os.getenv("SC2_WINPROB_CONCURRENCY", "8"))
     except ValueError:
-        configured_workers = 6
+        configured_workers = 8
     worker_count = max(1, min(8, configured_workers))
     with ThreadPoolExecutor(max_workers=worker_count) as executor:
         for batch_model, batch_points in executor.map(predict, batches):
@@ -282,7 +286,7 @@ def build_win_probability_series(replay: dict[str, Any], request_id: str) -> dic
         "model": model,
         "modelSha256": None,
         "perspectivePlayerId": int(replay["players"][0]["id"]),
-        "cadenceSeconds": 1,
+        "cadenceSeconds": CADENCE_SECONDS,
         "experimental": True,
         "points": points,
     }
