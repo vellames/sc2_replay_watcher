@@ -214,14 +214,28 @@ export function ReplayViewer() {
   const zoomRef = useRef(1);
   const currentTimeRef = useRef(0);
   const resumePlaybackRef = useRef(false);
+  const engagementResumePlaybackRef = useRef(false);
   const audioRef = useRef<ReplayAudioEngine | null>(null);
   const previousAudioTimeRef = useRef(0);
   const selectUnit = useCallback((unitId: number) => setSelection((current) => current?.kind === "unit" && current.unitId === unitId ? null : { kind: "unit", unitId }), []);
-  const seekTimelineEvent = useCallback((time: number, engagementId?: string) => {
+  const openEngagement = useCallback((engagementId: string, time: number) => {
+    if (selection?.kind !== "engagement") engagementResumePlaybackRef.current = playing;
     setCurrentTime(time);
     setPlaying(false);
-    if (engagementId) setSelection({ kind: "engagement", engagementId });
-  }, [setCurrentTime, setPlaying, setSelection]);
+    setSelection({ kind: "engagement", engagementId });
+  }, [playing, selection, setCurrentTime, setPlaying, setSelection]);
+  const closeEngagement = useCallback(() => {
+    setSelection(null);
+    setPlaying(engagementResumePlaybackRef.current);
+  }, [setPlaying, setSelection]);
+  const seekTimelineEvent = useCallback((time: number, engagementId?: string) => {
+    if (engagementId) {
+      openEngagement(engagementId, time);
+      return;
+    }
+    setCurrentTime(time);
+    setPlaying(false);
+  }, [openEngagement, setCurrentTime, setPlaying]);
 
   const playSound = useCallback((sound: ReplaySound) => {
     if (!soundEnabled) return;
@@ -414,6 +428,10 @@ export function ReplayViewer() {
         closeComparison();
         return;
       }
+      if (event.code === "Escape" && selection?.kind === "engagement") {
+        closeEngagement();
+        return;
+      }
       if (comparisonView) return;
       if (event.code === "Space") {
         event.preventDefault();
@@ -428,9 +446,11 @@ export function ReplayViewer() {
           ? [...events].reverse().find((item) => item.time < currentTimeRef.current - .5)
           : events.find((item) => item.time > currentTimeRef.current + .5);
         if (target) {
-          setCurrentTime(target.time);
-          setPlaying(false);
-          if (target.engagementId) setSelection({ kind: "engagement", engagementId: target.engagementId });
+          if (target.engagementId) openEngagement(target.engagementId, target.time);
+          else {
+            setCurrentTime(target.time);
+            setPlaying(false);
+          }
         }
       }
       if (event.code === "Home") {
@@ -447,7 +467,7 @@ export function ReplayViewer() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [replay, comparisonView, togglePlayback]);
+  }, [replay, comparisonView, selection, togglePlayback, openEngagement, closeEngagement]);
 
   if (!replay) {
     return (
@@ -682,9 +702,11 @@ export function ReplayViewer() {
       ? [...events].reverse().find((event) => event.time < currentTime - .5)
       : events.find((event) => event.time > currentTime + .5);
     if (!target) return;
-    setCurrentTime(target.time);
-    setPlaying(false);
-    if (target.engagementId) setSelection({ kind: "engagement", engagementId: target.engagementId });
+    if (target.engagementId) openEngagement(target.engagementId, target.time);
+    else {
+      setCurrentTime(target.time);
+      setPlaying(false);
+    }
   };
   const playerComposition = (playerId: number) => [...(currentFrame?.units ?? [])
     .filter((unit) => unit.ownerId === playerId && unit.isArmy)
@@ -798,35 +820,67 @@ export function ReplayViewer() {
       const totalLoss = Object.values(selectedEngagement.losses).reduce((sum, value) => sum + value, 0);
       const efficiencyLeaderId = Object.entries(selectedEngagement.tradeEfficiency ?? {}).sort((left, right) => right[1] - left[1])[0]?.[0];
       const tradeLeader = playerById.get(efficiencyLeaderId != null ? Number(efficiencyLeaderId) : selectedEngagement.winnerId ?? 0);
+      const engagementComposition = (field: "initialComposition" | "finalComposition" | "lossesByType", playerId: number) => {
+        const source = selectedEngagement[field]?.[String(playerId)] ?? {};
+        const canonical = new Map<string, { type: string; count: number }>();
+        for (const [type, count] of Object.entries(source)) {
+          const identity = canonicalSc2Type(type);
+          const current = canonical.get(identity) ?? { type, count: 0 };
+          current.count += count;
+          canonical.set(identity, current);
+        }
+        return [...canonical.values()].sort((left, right) => right.count - left.count || left.type.localeCompare(right.type));
+      };
       return (
-        <aside className="selection-inspector engagement-inspector" style={{ "--selection-color": tradeLeader?.color ?? "#e88a58" } as React.CSSProperties}>
-          <header>
-            <span className="selection-icon"><Flame size={15} /></span>
-            <div><small>{t("watcher.combatReview")}</small><strong>{t("watcher.engagement")}</strong><em>{formatTime(selectedEngagement.start)}–{formatTime(selectedEngagement.end)} · {Math.max(0, Math.round(selectedEngagement.end - selectedEngagement.start))}s</em></div>
-            <button onClick={() => setSelection(null)} aria-label={t("watcher.closeInspector")}><X size={14} /></button>
+        <aside className="engagement-review" role="dialog" aria-modal="true" aria-label={t("watcher.combatReview")} style={{ "--selection-color": tradeLeader?.color ?? "#e88a58" } as React.CSSProperties}>
+          <header className="engagement-review-header">
+            <span className="engagement-review-icon"><Flame size={18} /></span>
+            <div><small>{t("watcher.combatReview")}</small><strong>{t("watcher.engagementAnalysis")}</strong><em>{formatTime(selectedEngagement.start)}–{formatTime(selectedEngagement.end)} · {Math.max(1, Math.round(selectedEngagement.end - selectedEngagement.start))}s · X {Math.round(selectedEngagement.x)} Y {Math.round(selectedEngagement.y)}</em></div>
+            <section><span><Skull size={11} />{Object.values(selectedEngagement.unitsLost).reduce((sum, value) => sum + value, 0)} {t("watcher.unitsLost")}</span><span><Database size={11} />{compactNumber(totalLoss)} {t("watcher.valueLost")}</span>{tradeLeader && <b><i style={{ background: tradeLeader.color }} />{t("watcher.tradeAdvantage")}: {tradeLeader.name}</b>}</section>
+            <button onClick={closeEngagement} aria-label={t("watcher.closeInspector")}><X size={16} /></button>
           </header>
-          <section className="inspector-economy single-economy">
-            <div><small>{t("watcher.totalLosses")}</small><strong>{compactNumber(totalLoss)}</strong></div>
-            <span><b>{selectedEngagement.participants.length}</b> {t("watcher.players")}</span>
-            <span><b>{Object.values(selectedEngagement.unitsLost).reduce((sum, value) => sum + value, 0)}</b> {t("watcher.units")}</span>
-          </section>
-          <section className="inspector-section engagement-breakdown">
-            <h3><Swords size={11} />{t("watcher.lossesByPlayer")}</h3>
+          <div className="engagement-review-players">
             {selectedEngagement.participants.map((playerId) => {
               const player = playerById.get(playerId);
-              const loss = selectedEngagement.losses[String(playerId)] ?? 0;
-              const unitsLost = selectedEngagement.unitsLost[String(playerId)] ?? 0;
-              const minerals = selectedEngagement.mineralLosses?.[String(playerId)];
-              const vespene = selectedEngagement.vespeneLosses?.[String(playerId)];
-              const supply = selectedEngagement.supplyLost?.[String(playerId)];
-              const efficiency = selectedEngagement.tradeEfficiency?.[String(playerId)];
-              const detail = minerals != null && vespene != null
-                ? `${compactNumber(minerals)} M · ${compactNumber(vespene)} G · ${number(supply ?? 0)} ${t("watcher.supply")} · ${unitsLost} ${t("watcher.unitsLost")}`
-                : `${unitsLost} ${t("watcher.unitsLost")}`;
-              return <div key={playerId} style={{ "--combat-color": player?.color ?? "#7b8794" } as React.CSSProperties}><span><i />{player?.name ?? playerId}</span><strong>{compactNumber(loss)}{efficiency != null && <em>×{efficiency.toFixed(2)}</em>}</strong><small>{detail}</small></div>;
+              const opponentIds = selectedEngagement.participants.filter((candidate) => candidate !== playerId);
+              const lost = selectedEngagement.unitsLost[String(playerId)] ?? 0;
+              const killed = opponentIds.reduce((sum, opponentId) => sum + (selectedEngagement.unitsLost[String(opponentId)] ?? 0), 0);
+              const minerals = selectedEngagement.mineralLosses?.[String(playerId)] ?? 0;
+              const vespene = selectedEngagement.vespeneLosses?.[String(playerId)] ?? 0;
+              const supply = selectedEngagement.supplyLost?.[String(playerId)] ?? 0;
+              const efficiency = selectedEngagement.tradeEfficiency?.[String(playerId)] ?? 0;
+              const initialComposition = engagementComposition("initialComposition", playerId);
+              const finalComposition = engagementComposition("finalComposition", playerId);
+              const lostComposition = engagementComposition("lossesByType", playerId);
+              const actions = (selectedEngagement.actions ?? []).filter((action) => action.playerId === playerId);
+              const initialValue = selectedEngagement.initialValue?.[String(playerId)] ?? 0;
+              const finalValue = selectedEngagement.finalValue?.[String(playerId)] ?? 0;
+              const initialSupply = selectedEngagement.initialSupply?.[String(playerId)] ?? 0;
+              const finalSupply = selectedEngagement.finalSupply?.[String(playerId)] ?? 0;
+              const RaceIcon = raceIcon(player?.race ?? "");
+              const renderComposition = (items: Array<{ type: string; count: number }>, emptyLabel: string) => items.length === 0
+                ? <small className="engagement-empty">{emptyLabel}</small>
+                : <div className="engagement-unit-grid">{items.slice(0, 10).map((item) => { const Icon = hudEntityIcon(item.type); return <span key={canonicalSc2Type(item.type)} title={entityName(item.type)}><Icon size={12} /><b>{item.count}</b><small>{entityName(item.type)}</small></span>; })}</div>;
+              return (
+                <article key={playerId} className={`engagement-player ${tradeLeader?.id === playerId ? "trade-leader-player" : ""}`} style={{ "--combat-color": player?.color ?? "#7b8794" } as React.CSSProperties}>
+                  <header><span><i /><RaceIcon size={12} /></span><div><small>{t("watcher.player")}</small><strong>{player?.name ?? playerId}</strong><em>{player?.race}</em></div><b>×{efficiency.toFixed(2)}</b></header>
+                  <section className="engagement-kpis">
+                    <div><small>{t("watcher.eliminations")}</small><strong>{killed}</strong><em><Swords size={10} />{t("watcher.units")}</em></div>
+                    <div><small>{t("watcher.ownLosses")}</small><strong>{lost}</strong><em><Skull size={10} />{number(supply)} {t("watcher.supplyUnit")}</em></div>
+                    <div><small>{t("watcher.resourcesLost")}</small><strong>{compactNumber(minerals + vespene)}</strong><em>{compactNumber(minerals)} M · {compactNumber(vespene)} G</em></div>
+                  </section>
+                  <section className="engagement-force-flow">
+                    <div><header><span>{t("watcher.enteredFight")}</span><b>{number(initialSupply)} {t("watcher.supplyUnit")} · {compactNumber(initialValue)}</b></header>{renderComposition(initialComposition, t("watcher.noForceDetected"))}</div>
+                    <i><Activity size={13} /></i>
+                    <div><header><span>{t("watcher.leftFight")}</span><b>{number(finalSupply)} {t("watcher.supplyUnit")} · {compactNumber(finalValue)}</b></header>{renderComposition(finalComposition, t("watcher.noUnitsInZone"))}</div>
+                  </section>
+                  <section className="engagement-lost-composition"><header><span><Skull size={11} />{t("watcher.lostComposition")}</span></header>{renderComposition(lostComposition, t("watcher.noLosses"))}</section>
+                  <section className="engagement-actions"><header><span><ListTree size={11} />{t("watcher.observedActions")}</span><small>{t("watcher.factualEvents")}</small></header>{actions.length === 0 ? <small className="engagement-empty">{t("watcher.noActionsRecorded")}</small> : <ol>{actions.slice(0, 8).map((action, index) => <li key={`${action.time}-${action.unitType}-${index}`}><b>+{formatTime(action.time - selectedEngagement.start)}</b><span>{t("watcher.eliminated")} <strong>{entityName(action.unitType)}</strong></span><em>{compactNumber(action.mineralValue + action.vespeneValue)}</em></li>)}</ol>}{actions.length > 8 && <small className="engagement-more">+{actions.length - 8} {t("watcher.moreEvents")}</small>}</section>
+                </article>
+              );
             })}
-          </section>
-          {tradeLeader && <section className="trade-leader"><small>{t("watcher.tradeAdvantage")}<InfoTip label={t("watcher.tradeAdvantage")} side="right">{t("watcher.help.tradeAdvantage")}</InfoTip></small><strong><i style={{ background: tradeLeader.color }} />{tradeLeader.name}</strong><span>{t("watcher.estimatedFromLosses")}</span></section>}
+          </div>
+          <footer><InfoTip label={t("watcher.engagementData")}>{t("watcher.help.engagementData")}</InfoTip><span>{t("watcher.engagementDataNote")}</span><button onClick={closeEngagement}><X size={12} />{t("watcher.closeAnalysis")}</button></footer>
         </aside>
       );
     }
@@ -1006,7 +1060,7 @@ export function ReplayViewer() {
                 {visibleEngagements.map((engagement) => {
                   const point = toPercent(engagement.x, engagement.y);
                   const totalLoss = engagementLossAt(engagement, replayDeaths, currentTime);
-                  return <button key={engagement.id} className={`engagement-marker ${selectedEngagement?.id === engagement.id ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => { setCurrentTime(engagement.start); setPlaying(false); setSelection({ kind: "engagement", engagementId: engagement.id }); }} title={`${t("watcher.engagement")} · ${compactNumber(totalLoss)}`}><Flame size={10} /><b>{compactNumber(totalLoss)}</b></button>;
+                  return <button key={engagement.id} className={`engagement-marker ${selectedEngagement?.id === engagement.id ? "selected" : ""}`} style={{ left: `${point.left}%`, bottom: `${point.bottom}%` }} onClick={() => openEngagement(engagement.id, engagement.start)} title={`${t("watcher.engagement")} · ${compactNumber(totalLoss)}`}><Flame size={10} /><b>{compactNumber(totalLoss)}</b></button>;
                 })}
                 </div>
                 {showBaseMarkers && (currentFrame?.bases ?? []).map((base) => {

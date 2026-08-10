@@ -64,6 +64,23 @@ export type ReplayEngagement = {
   vespeneLosses?: Record<string, number>;
   supplyLost?: Record<string, number>;
   tradeEfficiency?: Record<string, number>;
+  initialComposition?: Record<string, Record<string, number>>;
+  finalComposition?: Record<string, Record<string, number>>;
+  lossesByType?: Record<string, Record<string, number>>;
+  initialValue?: Record<string, number>;
+  finalValue?: Record<string, number>;
+  initialSupply?: Record<string, number>;
+  finalSupply?: Record<string, number>;
+  actions?: Array<{
+    time: number;
+    type: "elimination";
+    playerId: number;
+    targetPlayerId: number;
+    unitType: string;
+    mineralValue: number;
+    vespeneValue: number;
+    supply: number;
+  }>;
   winnerId: number | null;
 };
 

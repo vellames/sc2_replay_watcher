@@ -120,6 +120,14 @@ def test_demo_is_compiled_by_world_engine() -> None:
         "vespeneLosses",
         "supplyLost",
         "tradeEfficiency",
+        "initialComposition",
+        "finalComposition",
+        "lossesByType",
+        "initialValue",
+        "finalValue",
+        "initialSupply",
+        "finalSupply",
+        "actions",
     }.issubset(payload["engagements"][0])
     assert sum(len(samples) for samples in payload["cameraSamples"].values()) > 0
     assert payload["cameraAnalytics"]
