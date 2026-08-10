@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { probabilityWindow } from "./win-probability.ts";
+import { nearestProbabilityPoint, probabilityWindow } from "./win-probability.ts";
 
 const points = [
   { time: 9.75, playerOne: 0.45, playerTwo: 0.55 },
@@ -22,4 +22,11 @@ test("clips probabilities to an engagement with causal boundary samples", () => 
 
 test("returns no graph when the series has not reached the engagement", () => {
   assert.deepEqual(probabilityWindow(points, 5, 6), []);
+});
+
+test("finds the closest probability sample for graph interaction", () => {
+  assert.equal(nearestProbabilityPoint(points, 10.14)?.time, 10.25);
+  assert.equal(nearestProbabilityPoint(points, 10.08)?.time, 10);
+  assert.equal(nearestProbabilityPoint(points, 99)?.time, 10.75);
+  assert.equal(nearestProbabilityPoint([], 10), null);
 });

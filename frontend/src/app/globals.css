@@ -507,11 +507,19 @@ button:focus-visible, select:focus-visible, input:focus-visible, [tabindex="0"]:
 .win-probability.loading .win-probability-track span { width: 50%; opacity: .25; animation: probability-loading 1.4s ease-in-out infinite alternate; }
 .win-probability.loading .win-probability-heading > small svg:first-child { animation: probability-pulse 1s ease-in-out infinite alternate; }
 .win-probability.loading .win-probability-track::after { content: ""; position: absolute; inset: 0; width: 28%; background: linear-gradient(90deg, transparent, rgba(213, 243, 255, .7), transparent); transform: translateX(-120%); animation: probability-scan 1.5s ease-in-out infinite; }
-.win-probability-history { height: 25px; margin-top: 4px; }
-.win-probability-history svg { width: 100%; height: 100%; display: block; overflow: visible; }
-.win-probability-history polyline { fill: none; stroke-width: .75; opacity: .78; vector-effect: non-scaling-stroke; }
+.win-probability-history { position: relative; height: 25px; margin-top: 4px; cursor: crosshair; outline: none; }
+.win-probability-history:focus-visible { box-shadow: 0 0 0 1px rgba(99, 202, 239, .35); }
+.win-probability-history svg { width: 100%; height: 100%; display: block; overflow: visible; pointer-events: none; }
+.win-probability-history polyline { fill: none; stroke-width: 1.35; opacity: .95; filter: drop-shadow(0 0 2px currentColor); vector-effect: non-scaling-stroke; }
 .win-probability-history .win-history-midline { stroke: rgba(122, 164, 184, .14); stroke-width: .5; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
-.win-probability-history .win-history-current { stroke: rgba(224, 241, 248, .48); stroke-width: .65; vector-effect: non-scaling-stroke; }
+.win-history-needle, .win-history-hover-needle { position: absolute; top: 0; bottom: 0; width: 1px; pointer-events: none; transform: translateX(-50%); }
+.win-history-needle { width: 2px; background: rgba(225, 244, 251, .78); box-shadow: 0 0 6px rgba(192, 232, 247, .46); }
+.win-history-needle i { position: absolute; top: -2px; left: 50%; width: 6px; height: 6px; border: 1px solid #d9f4ff; border-radius: 50%; background: #5ac9ef; box-shadow: 0 0 7px rgba(81, 199, 239, .75); transform: translate(-50%, -35%); }
+.win-history-hover-needle { border-left: 1px dashed rgba(211, 237, 247, .42); }
+.win-history-tooltip { --hover-x: 50%; position: absolute; z-index: 6; bottom: calc(100% + 7px); left: clamp(105px, var(--hover-x), calc(100% - 105px)); min-width: 200px; min-height: 31px; padding: 6px 8px; display: grid; grid-template-columns: auto 1fr 1fr; align-items: center; gap: 8px; border: 1px solid rgba(119, 177, 203, .24); border-radius: 4px; background: rgba(5, 13, 20, .97); box-shadow: 0 8px 25px rgba(0, 0, 0, .45); transform: translateX(-50%); pointer-events: none; }
+.win-history-tooltip b { color: #d6e6ed; font: 650 9px var(--font-geist-mono); }
+.win-history-tooltip em { overflow: hidden; font: 650 8px var(--font-geist-mono); font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.win-history-tooltip em:last-child { text-align: right; }
 @keyframes probability-loading { to { opacity: .55; } }
 @keyframes probability-pulse { to { color: #74d7ff; filter: drop-shadow(0 0 4px rgba(91, 205, 250, .8)); } }
 @keyframes probability-scan { to { transform: translateX(450%); } }

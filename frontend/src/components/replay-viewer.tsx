@@ -69,7 +69,7 @@ import { TimelineEventLayer, type TimelineEventPresentation } from "@/components
 import { playableBounds, projectedHeading } from "@/lib/map-projection";
 import { ReplayAudioEngine, type ReplaySound } from "@/lib/replay-audio";
 import { engagementLossAt } from "@/lib/engagement-progress";
-import { probabilityWindow } from "@/lib/win-probability";
+import { nearestProbabilityPoint, probabilityWindow, type WinProbabilityPoint } from "@/lib/win-probability";
 import { canonicalSc2Type, sc2CategoryName, sc2IconKey, sc2Name, sc2StateName, type Sc2IconKey } from "@/lib/sc2-catalog";
 import type { ReplayDeath, ReplayProduction, ReplayUnit, WinProbabilitySeries } from "@/lib/types";
 
@@ -129,6 +129,79 @@ function InfoTip({ label, side = "left", children }: { label: string; side?: "le
       {position && typeof document !== "undefined" && createPortal(<span id={tooltipId} className="info-tip-card" role="tooltip" style={position}><b>{label}</b><small>{children}</small></span>, document.body)}
     </span>
   );
+}
+
+function WinProbabilityHistory({
+  points,
+  duration,
+  currentTime,
+  players,
+  label,
+  onSeek,
+}: {
+  points: WinProbabilityPoint[];
+  duration: number;
+  currentTime: number;
+  players: Array<{ name: string; color: string }>;
+  label: string;
+  onSeek: (time: number) => void;
+}) {
+  const [hover, setHover] = useState<{ x: number; time: number; point: WinProbabilityPoint } | null>(null);
+  const chart = useMemo(() => {
+    const stride = Math.max(1, Math.ceil(points.length / 600));
+    const samples = points.filter((_, index) => index % stride === 0 || index === points.length - 1);
+    const line = (player: "playerOne" | "playerTwo") => samples.map((point) => {
+      const x = Math.min(100, Math.max(0, (point.time / duration) * 100));
+      const probability = Math.min(1, Math.max(0, point[player]));
+      return `${x.toFixed(2)},${(2 + (1 - probability) * 20).toFixed(2)}`;
+    }).join(" ");
+    return { playerOne: line("playerOne"), playerTwo: line("playerTwo") };
+  }, [duration, points]);
+  const currentX = Math.min(100, Math.max(0, (currentTime / duration) * 100));
+  const pointerPosition = (event: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    const time = ratio * duration;
+    const point = nearestProbabilityPoint(points, time);
+    return point ? { x: ratio * 100, time, point } : null;
+  };
+  return <div
+    className="win-probability-history"
+    role="slider"
+    tabIndex={0}
+    aria-label={label}
+    aria-valuemin={0}
+    aria-valuemax={Math.round(duration)}
+    aria-valuenow={Math.round(currentTime)}
+    onPointerMove={(event) => setHover(pointerPosition(event))}
+    onPointerLeave={() => setHover(null)}
+    onClick={(event) => {
+      const position = pointerPosition(event);
+      if (position) onSeek(position.time);
+    }}
+    onKeyDown={(event) => {
+      const next = event.key === "ArrowLeft" ? currentTime - 5 : event.key === "ArrowRight" ? currentTime + 5 : event.key === "Home" ? 0 : event.key === "End" ? duration : null;
+      if (next != null) {
+        event.preventDefault();
+        onSeek(Math.min(duration, Math.max(0, next)));
+      }
+    }}
+  >
+    <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+      <line className="win-history-midline" x1="0" y1="12" x2="100" y2="12" />
+      <polyline points={chart.playerOne} style={{ stroke: players[0]?.color }} />
+      <polyline points={chart.playerTwo} style={{ stroke: players[1]?.color }} />
+    </svg>
+    <span className="win-history-needle" style={{ left: `${currentX}%` }}><i /></span>
+    {hover && <>
+      <span className="win-history-hover-needle" style={{ left: `${hover.x}%` }} />
+      <span className="win-history-tooltip" role="tooltip" style={{ "--hover-x": `${hover.x}%` } as React.CSSProperties}>
+        <b>{formatTime(hover.time)}</b>
+        <em style={{ color: players[0]?.color }}>{players[0]?.name} {Math.round(hover.point.playerOne * 100)}%</em>
+        <em style={{ color: players[1]?.color }}>{Math.round(hover.point.playerTwo * 100)}% {players[1]?.name}</em>
+      </span>
+    </>}
+  </div>;
 }
 
 type UnitVisual = {
@@ -383,22 +456,6 @@ export function ReplayViewer() {
     const index = Math.min(winProbability.points.length - 1, Math.max(0, Math.floor(currentTime / winProbability.cadenceSeconds)));
     return winProbability.points[index];
   }, [currentTime, winProbability]);
-
-  const winProbabilityChart = useMemo(() => {
-    if (!replay || winProbability.status !== "ready" || winProbability.points.length < 2) return null;
-    const stride = Math.max(1, Math.ceil(winProbability.points.length / 600));
-    const samples = winProbability.points.filter((_, index) => index % stride === 0 || index === winProbability.points.length - 1);
-    const line = (player: "playerOne" | "playerTwo") => samples.map((point) => {
-      const x = Math.min(100, Math.max(0, (point.time / replay.meta.duration) * 100));
-      const probability = Math.min(1, Math.max(0, point[player]));
-      return `${x.toFixed(2)},${(2 + (1 - probability) * 20).toFixed(2)}`;
-    }).join(" ");
-    return {
-      playerOne: line("playerOne"),
-      playerTwo: line("playerTwo"),
-      currentX: Math.min(100, Math.max(0, (currentTime / replay.meta.duration) * 100)),
-    };
-  }, [currentTime, replay, winProbability]);
 
   const timelineEvents = useMemo<TimelineEventPresentation[]>(() => {
     if (!replay) return [];
@@ -1280,14 +1337,7 @@ export function ReplayViewer() {
                 <span style={{ width: `${currentWinProbability ? currentWinProbability.playerOne * 100 : 50}%`, background: replay.players[0]?.color }} />
                 <span style={{ background: replay.players[1]?.color }} />
               </div>
-              {winProbabilityChart && <div className="win-probability-history">
-                <svg viewBox="0 0 100 24" preserveAspectRatio="none" role="img" aria-label={t("watcher.winProbabilityHistory")}>
-                  <line className="win-history-midline" x1="0" y1="12" x2="100" y2="12" />
-                  <polyline points={winProbabilityChart.playerOne} style={{ stroke: replay.players[0]?.color }} />
-                  <polyline points={winProbabilityChart.playerTwo} style={{ stroke: replay.players[1]?.color }} />
-                  <line className="win-history-current" x1={winProbabilityChart.currentX} y1="1" x2={winProbabilityChart.currentX} y2="23" />
-                </svg>
-              </div>}
+              {winProbability.status === "ready" && winProbability.points.length > 1 && <WinProbabilityHistory points={winProbability.points} duration={replay.meta.duration} currentTime={currentTime} players={replay.players.slice(0, 2)} label={t("watcher.winProbabilityHistory")} onSeek={(time) => { setCurrentTime(time); setPlaying(false); }} />}
             </div>
           )}
           <div className="controls">
