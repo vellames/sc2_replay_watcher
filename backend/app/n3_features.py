@@ -26,6 +26,14 @@ COMMAND_CLASSES = (
     "special_ability",
     "unknown",
 )
+COSMETIC_ENTITY_PREFIXES = ("beacon",)
+COSMETIC_UPGRADE_PREFIXES = (
+    "gameheart",
+    "ghostalternate",
+    "rewarddance",
+    "spray",
+)
+COSMETIC_COMMAND_TOKENS = ("dance", "emote", "spray", "taunt")
 
 # Names in the frozen N3 contract mapped to sc2reader's PlayerStatsEvent API.
 STAT_ATTRIBUTES = {
@@ -146,6 +154,29 @@ def _command_class(event: Any) -> str:
     return "special_ability"
 
 
+def _normalized_name(value: Any) -> str:
+    return str(value or "").lower().replace(" ", "")
+
+
+def _is_cosmetic_entity(name: Any) -> bool:
+    normalized = _normalized_name(name)
+    return normalized.startswith(COSMETIC_ENTITY_PREFIXES)
+
+
+def _is_cosmetic_upgrade(name: Any, loop: int) -> bool:
+    # Standard melee has no legitimate completed upgrades at frame zero. These
+    # events describe account loadouts, entitlements, sprays, and dances.
+    normalized = _normalized_name(name)
+    return loop == 0 or normalized.startswith(COSMETIC_UPGRADE_PREFIXES)
+
+
+def _is_cosmetic_command(event: Any) -> bool:
+    if not bool(getattr(event, "has_ability", False)):
+        return False
+    normalized = _normalized_name(getattr(event, "ability_name", ""))
+    return any(token in normalized for token in COSMETIC_COMMAND_TOKENS)
+
+
 def _recent(values: list[int], cutoff: int, window: int | None = None) -> int:
     right = bisect.bisect_right(values, cutoff)
     if window is None:
@@ -178,8 +209,11 @@ class _State:
         loop = int(getattr(event, "frame", 0) or 0)
         unit_id = int(getattr(event, "unit_id", 0) or 0)
         if name in {"UnitBornEvent", "UnitInitEvent"}:
+            unit_type = str(getattr(event, "unit_type_name", "Unknown"))
+            if _is_cosmetic_entity(unit_type):
+                return
             owner = _owner_id(event)
-            self.units[unit_id] = _Unit(owner, str(getattr(event, "unit_type_name", "Unknown")), name == "UnitBornEvent")
+            self.units[unit_id] = _Unit(owner, unit_type, name == "UnitBornEvent")
             if owner in self.flow:
                 self.flow[owner]["born" if name == "UnitBornEvent" else "init"].append(loop)
         elif name == "UnitDoneEvent":
@@ -206,6 +240,8 @@ class _State:
         elif name == "UpgradeCompleteEvent":
             pid = _player_id(event) or int(getattr(event, "pid", 0) or 0)
             upgrade = str(getattr(event, "upgrade_type_name", "Unknown"))
+            if _is_cosmetic_upgrade(upgrade, loop):
+                return
             if pid in self.upgrades:
                 self.upgrades[pid][upgrade] = max(self.upgrades[pid][upgrade], int(getattr(event, "count", 1) or 1))
                 self.flow[pid]["upgrade"].append(loop)
@@ -229,6 +265,8 @@ class _State:
         if "ControlGroupEvent" in name:
             self.control_groups[pid].append(loop)
         if "CommandEvent" in name:
+            if _is_cosmetic_command(event):
+                return
             semantic = _command_class(event)
             self.commands[pid][semantic].append(loop)
             self.commands[pid]["__total__"].append(loop)

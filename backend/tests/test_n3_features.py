@@ -1,10 +1,25 @@
 from types import SimpleNamespace
 
-from app.n3_features import COMMAND_CLASSES, STAT_ATTRIBUTES, _State, _command_class
+from app.n3_features import (
+    COMMAND_CLASSES,
+    STAT_ATTRIBUTES,
+    _State,
+    _command_class,
+    _is_cosmetic_command,
+    _is_cosmetic_entity,
+    _is_cosmetic_upgrade,
+)
 
 
 def command(name: str | None, *, has_ability: bool = True) -> SimpleNamespace:
     return SimpleNamespace(has_ability=has_ability, ability_name=name)
+
+
+def event(event_type: str, **attributes: object) -> object:
+    instance = type(event_type, (), {})()
+    for name, value in attributes.items():
+        setattr(instance, name, value)
+    return instance
 
 
 def test_command_taxonomy_covers_race_specific_production_and_technology() -> None:
@@ -16,6 +31,56 @@ def test_command_taxonomy_covers_race_specific_production_and_technology() -> No
     assert _command_class(command("UpgradeGroundWeapons1")) == "technology"
     assert _command_class(command("EvolveMetabolicBoost")) == "technology"
     assert _command_class(command(None, has_ability=False)) == "no_explicit_ability"
+
+
+def test_cosmetic_signals_are_excluded_from_inference_features() -> None:
+    assert _is_cosmetic_entity("BeaconArmy")
+    assert not _is_cosmetic_entity("Marine")
+    assert _is_cosmetic_upgrade("RewardDanceGhost", 100)
+    assert _is_cosmetic_upgrade("AnyAccountLoadout", 0)
+    assert not _is_cosmetic_upgrade("Stimpack", 100)
+    assert _is_cosmetic_command(command("SprayTerran"))
+    assert _is_cosmetic_command(command("Dance"))
+    assert not _is_cosmetic_command(command("Attack"))
+
+
+def test_state_does_not_count_cosmetic_tracker_or_command_events() -> None:
+    state = _State((1, 2))
+    player = SimpleNamespace(pid=1)
+
+    state.tracker(
+        event(
+            "UnitBornEvent",
+            frame=0,
+            unit_id=10,
+            unit_type_name="BeaconArmy",
+            unit_controller=player,
+        )
+    )
+    state.tracker(
+        event(
+            "UpgradeCompleteEvent",
+            frame=0,
+            player=player,
+            upgrade_type_name="RewardDanceGhost",
+        )
+    )
+    state.game(
+        event(
+            "TargetPointCommandEvent",
+            frame=10,
+            player=player,
+            has_ability=True,
+            ability_name="SprayTerran",
+        )
+    )
+
+    assert state.units == {}
+    assert state.upgrades[1] == {}
+    assert state.flow[1]["born"] == []
+    assert state.flow[1]["upgrade"] == []
+    assert state.commands[1]["special_ability"] == []
+    assert state.commands[1]["__total__"] == []
 
 
 def test_snapshot_populates_the_complete_numeric_feature_families() -> None:
