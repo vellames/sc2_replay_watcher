@@ -1043,12 +1043,12 @@ export function ReplayViewer() {
               <div
                 className={`map-canvas ${mapMode} ${is3D ? `view-3d ${individualUnits.length >= 360 ? "dense-3d" : ""} ${playing ? "is-playing" : "is-paused"}` : "view-2d"}`}
                 style={{ "--map-aspect": mapAspect, transform: is3D
-                  ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px))`
+                  ? "translate(-50%, -50%)"
                   : mapMode !== "procedural"
                     ? `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`
                     : `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` } as React.CSSProperties}
               >
-                {is3D && <Sc2World3D bounds={bounds} geometry={replay.mapGeometry} rotation={mapRotation} units={worldUnits3D} selectedUnitId={selectedUnitId} showTerrain={layers.terrain} zoom={zoom} onProjectionChange={updateWorldProjection} onSelect={selectUnit} />}
+                {is3D && <Sc2World3D bounds={bounds} geometry={replay.mapGeometry} pan={pan} rotation={mapRotation} units={worldUnits3D} selectedUnitId={selectedUnitId} showTerrain={layers.terrain} zoom={zoom} onProjectionChange={updateWorldProjection} onSelect={selectUnit} />}
                 {layers.terrain && hasMapGeometry && !is3D && <TerrainLayer geometry={replay.mapGeometry} bounds={bounds} />}
                 {layers.terrain && !is3D && <div className={`map-grid ${hasMapGeometry ? "over-terrain" : ""}`} />}
                 <div className="map-overlay-layer">

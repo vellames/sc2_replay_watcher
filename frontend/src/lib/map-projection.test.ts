@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createIsometricProjection, playableBounds, projectedHeading, type MapGeometry } from "./map-projection.ts";
+import { createIsometricProjection, orthographicViewport, playableBounds, projectedHeading, type MapGeometry } from "./map-projection.ts";
 
 const geometry: MapGeometry = {
   source: "s2ma", width: 200, height: 200,
@@ -62,4 +62,14 @@ test("projects unit heading together with map rotation", () => {
   const original = projectedHeading(originalProjection, 100, 100, 0);
   const rotated = projectedHeading(rotatedProjection, 100, 100, 0);
   assert.ok(Math.abs(original - rotated) > 40);
+});
+
+test("3d pan shifts the camera frustum instead of moving the rendered canvas", () => {
+  const centered = orthographicViewport(200, 100, 1000, 500, 2, { x: 0, y: 0 });
+  const panned = orthographicViewport(200, 100, 1000, 500, 2, { x: 100, y: 50 });
+
+  assert.deepEqual(centered, { left: -100, right: 100, top: 50, bottom: -50 });
+  assert.deepEqual(panned, { left: -110, right: 90, top: 55, bottom: -45 });
+  assert.equal(panned.right - panned.left, centered.right - centered.left);
+  assert.equal(panned.top - panned.bottom, centered.top - centered.bottom);
 });

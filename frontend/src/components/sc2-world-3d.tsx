@@ -6,7 +6,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 import { sc2ModelAsset } from "@/lib/sc2-3d-assets";
 import { canonicalSc2Type } from "@/lib/sc2-catalog";
-import { decodeMapRle, type MapBounds, type MapGeometry } from "@/lib/map-projection";
+import { decodeMapRle, orthographicViewport, type MapBounds, type MapGeometry } from "@/lib/map-projection";
 import type { ReplayUnit } from "@/lib/types";
 
 type WorldUnit = ReplayUnit & { color: string; race?: string };
@@ -15,6 +15,7 @@ type Props = {
   geometry: MapGeometry;
   onProjectionChange: (projection: { project: (x: number, y: number) => { left: number; bottom: number } } | null) => void;
   onSelect: (id: number) => void;
+  pan: { x: number; y: number };
   rotation: number;
   selectedUnitId: number | null;
   showTerrain: boolean;
@@ -521,7 +522,7 @@ function createTerrain(geometry: MapGeometry, bounds: MapBounds, sampling: Terra
   return root;
 }
 
-export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onProjectionChange, onSelect, rotation, selectedUnitId, showTerrain, units, zoom }: Props) {
+export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onProjectionChange, onSelect, pan, rotation, selectedUnitId, showTerrain, units, zoom }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -535,12 +536,17 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onProject
   const renderRef = useRef<() => void>(() => undefined);
   const projectionUpdateRef = useRef<() => void>(() => undefined);
   const matrixUpdateRef = useRef<(blend: number, force?: boolean) => boolean>(() => false);
+  const cameraViewUpdateRef = useRef<() => void>(() => undefined);
   const targetUnitsRef = useRef(new Map<number, WorldUnit>());
   const displayedTransformsRef = useRef(new Map<number, DisplayedTransform>());
   const motionDirtyRef = useRef(false);
+  const panRef = useRef(pan);
+  const zoomRef = useRef(zoom);
   const terrainSampling = useMemo(() => terrainSampler(geometry), [geometry]);
   unitsRef.current = units;
   selectedUnitIdRef.current = selectedUnitId;
+  panRef.current = pan;
+  zoomRef.current = zoom;
   const unitStructureRevision = units.map((unit) => `${unit.id}:${unit.type}:${unit.completed}:${unit.color}:${unit.race ?? "neutral"}`).join("|");
 
   useEffect(() => {
@@ -675,11 +681,16 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onProject
       }
       const viewHeight = Math.max(halfViewHeight * 2, halfViewWidth * 2 / aspect) * 1.06;
       const viewWidth = viewHeight * width / height;
-      camera.left = -viewWidth / 2;
-      camera.right = viewWidth / 2;
-      camera.top = viewHeight / 2;
-      camera.bottom = -viewHeight / 2;
-      camera.updateProjectionMatrix();
+      cameraViewUpdateRef.current = () => {
+        const view = orthographicViewport(viewWidth, viewHeight, width, height, zoomRef.current, panRef.current);
+        camera.zoom = zoomRef.current;
+        camera.left = view.left;
+        camera.right = view.right;
+        camera.top = view.top;
+        camera.bottom = view.bottom;
+        camera.updateProjectionMatrix();
+      };
+      cameraViewUpdateRef.current();
       renderer.setSize(width, height, false);
       render();
       emitProjection();
@@ -726,6 +737,7 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onProject
       rendererRef.current = null;
       sceneRef.current = null;
       matrixUpdateRef.current = () => false;
+      cameraViewUpdateRef.current = () => undefined;
       projectionUpdateRef.current = () => undefined;
       onProjectionChange(null);
     };
@@ -748,13 +760,11 @@ export const Sc2World3D = memo(function Sc2World3D({ bounds, geometry, onProject
   }, [bounds, rotation]);
 
   useEffect(() => {
-    const camera = cameraRef.current;
-    if (!camera) return;
-    camera.zoom = zoom;
-    camera.updateProjectionMatrix();
+    if (!cameraRef.current) return;
+    cameraViewUpdateRef.current();
     renderRef.current();
     projectionUpdateRef.current();
-  }, [zoom]);
+  }, [pan, zoom]);
 
   useEffect(() => {
     const root = unitRootRef.current;

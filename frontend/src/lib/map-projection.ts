@@ -3,6 +3,25 @@ import type { ReplayData } from "@/lib/types";
 export type MapBounds = { minX: number; maxX: number; minY: number; maxY: number };
 export type MapGeometry = ReplayData["mapGeometry"];
 
+export function orthographicViewport(
+  viewWidth: number,
+  viewHeight: number,
+  viewportWidth: number,
+  viewportHeight: number,
+  zoom: number,
+  pan: { x: number; y: number },
+) {
+  const safeZoom = Math.max(.01, zoom);
+  const offsetX = -pan.x * viewWidth / Math.max(1, viewportWidth) / safeZoom;
+  const offsetY = pan.y * viewHeight / Math.max(1, viewportHeight) / safeZoom;
+  return {
+    left: -viewWidth / 2 + offsetX,
+    right: viewWidth / 2 + offsetX,
+    top: viewHeight / 2 + offsetY,
+    bottom: -viewHeight / 2 + offsetY,
+  };
+}
+
 export function decodeMapRle(encoded: number[], expected: number) {
   const values = new Uint8Array(expected);
   let offset = 0;
